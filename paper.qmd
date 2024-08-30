@@ -1,0 +1,100 @@
+---
+title: "Tournaments"
+author: "Greg"
+format: html
+editor: visual
+---
+
+## Tournaments
+
+ - Single elimination (NCAA tournament, NFL playoffs)
+  - Seeding issues (Tennis: https://www.liveabout.com/definition-of-seeding-3207821)
+   Reseeding after each round.  Straight knockout.  
+  - Second faces Third for silver medal.  Guarantees than sivler has 1 loss and bronze has 2 losses.  
+  - With a 3rd place match (Badminton: https://www.nbcolympics.com/news/badminton-101-olympic-competition-format)
+  - Single elimination with series (NBA, MLB, NHL)
+  - Ladder tournaments (Korean baseball does best of 3 with one team starting up 1-0 in the opening round)
+  - Seeding issues (NFL re-seeds, NCAA tournament straight bracket)
+  - Group/Pool play followed by knockout stages (World Cup, Euro, Overwatch World CUp. )
+  
+ - Double elimination (Overwatch Champions League)
+  - Repechage (Olympic Wrestling, Tae Kwon Do, Judo) (These also aware 2 bronze medals)
+  - True Double elimination
+  - Double elimination but a single loss before finals means you can onyl go for third place (College wrestling)
+  
+  - Triple Elimination (Curling! https://thegrandslamofcurling.com/bracketology-101-triple-knockout-explained-2021/)
+ 
+ - Swiss Tournament (https://en.chessbase.com/post/125-years-swiss-system)
+
+ - Round Robin
+  - Single and Double.  
+  - Baseball is an imbalanced multiple round robin qualifying round. 
+  
+  - https://www.tandfonline.com/doi/abs/10.1080/01621459.1952.10501178
+  
+  
+ 
+ - Heat based events (Track 5000m and below, swimming, ) 
+ 
+ - Ranking Round followed by single elimination (Olympic Archery https://www.nbcolympics.com/news/archery-101-olympic-competition-format-and-scoring)
+ 
+ - Elimination racing (Cycling, Bachelor/Bachelorette, Survivor)
+ 
+ Tournament: a series of contests between a number of competitors, who compete for an overall prize. Oxford Dictionary
+  Wiki: "A tournament is a competition involving at least three competitors, all participating in a sport or game"
+ 
+ 
+ (https://www.espn.com/olympics/story/_/id/40536088/2024-paris-summer-olympics-track-field-medaling-format-rules)
+ 
+ 
+Curling and DOE! https://khazna.ku.ac.ae/en/publications/applying-design-of-experiments-tooptimize-the-performance-level-o
+
+Poker: https://arxiv.org/abs/physics/0703122
+
+Graph Theory Stuff: 
+Chickens: https://link.springer.com/article/10.1007/BF02476378
+
+
+Are elections tournaments?  
+
+Tournament of Tournaments.  
+
+
+ - aggregation of rankings (golf fedex cup, formula one, tour de france)
+
+
+
+
+https://liquipedia.net/overwatch/Overwatch_Champions_Series/2024/North_America/Stage_2
+Swiss, Top Cut Swiss, Group play then a double elimiation bracket!
+
+https://www.vgcguide.com/swiss-and-top-cut
+
+
+
+
+
+```{r}
+results <- data.frame(h = c("i","i","j","i","j","l"), a = c("j","l","l","k","k","k"), hpoints = c(3,3,3,1,1,1), apoints = c(0,0,0,1,1,1))
+                
+library(tidyverse)     
+h <-results %>% group_by(h) %>% summarize(sum = sum(hpoints))  
+a <- results %>% group_by(a) %>% summarize(sum = sum(apoints)) 
+names(a) <- c("h","sum")
+d <- rbind(h,a)
+d %>% group_by(h) %>%  summarize(sum = sum(sum))  %>% arrange(-sum)
+
+#Now reverse the outcomes
+results <- data.frame(h = c("i","i","j","i","j","l"), a = c("j","l","l","k","k","k"), hpoints = c(0,0,0,1,1,1), apoints = c(3,3,3,1,1,1))
+                
+library(tidyverse)     
+h <-results %>% group_by(h) %>% summarize(sum = sum(hpoints))  
+a <- results %>% group_by(a) %>% summarize(sum = sum(apoints)) 
+names(a) <- c("h","sum")
+d <- rbind(h,a)
+d %>% group_by(h) %>%  summarize(sum = sum(sum))  %>%arrange(-sum)
+
+
+                 
+                     
+```
