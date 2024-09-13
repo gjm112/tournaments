@@ -51,7 +51,9 @@ editor: visual
  Tournament: a series of contests between a number of competitors, who compete for an overall prize. Oxford Dictionary
   Wiki: "A tournament is a competition involving at least three competitors, all participating in a sport or game"
  
- 
+ Tournament (graphy theory): [wikipedia definition](https://en.wikipedia.org/wiki/Tournament_(graph_theory)) and in [McShane (2019)](https://scholar.smu.edu/hum_sci_statisticalscience_etds/13/) -- essentially a "round robin tournament" -- a graph where every node (competitor: A, B, C) is connected by a directed edge (win A -> B or lose A <- B), where there are no loops (self-directed edges -- competitors cannot play against themselves). AKA a complete directed graph with no loops; has $n$ nodes and $\choose{n}{2}$ edges. John W. Moon's [Topic on Tournaments](https://www.gutenberg.org/ebooks/42833) is the classic graph theoretical tournaments text. This definition should be used to disambiguate _tournament_, especially since graph theory may be used. 
+
+
  (https://www.espn.com/olympics/story/_/id/40536088/2024-paris-summer-olympics-track-field-medaling-format-rules)
  
  
