@@ -31,6 +31,14 @@ editor: visual
   - Baseball is an imbalanced multiple round robin qualifying round. 
   
   - https://www.tandfonline.com/doi/abs/10.1080/01621459.1952.10501178
+
+  - Waterfall format
+   - Introduced in the Smash 64 community, [they claim](https://thesmashwriter.wordpress.com/2017/04/24/what-is-a-waterfall-bracket/)
+   - Recent example was [Super Smash Con 2023](https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles/overview)
+    - Players are seeded $1 \rightarrow n$ and grouped into $k$ divisions, 1 best, $n$ and $k$ worst. 
+    - The worst $\frac{n + \epsilon}{k}$ play in [relatively small round robin pools](https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles/brackets/1184919/1833431). Some fraction advance. In this linked example, There are 16 pools in division 4, where each pool is roughly 13 players, with 4 from each division advancing. 
+    - The advancing players are then entered into pools with the slightly better-seeded players, and again complete round robins. This iterates over and over again. In this example, to make the numbers work, there are also [wildcard rounds](https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles/brackets/1184927/1833460) to advance an extra few players to further divisions. 
+    - In Smash 64, this ultimately leads to a top 16 or 32, which then becomes a double-elimination tournament (all prior losses are ignored). The [top 32](https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles/brackets/1184923/1833456) is seeded by the [top division pool results](https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles/brackets/1184922/1833451). 
   
   
  
