@@ -1,0 +1,160 @@
+## 9/12
+
+- lit review on tournament structures or competition frameworks
+    - go through papers - Goossens paper
+        - go through interesting citations
+    - go through leagues that exist and catalog how winners are decided
+        - Olympic sports
+        - major sports leagues
+- something statistical - what can we say about the properties of each structure?
+    - theory and simulation
+    - are there tournament structures that produce biased estimators
+- distinction between paired comparisons vs XC or Nascar or golf
+    - paired vs ranked based sports
+        - things get weird with rank based sports (sports climbing medals changing)
+
+binary outcome tournament types
+
+- round robin (nRR)
+    - 2RR - premier league
+    - 1RR - group stage World Cup
+    - partial (fixed) RR - major league baseball
+    - Swiss tournament - dynamically choose who you play next - NFL playoffs (reseeding)
+        - what if first p rounds were fixed and then you assign dynamically
+    - Jacobian ladder - rugby (top 4 from the 8 play, bottom 4 play)
+- knock out (L KO)
+    - 1 KO - NCAA
+        - true 3rd- second and third play each other for the win - USA Olympic Trials wrestling
+        - 3rd place - losers of semifinal play each other for third
+        - repechage - Judo
+        - ladder tournaments - squash, badminton, basketball (A10 tournament)
+            - complete ladders (a ton of byes) and partial ladders (a few byes)
+    - 2 KO
+        - true (keep going until only one team has not lost 2 games) - maybe league of legends, esports, old man softball
+            - where the game is not super physically taxing
+        - lose (highest you can get is third) - college wrestling
+        - repechage - wrestling, double bronze
+    - 3 KO - curling
+- hybrid
+    - RR → KO - every league in the US basically
+
+dynamic - branches change
+
+deterministic - branches do not change
+
+other kinds of competitions (not two competitors and a winner)
+
+- track heats
+
+other
+
+- need notation for NCAA (one game, one loss) vs NBA (seven games, one loss)
+    - how many people you start with, number of losses, number of games to determine a loss
+- seeding in a knockout tournament
+    - if goal is to find best team, use KO with no seeds
+        - want second, third, etc., use seeding
+    - full, partial (seed top n, then random draw), tennis group seeding
+    - seeds are like priors, and the tournament is the data
+        - Bayesian Prior
+        - look into Bayesian statistics
+- Bradley Terry model
+    - logistic regression with indictors for the competitors
+- Glickman - researcher
+
+
+
+## 9/26
+
+- Bradley Terry model
+    - logistic regression
+    - estimate strength of a team
+    - want tournament to give us information
+- ratings - score for strength of team. rankings - function of ratings, best team is 1, etc.
+- transitive property: a > b, b > c, so a < c
+    - weak stochastic transitivity property
+        - let A, B, C be teams
+        - if P(A → B), P(B → C) > 0.5, then P(A → C) > 0.5
+- graph theory
+    - graph G = (V, E), or sets V of vertices and E of edges
+    - Vertices A and B are adjacent if there is an edge (A, B)
+    - in a directed graph, arrow A → B
+    - simple graph contains no loops (A playing or beating itself)
+    - a graph with n vertices with every pair of vertices is adjacent is a complete graph
+        - tournament T is a simple and complete directed graph
+    - a directed graph can be represented by an adjacency matrix
+        - ith row and jth column represent ith and jth vertices; ijth entry is a directed edge (i,j)
+- Kendall and Smith (1940)
+    - thought judges should make consistent preferences
+    - single judge comparing 4 objects, A should have 3 wins, B have 2, etc.
+    - circular triad: A → B → C → A
+        - if too many circular triads, judge is inconsistent
+        - measure of inconsistency, d
+            - d is the number of circular triads in a tournament
+    - Elo (1978) or Glicko (1998) for comparisons before and after tournaments
+- **PAPER IDEA**: if you have a bunch of team strengths, simulate tournament structure, true ranks vs estimated ranks, spearman correlations
+    - vector of 4 teams and their rankings
+    - P one team will beat another team
+    - round robin vs single elimination
+        - simulate a bunch of the tournaments, get different rankings, calculate spearman correlation coefficient distribution
+            - then compare the tournaments
+        - how close can we get the coefficient to one in the fewest number of games?
+        - what kind of tournament works better for a transitive vs intransitive model?
+- **TO DO**: functions to start simulating tournaments
+    - start with Bradley Terry type model
+    - take in a vector of 4 teams/strengths, and returns a ranking
+        - need to specify the strengths and their distribution?
+            - complete parity (all zeros) vs no parity
+                - need to have realistic, medium between these
+        - then run this function a lot
+    - each function for different type of tournament
+    - wins and loses only
+    - ranking based only on number of wins; if ties, rank average
+    - start with round robin, single elimination
+        - teams that lose in semis in single elimination get 3.5 ranking
+        - single elimination - allow byes, need seeding structure?
+- paper name for repechage: Run It Back
+
+
+
+## 10/10
+
+- round robin function
+    - theta = vector of strengths using runif()
+    - theta_i / (theta_i + theta_j) = prob i > j
+    - function inputs: team list and strength list
+    - output: team, number of wins, and ranking
+        - want to know correlation between original strength and output ranking
+- single elimination
+    - inputs: teams, true rank, seeds
+        - types of seeding:
+            - shuffle with replacement
+            - f(theta hat) - some function of the rankings
+            - true rank (theta)
+        - types of structure
+            - bracketology (1v8, 2v7, etc.)
+                - compare to how bad 1v2, 3v4, etc. is
+                - how many different unique tournaments are there (regarding seeding structures)?
+                    - for 4 teams, A can only play 3 different teams, so 3 possibilities
+                    - what about reseeding after each round?
+            - bye handling
+                - step 2 is ways to handle byes, right now 2^n teams
+- ladder tournament, caterpillar, waterfall?
+    - ladder tournament: could go on forever
+        - https://en.wikipedia.org/wiki/Ladder_tournament
+- **TO DO:** focus for next week
+    - round robin distribution of correlations (kendall rank) between true strengths and function output ranks
+        - team, score (different in each simulation), rank (diff, call rank hat), true strength
+        - correlation between rank hat and rank
+            - distribution of correlations between different simulations
+    - mess around with seeding structures
+        - how many ways to set up a tournament based on seeds?
+    - bracketology
+        - for every seeding structure, get correlation distribution for ranks and predicted ranks
+        - 4 teams - 3 options: ABCD, ACBD, ADBC
+            - which seeding structure gets closest to true strength ranks
+    - generate probabilities using exp(i-j)/(1+exp(i-j))
+        - vector of thetas (strengths) - more than just between 0 and 1
+- generalize these approaches so we do not have to rewrite for every type
+    - pass in true strengths, seeds, and structure
+- josie - how many unique seeding structures in an 8 team tournament
+    - if n = 2^k teams, how many unique structures (number of rounds is k-1)
