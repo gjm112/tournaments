@@ -1,0 +1,344 @@
+---
+title: "Tournaments"
+author: "Zach Culp"
+format: html
+editor: visual
+---
+
+Creating the teams and the strengths
+
+```{r}
+# Define the number of teams 
+num_teams <- 8
+teams <- paste("Team", 1:num_teams)
+
+# Assign random strengths to each team 
+team_strengths <- data.frame(
+  Team = teams,
+  Strength = round(runif(num_teams, min = 0, max = 1),2)
+)
+#team_strengths
+```
+
+Simulating a match using the Bradley Terry model
+
+```{r}
+# Function to simulate a match using Bradley-Terry model
+simulate_match <- function(team1, team2, strengths) {
+  strength1 <- strengths$Strength[strengths$Team == team1]
+  strength2 <- strengths$Strength[strengths$Team == team2]
+  
+  prob_team1_wins <- strength1 / (strength1 + strength2)  # BT model probability
+  
+  winner <- ifelse(runif(1) < prob_team1_wins, team1, team2)  # Randomize outcome
+  return(winner)
+}
+```
+
+# Round Robin Tournaments
+
+Example of a round robin structure (each team plays each other once)
+
+```{r}
+simulate_roundrobin <- function(teams, strengths){
+  n <- length(teams)
+  win_counts <- numeric(n)
+  for (i in seq_along(teams)){
+    for (j in seq_along(teams)){
+      if (i != j){
+        match_winner <- simulate_match(teams[i],teams[j],strengths)
+        #cat(paste(teams[i], teams[j], match_winner), "\n")
+        if (match_winner == teams[i]) {
+          win_counts[i] <- win_counts[i] + 1
+        } else {
+          win_counts[j] <- win_counts[j] + 1
+        }
+      }
+    }
+  }
+  results <- data.frame(
+    Team = teams,
+    Wins = win_counts
+  )
+  
+  # Ranks teams based on number of wins (includes ties)
+  results$Rank <- rank(-results$Wins, ties.method = "average")
+  results <- results[order(results$Rank),]
+  return(results)
+}
+round_robin <- simulate_roundrobin(teams, team_strengths)
+round_robin
+```
+
+Simulation of many round robin tournaments.
+
+```{r}
+# Define the number of simulations
+n <- 10000  # Set the number of simulations you want
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+# Run multiple simulations
+for (i in 1:n) {
+  simulation <- simulate_roundrobin(teams, team_strengths)  # Call the tournament simulation function
+  ranks <- simulation$Rank
+  team_order <- simulation$Team
+  total_ranks[i, team_order] <- ranks
+}
+# Calculate average ranks for each team
+average_ranks <- colMeans(total_ranks, na.rm = TRUE)
+
+# Print average ranks for each team
+for (team in teams) {
+  team_strength <- team_strengths$Strength[team_strengths$Team == team]
+  cat(paste(team, "-> Avg. Rank:", average_ranks[team], "Strength:", team_strength), "\n")
+}
+
+```
+
+This structure plays out exactly how it would be expected as the ranks follow the order of strengths.
+
+# Single Elimination
+
+Creates an example single elimination tournament with only one simulation.
+
+```{r}
+# defining the rank value for each finish
+rank_values <- c(
+  # Add more ranks as needed
+  quarterfinalist = 6.5,
+  semifinalist = 3.5,
+  finalist = 2,
+  champion = 1
+)
+
+# Simulate the single-elimination tournament
+simulate_tournament <- function(teams, strengths) {
+  ranks <- rep(NA, length(teams)) # Creates empty ranks to be filled later
+  names(ranks) <- teams  # Assign team names to ranks for easier reference
+  
+  round_number <- 1  # To track the current round
+  
+  while (length(teams) > 1) {
+    #cat("\n--- Round", round_number, "---\n")
+    next_round <- c() # Makes sure only winners are included in next round
+    
+    for (i in seq(1, length(teams), by = 2)) { # Gets 2 teams for each match
+      team1 <- teams[i]
+      team2 <- teams[i+1]
+      match_winner <- simulate_match(team1, team2, strengths)
+      next_round <- c(next_round, match_winner)
+      #cat(paste(team1, "vs", team2, "-> Winner:", match_winner, "\n"))
+      
+      # Assign ranks based on the current round
+      if (round_number == 1) {  # Quarterfinals
+        if (match_winner == team1) {
+          if (is.na(ranks[team2])) {
+            ranks[team2] <- rank_values["quarterfinalist"]
+          }
+        } else {
+          if (is.na(ranks[team1])) {
+            ranks[team1] <- rank_values["quarterfinalist"]
+          }
+        }
+      } else if (round_number == 2) {  # Semifinals
+        if (match_winner == team1) {
+          if (is.na(ranks[team2])) {
+            ranks[team2] <- rank_values["semifinalist"]
+          }
+        } else {
+          if (is.na(ranks[team1])) {
+            ranks[team1] <- rank_values["semifinalist"]
+          }
+        }
+      } else if (round_number == 3) {
+        if (match_winner == team1) {
+          if(is.na(ranks[team2])) {
+            ranks[team2] <- rank_values["finalist"]
+          }
+          if(is.na(ranks[team1])) {
+            ranks[team1] <- rank_values["champion"]
+          }
+        } else {
+          if(is.na(ranks[team1])) {
+            ranks[team1] <- rank_values["finalist"]
+          }
+          if(is.na(ranks[team2])) {
+            ranks[team2] <- rank_values["champion"]
+          }
+        }
+      }
+      # No rank assignment here for the final round; handled after loop
+    }
+    
+    # If only two teams remain, handle the final match
+    #if (length(next_round) == 2 && round_number == 3) {
+    #  finalist <- setdiff(teams, next_round)
+    #  # Assign ranks for the final match
+    #  ranks[next_round[1]] <- rank_values["champion"]
+    #  ranks[next_round[2]] <- rank_values["finalist"]
+    #}
+    
+    teams <- next_round  # Winners move to the next round
+    round_number <- round_number + 1
+  }
+  
+  # Handle the case where only one team remains (champion)
+  if (length(teams) == 1 && is.na(ranks[teams])) {
+    ranks[teams] <- rank_values["champion"]
+  }
+  
+  return(list(champion = teams[1], ranks = ranks))  # Return champion and ranks
+}
+
+# Define the teams for the tournament
+teams <- c("Team 1", "Team 2", "Team 3", "Team 4", "Team 5", "Team 6", "Team 7", "Team 8")
+
+# Run the tournament
+cat("Starting tournament with teams:", paste(teams, collapse = ", "), "\n")
+result <- simulate_tournament(teams,team_strengths)
+
+# Print the results
+cat("\nChampion of the tournament is:", result$champion, "\n")
+cat("\nTeam Rankings:\n")
+for (team in teams) {
+  cat(paste(team, "-> Rank:", ifelse(is.na(result$ranks[team]), "Not Ranked", result$ranks[team]), "\n"))
+}
+team_strengths
+```
+
+Simulating games many times
+
+```{r}
+# Initialize the teams you want to simulate
+team1 <- "Team 1"  # Replace with the actual team name
+team2 <- "Team 2"  # Replace with the actual team name
+
+# Initialize a vector to store match results (1 for team1 win, 0 for team2 win)
+match_results <- numeric(1000)
+
+# Run 1000 simulations of the match
+for (i in 1:1000000) {
+  winner <- simulate_match(team1, team2,team_strengths)
+  match_results[i] <- ifelse(winner == team1, 1, 0)  # 1 if team1 wins, 0 if team2 wins
+}
+
+# Calculate the mean of the match results
+mean_result <- mean(match_results)
+cat("Mean result (fraction of wins for team1):", mean_result, "\n")
+```
+
+Simulating the tournament many times.
+
+```{r}
+# Define the number of simulations
+n <- 10000  # Set the number of simulations you want
+
+# Initialize a data frame to store total ranks for each team
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+# Run multiple simulations
+for (i in 1:n) {
+  simulation <- simulate_tournament(teams, team_strengths)  # Call the tournament simulation function
+  total_ranks[i, ] <- simulation$ranks  # Store the ranks of the current simulation
+}
+total_ranks
+# Calculate average ranks for each team
+average_ranks <- colMeans(total_ranks, na.rm = TRUE)
+
+# Print average ranks for each team
+for (team in teams) {
+  team_strength <- team_strengths$Strength[team_strengths$Team == team]
+  cat(paste(team, "-> Avg. Rank:", average_ranks[team], "Strength:", team_strength), "\n")
+}
+
+```
+
+As seen here, a completely randomized seeding can lead to a higher strength team losing more often than a lower strength team. Because of the high probability of winning the first game, Team 6 actually averages to the highest ranking.
+
+Now, attempting it seeding the teams based on strength.
+
+```{r}
+# Sort the teams by their strengths in descending order (for seeding)
+teams_seeded <- team_strengths[order(-team_strengths$Strength), ]  # Strongest at the top
+seeded_strengths <- data.frame(
+  Team = teams_seeded$Team,
+  Strength = teams_seeded$Strength
+)
+# Display the seeding
+#cat("Teams sorted by strength (seeds):\n")
+#teams_seeded
+
+simulate_seeded_tournament <- function(teams,strengths) {
+  ranks <- rep(NA, length(teams))  # Create empty ranks to be filled later
+  names(ranks) <- teams  # Set names for easier access
+  round_number <- 1
+  while (length(teams) > 1) {
+    #cat("\n--- Round", round_number, "---\n")
+    next_round <- c()  # Ensures only winners are included in the next round
+    # Pair teams based on seeding (1 vs 8, 2 vs 7, etc.)
+   for (i in 1:(length(teams) / 2)) {
+      team1 <- teams[i]                  # Higher seed
+      team2 <- teams[length(teams) - i + 1]  # Lower seed
+      match_winner <- simulate_match(team1, team2, strengths)
+      next_round <- c(next_round, match_winner)
+      #cat(paste(team1, "vs", team2, "-> Winner:", match_winner, "\n\n"))
+    
+    
+      # Assign ranks based on the current round
+      if (round_number == 1) {  # Quarterfinals
+        ranks[team1] <- rank_values["quarterfinalist"]
+        ranks[team2] <- rank_values["quarterfinalist"]
+      } else if (round_number == 2) {  # Semifinals
+        if (match_winner == team1) {
+          ranks[team2] <- rank_values["semifinalist"]
+        } else {
+          ranks[team1] <- rank_values["semifinalist"]
+        }
+      } else if (round_number == 3) {  # Finals
+        if (match_winner == team1) {
+          ranks[team1] <- rank_values["champion"]
+          ranks[team2] <- rank_values["finalist"]
+        } else {
+          ranks[team2] <- rank_values["champion"]
+          ranks[team1] <- rank_values["finalist"]
+        }
+      }
+    }
+  
+    teams <- next_round
+    round_number <- round_number + 1
+  }
+  
+  return(list(champion = teams[1], ranks = ranks))  # Final winner
+}
+
+
+# Define the number of simulations
+n <- 1000  # Set the number of simulations you want
+
+# Initialize a data frame to store total ranks for each team
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+# Run multiple simulations
+for (i in 1:n) {
+  seeded_simulation <- simulate_seeded_tournament(teams_seeded$Team,seeded_strengths)  # Call the tournament simulation function
+  seeded_simulation
+  total_ranks[i, names(seeded_simulation$ranks)] <- seeded_simulation$ranks  # Store the ranks of the current simulation
+}
+# Calculate average ranks for each team
+average_ranks <- colMeans(total_ranks, na.rm = TRUE)
+
+# Print average ranks for each team
+for (team in teams_seeded$Team) {
+  team_strength <- teams_seeded$Strength[teams_seeded$Team == team]
+  cat(paste(team, "-> Avg. Rank:", average_ranks[team], "Strength:", team_strength), "\n")
+}
+
+```
+
+As seen in this example, the ranks are what you would expect given the strengths. This shows that a seeded single elimination tournament structure will likely produce more accurate depictions of strength than a randomized single elimination structure.
+
+The next step will be to include potential byes to this single elimination tournament and then look into double elimination tournaments.
