@@ -1,0 +1,335 @@
+---
+title: "single_elimination"
+format: html
+editor: visual
+---
+
+# Simulate a Single Match
+
+```{r}
+# Function to simulate a match using Bradley-Terry model
+simulate_match <- function(team1, team2, strength1, strength2) {
+  odds <- exp(strength1 - strength2)/(1+exp(strength1 - strength2))
+  
+  winner <- ifelse(runif(1) < odds, team1, team2)  # Randomize outcome
+  return(winner)
+}
+```
+
+# Single Elimination Tournament Structures
+
+```{r}
+num_teams <- 8
+teams <- paste("Team", 1:num_teams)
+team_map <- setNames(1:8, teams)
+tourn <- do.call(rbind, args = combinat::permn(1:8))
+tourn
+dist <- apply(X = tourn, MARGIN = 1, FUN = function(x){
+  if (sum(x[5:8] == 1) > 0) {
+    x[1:8] <- x[c(5:8, 1:4)]
+  }
+  if (sum(x[3:4] == min(x[1:4])) > 0) {
+    x[1:4] <- x[c(3:4, 1:2)]
+  }
+  if (sum(x[7:8] == min(x[5:8])) > 0) {
+    x[5:8] <- x[c(7:8, 5:6)]
+  }
+  for (i in c(1, 3, 5, 7)) {
+    x[i:(i + 1)] <- sort(x[i:(i + 1)])
+  }
+return(x)
+})
+
+dist <- t(dist)
+seeds <- dist[!duplicated(dist), ]
+
+# How to check for a specific seed
+which(apply(seeds, 1, function(x) all(x == c(1, 8, 2, 7, 3, 6, 4, 5))))
+
+## Important Structures Rows ##
+# 1-8: row 1
+# (1,8), (2,7), (3,6), (4,5): row 23
+```
+
+# Setting Up the Teams and Strengths
+
+```{r}
+# Assign random strengths to each team 
+team_strengths <- data.frame(
+  Team = teams,
+  Strength = c(1,2,3,4,5,6,7,8),
+  Wins = rep(0,8),
+  Ranks = rep(NA,8),
+  Exp_Ranks = c(8,7,6,5,4,3,2,1)
+)
+
+normal_strengths <- data.frame(
+  Team = teams,
+  Strength = round(rnorm(8,0,1),2),
+  Wins = rep(0,8),
+  Ranks = rep(NA,8)
+)
+normal_strengths$Exp_Ranks <- rank(-normal_strengths$Strength, ties.method = "average")
+
+unif_strength <- data.frame(
+  Team = teams,
+  Strength = round(runif(8,0,8),2),
+  Wins = rep(0,8),
+  Ranks = rep(NA,8)
+)
+unif_strength$Exp_Ranks <- rank(-unif_strength$Strength, ties.method = "average")
+
+# Store strength data frames in a list
+strengths_list <- list(
+  "Default" = team_strengths,
+  "Normal" = normal_strengths,
+  "Uniform" = unif_strength
+)
+
+```
+
+# Simulating a Tournament
+
+```{r}
+# defining the rank value for each finish
+rank_values <- c(
+  # Add more ranks as needed
+  quarterfinalist = 6.5,
+  semifinalist = 3.5,
+  finalist = 2,
+  champion = 1
+)
+
+# Simulate the single-elimination tournament
+simulate_tournament <- function(df,seeds = NULL) {
+  
+  # Sets seed to that of common best vs worst structure
+  if (is.null(seeds)){
+    seeds <- matrix(c(1,8,2,7,3,6,4,5), nrow = 1)
+  } 
+    
+  
+  results <- list()  # Initialize the results list
+  
+  for (i in 1:nrow(seeds)) {
+    # Create a new data frame based on the current permutation in 'test'
+    permutation <- seeds[i, ]
+    permuted_df <- df
+    permuted_df$Team <- df$Team[permutation]  # Update team order 
+    permuted_df$Strength <- df$Strength[permutation]
+    permuted_df$Ranks <- NA  # Initialize ranks column
+    permuted_df$Wins <- 0  # Initialize wins column
+    permuted_df$Exp_Rank <- df$Exp_Rank[permutation]
+    
+    teams <- permuted_df$Team
+    strengths <- permuted_df$Strength
+   
+    round_number <- log2(length(teams))
+    
+  while (length(teams) > 1) {
+    #cat("\n--- Round", round_number, "---\n")
+    next_round <- c() # Makes sure only winners are included in next round
+    
+    for (j in seq(1, length(teams), by = 2)) { # Gets 2 teams for each match
+      team1 <- teams[j]
+      team2 <- teams[j+1]
+      
+      strength1 <- strengths[permuted_df$Team == team1]
+      strength2 <- strengths[permuted_df$Team == team2]
+      
+      match_winner <- simulate_match(team1, team2, strength1, strength2)
+      next_round <- c(next_round, match_winner)
+      #cat(paste(team1, "vs", team2, "-> Winner:", match_winner, "\n"))
+      
+      # Can add more rounds by the same code with rounnd_number increasing by 1 and rank_values[round name]
+      
+      # Assign ranks based on the current round
+      if (round_number == 3) {  # Quarterfinals
+        if (match_winner == team1) {
+          permuted_df$Ranks[permuted_df$Team == team2] <- 
+          rank_values["quarterfinalist"]
+        } else {
+          permuted_df$Ranks[permuted_df$Team == team1] <-   
+          rank_values["quarterfinalist"]
+        }
+      } else if (round_number == 2) {  # Semifinals
+        if (match_winner == team1) {
+          permuted_df$Ranks[permuted_df$Team == team2] <-
+          rank_values["semifinalist"]
+        } else {
+          permuted_df$Ranks[permuted_df$Team == team1] <-
+          rank_values["semifinalist"]
+        }
+      } else if (round_number == 1) { # Finals
+        if (match_winner == team1) {
+          permuted_df$Ranks[permuted_df$Team == team2] <- rank_values["finalist"]
+        permuted_df$Ranks[permuted_df$Team == team1] <- rank_values["champion"]
+        permuted_df$Wins[permuted_df$Team == team1] <-
+        permuted_df$Wins[permuted_df$Team == team1] + 1
+        } else {
+          permuted_df$Ranks[permuted_df$Team == team1] <- rank_values["finalist"]
+          permuted_df$Ranks[permuted_df$Team == team2] <- rank_values["champion"]
+          permuted_df$Wins[permuted_df$Team == team2] <-
+          permuted_df$Wins[permuted_df$Team == team2] + 1
+        }
+      }
+    }
+    
+    teams <- next_round  # Winners move to the next round
+    round_number <- round_number - 1
+  }
+  
+  results[[i]] <- permuted_df # Store the results of this permutation
+  }
+  return(do.call(rbind, results))
+}
+
+```
+
+# Single Tournament Simulation Results
+
+```{r}
+result <- simulate_tournament(team_strengths,seeds)
+result[order(-result$Strength),]
+
+norm_result <- simulate_tournament(normal_strengths,seeds)
+norm_result[order(-norm_result$Strength),]
+
+unif_result <- simulate_tournament(unif_strength,seeds)
+unif_result[order(-unif_result$Strength),]
+```
+
+# Multiple Simulations
+
+```{r}
+tourn_sims <- function(df, seeds = NULL, replicates = 100) {
+  tournament_replicates <- replicate(replicates, {
+    # Reset wins and ranks for each tournament
+    df$Wins <- rep(0, nrow(df))
+    df$Ranks <- rep(NA, nrow(df))
+    
+    if (is.null(seeds)) {
+      seeds <- matrix(c(1, 8, 2, 7, 3, 6, 4, 5), nrow = 1)
+    }
+    
+    # Run the tournament
+    result <- simulate_tournament(df, seeds)
+
+    return(result[, c("Team", "Strength", "Wins", "Ranks", "Exp_Rank")])  
+  }, simplify = FALSE)  # Prevents simplification to atomic vector
+  
+  combined_results <- do.call(rbind, tournament_replicates)
+  
+  # Calculate average ranks and total wins using dplyr
+  results_summary <- combined_results %>%
+    group_by(Team, Strength, Exp_Rank) %>%  # Track SeedNum
+    summarise(
+      Average_Rank = mean(Ranks, na.rm = TRUE),
+      Total_Wins = sum(Wins, na.rm = TRUE)
+    ) %>%
+    arrange(desc(Strength))
+  
+  return(results_summary)
+}
+
+# Run the simulation for each strength configuration
+results_sim <- lapply(strengths_list, tourn_sims)
+
+
+# Print the results for each configuration
+for (name in names(results_sim)) {
+  cat("\nResults for strength configuration:", name, "\n")
+  print(results_sim[[name]])
+  
+  # Calculate Kendall tau correlation
+  kendall_cor <- cor(results_sim[[name]]$Average_Rank, results_sim[[name]]$Exp_Rank, method = "kendall", use = "complete.obs")
+  cat("Kendall Tau Correlation:", kendall_cor, "\n")
+  
+  # Calculate Spearman correlation
+  spearman_cor <- cor(results_sim[[name]]$Average_Rank, results_sim[[name]]$Exp_Rank, method = "spearman", use = "complete.obs")
+  cat("Spearman Correlation:", spearman_cor, "\n")
+  
+  # Create a barplot for total wins
+  barplot(
+    results_sim[[name]]$Total_Wins,
+    names.arg = results_sim[[name]]$Strength,
+    main = paste("Total Wins for", name),
+    xlab = "Strength",
+    col = "blue",  # Added color for better visualization
+    border = "black"  # Added border color for bars
+  )
+}
+
+
+```
+
+# Spearman Correlation Best and Worst Cases
+
+```{r}
+all_results <- function (strength){
+    all_seeds <- list()
+    total_seeds <- nrow(seeds)  # Store the total number of seeds
+    for (i in 1:total_seeds) {
+        current_seed <- seeds[i, , drop = FALSE]
+        result <- suppressMessages(tourn_sims(team_strengths, current_seed))
+        result$SeedNum <- i  # Add seed number to the result
+        all_seeds[[paste0("Seed_", i)]] <- result
+    }
+    return(all_seeds)
+}
+
+# Store strength data frames in a list
+sims_list <- list(
+    "Default" = all_results(team_strengths),
+    "Normal" = all_results(normal_strengths),
+    "Uniform" = all_results(unif_strength)
+)
+
+# Initialize a list to store Spearman correlation results separately
+spearman_results_list <- list()
+
+# Loop through each simulation and calculate Spearman correlation
+for (name in names(sims_list)) {
+    sim_results <- do.call(rbind, sims_list[[name]])
+    
+    # Calculate the Spearman correlation only once for the unique ranks
+    spearman_cor <- cor(sim_results$Average_Rank, sim_results$Exp_Rank, method = "spearman", use = "complete.obs")
+    
+    # Store the overall Spearman correlation result
+    spearman_results_list[[name]] <- data.frame(Configuration = name, 
+                                                  Spearman_Correlation = spearman_cor)
+    
+    # Keep only relevant columns and ensure distinct SeedNum
+    distinct_results <- sim_results[, c("SeedNum", "Average_Rank", "Exp_Rank")]
+    
+    # Calculate the Spearman correlation for each distinct SeedNum
+    distinct_spearman_results <- distinct_results %>%
+        group_by(SeedNum) %>%
+        summarize(Spearman_Correlation = cor(Average_Rank, Exp_Rank, method = "spearman", use = "complete.obs")) %>%
+        ungroup()
+    
+    # Get top 5 highest distinct Spearman correlations for this configuration
+    top_5 <- distinct_spearman_results %>%
+        arrange(desc(Spearman_Correlation)) %>%
+        slice_head(n = 5)  # Select top 5
+    
+    # Get top 5 lowest distinct Spearman correlations for this configuration
+    lowest_5 <- distinct_spearman_results %>%
+        arrange(Spearman_Correlation) %>%
+        slice_head(n = 5)  # Select lowest 5
+    
+    # Print results with seed numbers
+    cat(paste("\nTop 5 Distinct Spearman Correlations for configuration:", name, "\n"))
+    print(top_5)  # Only SeedNum and Spearman_Correlation
+    
+    cat(paste("\nLowest 5 Distinct Spearman Correlations for configuration:", name, "\n"))
+    print(lowest_5)  # Only SeedNum and Spearman_Correlation
+}
+
+# Print overall Spearman results for all configurations
+ for (name in names(spearman_results_list)) {
+     cat(paste("\nSpearman Correlation for configuration:", name, "\n"))
+     print(spearman_results_list[[name]])
+ }
+
+```
