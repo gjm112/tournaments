@@ -158,3 +158,32 @@ other
     - pass in true strengths, seeds, and structure
 - josie - how many unique seeding structures in an 8 team tournament
     - if n = 2^k teams, how many unique structures (number of rounds is k-1)
+
+
+## 10/18
+
+- round robin with two or three rounds and compare kendall coefficient
+- $e^x / (1+e^x) = e^{(i-j)}/(1+e^{(i-j)})$
+    - start with all real numbers → (0, 1]
+        - rather than decimals (0, 1] → all reals
+    - could do vector of all zeros, should get coefficient near 0
+        - then do vector with (1, 2, …, 8)
+        - could do random distribution, normal distribution (possibly closest to reality)
+    - simulate strengths one time and see what that looks like
+        - then maybe simulation of simulations (random leagues with normal distribution)
+            - one season versus concept of a league
+- when we compare tournament structures, we have fixed theta and see which tournament structure gets closest to true ranks
+- tournament structure function:
+    - main input: team names, strengths, tournament structure
+    - **BUILD THESE FIRST:** different functions for each type, main function to simulate tournament
+        - round robin function: teams, strengths, schedule, (seed?)
+        - single elimination function: teams, strengths, seeds, schedule, number games per round, home or away
+            - byes: A plays NA, if a team plays NA then A wins automatically
+- eventually, simulate like NBA regular season
+    - schedule effects?
+- look at kendall’s tau and spearman’s correlation
+
+- **TO DO:**
+    - Josie: vector 1-8, vector using normal distribution
+        - use $e^x / (1+e^x)$ for winning probability
+    - Zach: work on single elimination function
