@@ -187,3 +187,21 @@ other
     - Josie: vector 1-8, vector using normal distribution
         - use $e^x / (1+e^x)$ for winning probability
     - Zach: work on single elimination function
+
+
+## 10/31
+
+- don’t want to generate them randomly because we want to control them more
+    - pick the values so they are the same every time (space out to match normal)
+        - use inverse cdf - qnorm() and pass a set of evenly spaced percentages (values 0 to 1)
+        - don’t want first cut to be at 0, want it to be half a unit
+    - for uniform distribution, just 1-8
+        - different by one, different by two, etc
+- comparing correlations between different tournament structures
+
+round robin
+- what if they play twice or three times
+- partial round robin
+    - every time plays exactly 2 or whatever games
+    - balanced design
+    - Taguchi
