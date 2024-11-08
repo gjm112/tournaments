@@ -206,3 +206,19 @@ round robin
     - every time plays exactly 2 or whatever games
     - balanced design
     - Taguchi
+
+
+## 11/8
+
+- run round robin with 4 teams for 1-4 times
+    - make scatterplot of correlations between different number of round robins run
+        - where does kendalls tau level off?
+    - try with different number of teams (4, 6, 8)
+        - does the number of teams actually affect this? if you have more teams, does the correlation drop?
+    - then maybe try with different thetas
+- also try qunif
+- what’s the worst kendalls tau we can get for a structure
+    - averages could be good, but full distribution could be different
+- run single elimination of best 5 structures a lot more times to get better idea of kendalls tau
+    - take one tournament structure and write out every possible tournament outcome (128 outcomes) to get different kendall’s taus. can get exact distribution
+        - do best and worst correlation
