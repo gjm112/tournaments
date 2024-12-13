@@ -158,3 +158,67 @@ other
     - pass in true strengths, seeds, and structure
 - josie - how many unique seeding structures in an 8 team tournament
     - if n = 2^k teams, how many unique structures (number of rounds is k-1)
+
+
+## 10/18
+
+- round robin with two or three rounds and compare kendall coefficient
+- $e^x / (1+e^x) = e^{(i-j)}/(1+e^{(i-j)})$
+    - start with all real numbers → (0, 1]
+        - rather than decimals (0, 1] → all reals
+    - could do vector of all zeros, should get coefficient near 0
+        - then do vector with (1, 2, …, 8)
+        - could do random distribution, normal distribution (possibly closest to reality)
+    - simulate strengths one time and see what that looks like
+        - then maybe simulation of simulations (random leagues with normal distribution)
+            - one season versus concept of a league
+- when we compare tournament structures, we have fixed theta and see which tournament structure gets closest to true ranks
+- tournament structure function:
+    - main input: team names, strengths, tournament structure
+    - **BUILD THESE FIRST:** different functions for each type, main function to simulate tournament
+        - round robin function: teams, strengths, schedule, (seed?)
+        - single elimination function: teams, strengths, seeds, schedule, number games per round, home or away
+            - byes: A plays NA, if a team plays NA then A wins automatically
+- eventually, simulate like NBA regular season
+    - schedule effects?
+- look at kendall’s tau and spearman’s correlation
+
+- **TO DO:**
+    - Josie: vector 1-8, vector using normal distribution
+        - use $e^x / (1+e^x)$ for winning probability
+    - Zach: work on single elimination function
+
+
+## 10/31
+
+- don’t want to generate strengths randomly because we want to control them more
+    - pick the values so they are the same every time (space out to match normal)
+        - use inverse cdf - qnorm() and pass a set of evenly spaced percentages (values 0 to 1)
+        - don’t want first cut to be at 0, want it to be half a unit
+    - for uniform distribution, just 1-8
+        - different by one, different by two, etc
+- comparing correlations between different tournament structures
+
+
+round robin
+- what if they play twice or three times
+- partial round robin
+    - every time plays exactly 2 or whatever games
+    - balanced design
+    - Taguchi
+
+
+## 11/8
+
+- run round robin with 4 teams for 1-4 times
+    - make scatterplot of correlations between different number of round robins run
+        - where does kendalls tau level off?
+    - try with different number of teams (4, 6, 8)
+        - does the number of teams actually affect this? if you have more teams, does the correlation drop?
+    - then maybe try with different thetas
+- also try qunif
+- what’s the worst kendalls tau we can get for a structure
+    - averages could be good, but full distribution could be different
+- run single elimination of best 5 structures a lot more times to get better idea of kendalls tau
+    - take one tournament structure and write out every possible tournament outcome (128 outcomes) to get different kendall’s taus. can get exact distribution
+        - do best and worst correlation
