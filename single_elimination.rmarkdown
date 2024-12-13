@@ -7,10 +7,13 @@ editor: visual
 ```{r}
 library(tidyverse)
 library(dplyr)
-library(shiny)
 ```
 
+
+
 # Simulate a Single Match
+
+
 
 ```{r}
 # Function to simulate a match using Bradley-Terry model
@@ -20,13 +23,15 @@ simulate_match <- function(team1, team2, strength1, strength2) {
   winner <- ifelse(runif(1) < p, team1, team2)  # Randomize outcom
   return(winner)
 }
-# sample("A","B"),p=(p,1-p)
+
 
 ```
 
+
+
 # Single Elimination Tournament Structures
 
-## 8 Teams
+
 
 ```{r}
 num_teams <- 8
@@ -49,8 +54,6 @@ dist <- apply(X = tourn, MARGIN = 1, FUN = function(x){
 return(x)
 })
 
-
-
 dist <- t(dist)
 seeding_structure <- dist[!duplicated(dist), ]
 seeding_structure_char <- apply(seeding_structure,1,function(x) {paste0(x,collapse="")})
@@ -62,34 +65,11 @@ which(apply(seeding_structure, 1, function(x) all(x == c(1, 8, 4, 5, 2, 7, 3, 6)
 # (1,8), (2,7), (3,6), (4,5): row 23
 ```
 
-# 4 Teams
 
-```{r}
-#num_teams <- 4
-#teams <- paste("Team",num_teams:1)
-#team_map <- setNames(1:num_teams, teams)
-#tourn <- do.call(rbind, args = combinat::permn(1:num_teams))
-#dist <- apply(X = tourn, MARGIN = 1, FUN = function(x){
-#  if (sum(x[3:4] == min(x[1:4])) > 0) {
-#    x[1:4] <- x[c(3:4, 1:2)]
-#  }
-#  for (i in c(1, 3)) {
-#    x[i:(i + 1)] <- sort(x[i:(i + 1)])
-#  }
-#return(x)
-#})
-#dist <- t(dist)
-#seeding_structure <- dist[!duplicated(dist), ]
-#seeding_structure_char <- apply(seeding_structure,1,function(x) {paste0(x,collapse#="")})
-
-#num_teams <- 5
-#teams <- paste("Team",num_teams:1)
-#team_map <- setNames(1:num_teams, teams)
-#tourn <- do.call(rbind, args = combinat::permn(1:num_teams))
-#tourn[tourn[,1] == 1,]
-```
 
 # Setting Up the Teams and Strengths
+
+
 
 ```{r}
 # Assign random strengths to each team coming from normal and uniform distributions
@@ -119,7 +99,11 @@ strengths_list <- list(
 
 ```
 
+
+
 # Simulating a Tournament
+
+
 
 ```{r}
 # defining the rank value for each finish
@@ -127,8 +111,6 @@ rank_values <- c(
   # Add more ranks as needed
   quarterfinalist = 6.5,
   semifinalist = 3.5,
-  fourth_place = 4,
-  third_place = 3,
   finalist = 2,
   champion = 1
 )
@@ -140,7 +122,7 @@ noTies <- function(df) {
     mutate(Ranks = sample(5:8, n(), replace = FALSE))  # Assigns unique ranks
   semifinals <- df %>%
     filter(Ranks == rank_values["semifinalist"]) %>%
-    mutate(Ranks = sample(3:min(n(),4), n(), replace = FALSE))
+    mutate(Ranks = sample(3:4, n(), replace = FALSE))
   
   df <- df %>%
     filter(Ranks != rank_values["quarterfinalist"], Ranks != rank_values["semifinalist"]) %>%
@@ -149,17 +131,13 @@ noTies <- function(df) {
   return(df)
 }
 
-
 # Simulate the single-elimination tournament
-simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, third_place = T) {
+simulate_tournament <- function(df,seeding_structure = NULL, ties=TRUE) {
   
   # Sets seed to that of common best vs worst structure
   if (is.null(seeding_structure)){
-    seeding_structure <- matrix(c(1,8, 4, 5, 2, 7, 3, 6), nrow = 1)
+    seeding_structure <- matrix(c(1,8,2,3,4,6,5,7), nrow = 1)
   } 
-  if(series %% 2 == 0) {
-    stop("Series must be an odd number to avoid potential ties.")
-  }
     
   
   results <- list()  # Initialize the results list
@@ -179,9 +157,6 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
    
     round_number <- log2(length(teams))
     
-    # Track the losers of the semifinals for the third-place match
-    losers_semis <- c()
-    
   while (length(teams) > 1) {
     #cat("\n--- New Round ---\n")
     next_round <- c() # Makes sure only winners are included in next round
@@ -193,28 +168,11 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
       strength1 <- strengths[permuted_df$Team == team1]
       strength2 <- strengths[permuted_df$Team == team2]
       
-      wins_team1 <- 0
-      wins_team2 <- 0
-      for (game in 1:series){
       match_winner <- simulate_match(team1, team2, strength1, strength2)
-      if (match_winner == team1) {
-            wins_team1 <- wins_team1 + 1
-          } else {
-            wins_team2 <- wins_team2 + 1
-          }
-          
-          # Determine the overall winner if a majority is reached
-          if (wins_team1 > series / 2 || wins_team2 > series / 2) {
-            break
-          }
-        }
-        
-        # Determine the match winner based on series results
-        series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
-      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
-      next_round <- c(next_round, series_winner)
+      next_round <- c(next_round, match_winner)
+      #cat(paste(team1, "vs", team2, "-> Winner:", match_winner, "\n"))
       
-      # Can add more rounds by the same code with round_number increasing by 1 and rank_values[round name]
+      # Can add more rounds by the same code with rounnd_number increasing by 1 and rank_values[round name]
       
       # Assign ranks based on the current round
       if (round_number == 3) {  # Quarterfinals
@@ -229,13 +187,10 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
         if (match_winner == team1) {
           permuted_df$Ranks[permuted_df$Team == team2] <-
           rank_values["semifinalist"]
-          losers_semis <- c(losers_semis, team2)
         } else {
           permuted_df$Ranks[permuted_df$Team == team1] <-
           rank_values["semifinalist"]
-          losers_semis <- c(losers_semis, team1)
         }
-        
       } else if (round_number == 1) { # Finals
         if (match_winner == team1) {
           permuted_df$Ranks[permuted_df$Team == team2] <- rank_values["finalist"]
@@ -254,43 +209,11 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
     teams <- next_round  # Winners move to the next round
     round_number <- round_number - 1
   }
-    
-  # Third place match between the losers of the semifinals
-  if (third_place == TRUE){
-    team1 <- losers_semis[1]
-    team2 <- losers_semis[2]
-    strength1 <- strengths[permuted_df$Team == team1]
-    strength2 <- strengths[permuted_df$Team == team2]
-    wins_team1 <- 0
-    wins_team2 <- 0
-    for (game in 1:series) {
-      match_winner <- simulate_match(team1, team2, strength1, strength2)
-      if (match_winner == team1) {
-        wins_team1 <- wins_team1 + 1
-      } else {
-        wins_team2 <- wins_team2 + 1
-      }
-     # Determine the overall winner if a majority is reached
-      if (wins_team1 > series / 2 || wins_team2 > series / 2) {
-      break
-    }
-   # Assign third place and fourth place ranks
-      if (wins_team1 > wins_team2) {
-        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team1))
-        permuted_df$Ranks[permuted_df$Team == team1] <- rank_values["third_place"]
-        permuted_df$Ranks[permuted_df$Team == team2] <- rank_values["fourth_place"]
-      } else {
-        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team2))
-        permuted_df$Ranks[permuted_df$Team == team2] <- rank_values["third_place"]
-        permuted_df$Ranks[permuted_df$Team == team1] <- rank_values["fourth_place"]
-      }
-    }
-  }
-    
+  
   results[[i]] <- permuted_df # Store the results of this permutation
   }
-  
   final_results <- do.call(rbind, results)
+  
   # Remove ties if ties = FALSE
   if (!ties) {
     final_results <- noTies(final_results)
@@ -299,11 +222,11 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
   return(final_results)
 }
 
-test <- simulate_tournament(normal_strengths,ties=T, series=3)
+test <- simulate_tournament(normal_strengths,ties=FALSE)
 test[order(-test$Strength),]
 
 # Run the tournament simulation
-simulation_results <- replicate(1000, simulate_tournament(unif_strength), simplify = FALSE)
+simulation_results <- replicate(10000, simulate_tournament(unif_strength), simplify = FALSE)
 
 # Combine all replicate results
 all_results <- do.call(rbind, simulation_results)
@@ -321,27 +244,13 @@ total_wins_summary <- all_results %>%
 print(total_wins_summary)
 
 
-# Run the tournament simulation
-simulation_series <- replicate(1000, simulate_tournament(unif_strength, series=7), simplify = FALSE)
-
-# Combine all replicate results
-series_results <- do.call(rbind, simulation_series)
-
-# Summarize total wins
-total_wins_series <- series_results %>%
-  group_by(Team) %>%
-  summarise(
-    Total_Wins = sum(Wins, na.rm = TRUE),
-    .groups = 'drop'
-  ) %>%
-  arrange(desc(Total_Wins))
-
-# Print the total wins summary
-print(total_wins_series)
-
 ```
 
+
+
 # Single Tournament Simulation Results
+
+
 
 ```{r}
 norm_result <- simulate_tournament(normal_strengths,seeding_structure)
@@ -351,13 +260,17 @@ unif_result <- simulate_tournament(unif_strength,seeding_structure)
 unif_result[order(-unif_result$Strength),]
 ```
 
+
+
 # Multiple Simulations for 1 Seeding Structure
 
+
+
 ```{r}
-tourn_sims <- function(df, seeding_structure = NULL, seed_char = NULL, replicates = 100, series=1) {
+tourn_sims <- function(df, seeding_structure = NULL, seed_char = NULL, replicates = 1000) {
   # Default seeding structure if none provided
   if (is.null(seeding_structure)) {
-    seeding_structure <- matrix(c(1,8,4,5,2,7,3,6), nrow = 1)
+    seeding_structure <- matrix(c(1,8,2,3,4,6,5,7), nrow = 1)
     seed_char <- apply(seeding_structure, 1, function(x) paste0(x, collapse = ""))
   }
   
@@ -369,7 +282,7 @@ tourn_sims <- function(df, seeding_structure = NULL, seed_char = NULL, replicate
       df$Ranks <- rep(NA, nrow(df))
       
       # Run the tournament with the current seed configuration
-      result <- simulate_tournament(df, seeding_structure[seed_num, , drop = FALSE], series = series)
+      result <- simulate_tournament(df, seeding_structure[seed_num, , drop = FALSE])
       
       # Add Seed_Num column to keep track of the current seed configuration
       result$Seed_Num <- seed_num
@@ -418,7 +331,7 @@ for (name in names(results_sim)) {
     names.arg = results_sim[[name]]$True_Rank,
     main = paste("Total Wins for", name),
     xlab = "True Rank",
-    ylim = c(0,100),
+    ylim = c(0,1000),
     col = "blue",  # Added color for better visualization
     border = "black"  # Added border color for bars
   )
@@ -430,53 +343,20 @@ for (name in names(results_sim)) {
     col = "black"
   )
 }
-
-
-num_games <- 7
-series_sim <- lapply(strengths_list, function(strength_config) {
-  tourn_sims(strength_config, series = num_games)
-})
-# Print the results for each configuration
-for (name in names(series_sim)) {
-  cat("\nResults for strength configuration:", name, "\n")
-  print(series_sim[[name]])
-  
-  # Calculate Kendall tau correlation
-  kendall_cor <- cor(series_sim[[name]]$Average_Rank, series_sim[[name]]$True_Rank, method = "kendall", use = "complete.obs")
-  cat("Kendall Tau Correlation:", kendall_cor, "\n")
-  
-  # Calculate Spearman correlation
-  spearman_cor <- cor(series_sim[[name]]$Average_Rank, series_sim[[name]]$True_Rank, method = "spearman", use = "complete.obs")
-  cat("Spearman Correlation:", spearman_cor, "\n")
-  
-  # Create a barplot for total wins
-  bar <- barplot(
-    series_sim[[name]]$Total_Wins,
-    names.arg = series_sim[[name]]$True_Rank,
-    main = paste("Total Wins for", name),
-    xlab = "True Rank",
-    ylim = c(0,100),
-    col = "blue",  # Added color for better visualization
-    border = "black"  # Added border color for bars
-  )
-  text(
-    x = bar,
-    y = series_sim[[name]]$Total_Wins + 50,
-    labels = series_sim[[name]]$Total_Wins,
-    cex = 0.8,
-    col = "black"
-  )
-}
 ```
 
+
+
 # Probability of Each Seed Winning With Each Structure
+
+
 
 ```{r}
 library(dplyr)
 library(ggplot2)
 
-sims_norm <- tourn_sims(normal_strengths,seeding_structure, seeding_structure_char, 100)
-sims_unif <- tourn_sims(unif_strength,seeding_structure, seeding_structure_char, 100)
+sims_norm <- tourn_sims(normal_strengths,seeding_structure, seeding_structure_char, 1000)
+sims_unif <- tourn_sims(unif_strength,seeding_structure, seeding_structure_char, 1000)
 
 graphing <- function(df, distribution_name){
   # Loop over each unique True_Rank
@@ -543,10 +423,14 @@ graphing(sims_unif, "Uniform")
 seeding_structure[c(42,86,104,74,41,139,75,117,141,140),]
 ```
 
+
+
 # Individual Spearman Correlations by Seeding Structure
 
+
+
 ```{r}
-spearman_results <- function(df, seeding_structure, replicates = 100) {
+spearman_results <- function(df, seeding_structure, replicates = 2000) {
   tournament_replicates <- replicate(replicates, {
     # Reset wins and ranks for each tournament
     df$Wins <- rep(0, nrow(df))
@@ -611,10 +495,14 @@ output_spearman <- function(strengths_list, seeding_structure, seeding_structure
 
 ```
 
+
+
 # Average Spearman Correlation by Seeding Structure
 
+
+
 ```{r}
-spearman_by_seed <- function(df, seeding_structure, seeding_structure_char, replicates = 100) {
+spearman_by_seed <- function(df, seeding_structure, seeding_structure_char, replicates = 2000) {
   tournament_replicates <- replicate(replicates, {
     # Reset wins and ranks for each tournament
     df$Wins <- rep(0, nrow(df))
@@ -676,14 +564,18 @@ output_results <- function(strengths_list, seeding_structure, seeding_structure_
 #output_results(strengths_list, seeds = seeds)
 ```
 
+
+
 # Spearman Correlation Best and Worst Cases
 
-```{r}
-graph_results <- output_results(strengths_list, seeding_structure = seeding_structure, seeding_structure_char) 
-library(ggplot2)
-#ggplot(data=graph_results, aes(x=as.factor(Seeding_Structure),y=Spearman)) + geom_boxplot() + facet_grid(~Distribution)
 
-#ggplot(data=graph_results, aes(x=Spearman,fill=as.factor(Seeding_Structure))) + geom_density(alpha=0.5) + facet_grid(~Distribution)
+
+```{r}
+graph_results <- output_results(strengths_list, seeding_structure = seeding_structure[c(25,187,1,3),], seeding_structure_char[c(25,187,1,3)]) 
+library(ggplot2)
+ggplot(data=graph_results, aes(x=as.factor(Seeding_Structure),y=Spearman)) + geom_boxplot() + facet_grid(~Distribution)
+
+ggplot(data=graph_results, aes(x=Spearman,fill=as.factor(Seeding_Structure))) + geom_density(alpha=0.5) + facet_grid(~Distribution)
 
 
 sim_results <- output_spearman(strengths_list, seeding_structure = seeding_structure, seeding_structure_char) 
@@ -716,84 +608,3 @@ print(unif_top_5_seeds)
 print(unif_worst_5_seeds)
 ```
 
-# Probability of Top 3 Correct
-
-```{r}
-# Function to run multiple simulations
-run_simulations <- function(df, seeding_structure = NULL, seed_char = NULL, replicates = 100, series = 1) {
-  # Default seeding structure
-  if (is.null(seeding_structure)) {
-    seeding_structure <- matrix(c(1, 8, 4, 5, 2, 7, 3, 6), nrow = 1)
-  }
-  
-  # Store results for all simulations
-  all_simulations <- lapply(1:replicates, function(rep) {
-    # Simulate tournament for each seeding structure
-    lapply(1:nrow(seeding_structure), function(seed_num) {
-      simulate_tournament(df,seeding_structure,series = series,third_place = TRUE
-      ) %>%
-        mutate(Simulation = rep, Seed_Num = seed_num, Seeding_Structure = seed_char[seed_num])
-    }) %>%
-      do.call(rbind, .)
-  }) %>%
-    do.call(rbind, .)
-  
-  return(all_simulations)
-}
-
-
-# Analyze Top-Three Ranks
-analyze_top_three <- function(simulations) {
-  # Identify top-3 ranks for each simulation
-  top_three_results <- simulations %>%
-    group_by(Simulation, Seed_Num) %>%
-    filter(Ranks %in% 1:3) %>%
-    arrange(Ranks) %>%
-    summarise(
-      Is_Correct_Order = all(Ranks == c(1,2,3) & Ranks == True_Rank),
-      Simulation=Simulation,
-      Seed_Num=Seed_Num,
-      Ranks=Ranks,
-      True_Rank=True_Rank,
-      .groups = 'drop'
-    ) %>%
-    summarise(
-      Rank_1_Count = sum(Ranks == 1, na.rm = TRUE),
-      Rank_2_Count = sum(Ranks == 2, na.rm = TRUE),
-      Rank_3_Count = sum(Ranks == 3, na.rm = TRUE),
-      Correct_Order_Count = sum(Is_Correct_Order, na.rm = TRUE),
-      .groups = 'drop'
-    )
-  
-  # Calculate proportions across all simulations
-  total_simulations <- length(unique(simulations$Simulation))
-  top_three_results <- top_three_results %>%
-    mutate(
-      Rank_1_Proportion = Rank_1_Count / total_simulations,
-      Rank_2_Proportion = Rank_2_Count / total_simulations,
-      Rank_3_Proportion = Rank_3_Count / total_simulations,
-      Correct_Order_Proportion = Correct_Order_Count / total_simulations
-    )
-  
-  return(top_three_results)
-}
-
-simulations <- run_simulations(normal_strengths, replicates = 100, series = 3)
-
-# Analyze top-three occurrences
-top_three_summary <- analyze_top_three(simulations)
-
-# Print results
-print(top_three_summary)
-
-```
-
--   Probability that the top 3 are correct (1,2,3) in any order
-
--   16 team seeding
-
--   byes and third team game
-
--   curve showing top i seeds correct (for 2 is 1 and 2 in the final); overlap a curve showing the correct order; probability of 1, 2\|1, 3\|(1,2) or (2,1) etc; use %in%
-
--   series best of n
