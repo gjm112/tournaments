@@ -1,0 +1,369 @@
+---
+title: "round robin simulations"
+format: html
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Bradley Terry
+
+teams and strengths
+
+```{r}
+set.seed(4329)
+library(tidyverse)
+
+#set up
+num_teams <- 8
+teams <- paste("Team", 1:num_teams)
+
+team_strengths <- data.frame(Team = teams,
+  Strength = round(runif(num_teams, min = 0, max = 1),2))
+
+# add column for true ranks of team_strengths
+(team_strengths <- team_strengths %>% arrange(-Strength) %>% mutate(Rank = row_number()) %>% arrange(Team))
+```
+
+simulate one match using Bradley Terry model
+```{r}
+# simulate a match using Bradley-Terry model
+simulate_match <- function(team1, team2, strengths) {
+  strength1 <- strengths$Strength[strengths$Team == team1]
+  strength2 <- strengths$Strength[strengths$Team == team2]
+  
+  prob_team1_wins <- strength1 / (strength1 + strength2)  # BT model probability
+  
+  winner <- ifelse(runif(1) < prob_team1_wins, team1, team2)  # Randomize outcome
+  return(winner)
+}
+```
+
+simulate single round robin tournament
+
+```{r}
+simulate_roundrobin <- function(teams, strengths){
+  n <- length(teams)
+  win_counts <- numeric(n)
+  for (i in seq_along(teams)){
+    for (j in seq_along(teams)){
+      if (i != j){
+        match_winner <- simulate_match(teams[i],teams[j],strengths)
+        if (match_winner == teams[i]) {
+          win_counts[i] <- win_counts[i] + 1
+        } else {
+          win_counts[j] <- win_counts[j] + 1
+        }
+      }
+    }
+  }
+  results <- data.frame(
+    Team = teams,
+    Wins = win_counts
+  )
+  
+  # Ranks teams based on number of wins (includes ties)
+  results$RankHat <- rank(-results$Wins, ties.method = "average")
+  results <- results[order(results$RankHat),]
+  
+  results <- results %>% inner_join(team_strengths, by = 'Team') %>% select(Team, Strength, Rank, RankHat, Wins)
+  
+  return(results)
+}
+
+rr <- simulate_roundrobin(teams, team_strengths)
+
+# kendall correlation
+kendallcor <- cor.test(rr$RankHat,rr$Rank, method="kendall")
+```
+
+simulate many round robin tournaments using the same set of 8 teams
+
+```{r}
+# Define the number of simulations
+n <- 1000  # Set the number of simulations you want
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+kendallcor <- c()
+
+# Run multiple simulations
+for (i in 1:n) {
+  simulation <- simulate_roundrobin(teams, team_strengths)  # Call the tournament simulation function
+  ranks <- simulation$Rank
+  team_order <- simulation$Team
+  total_ranks[i, team_order] <- ranks
+  
+  k <- cor.test(simulation$RankHat,simulation$Rank, method="kendall")$estimate
+  kendallcor[i] <- k
+}
+
+# Calculate average ranks for each team
+average_ranks <- data.frame(AvgRankHat = colMeans(total_ranks, na.rm = TRUE), Strength = team_strengths$Strength, Rank = team_strengths$Rank)
+average_ranks
+
+# distribution of kendall coefficients
+hist(kendallcor)
+mean(kendallcor)
+median(kendallcor) # rank hat matches true rank about 70% of the time
+```
+
+# Finalizing Round Robin Function
+
+### generate winning probabilities with$\exp(i-j)/(1+\exp(i-j))$
+
+round robin function inputs: teams, strengths, schedule, (seed?)
+
+## create teams and strengths - strengths are just 1-8
+
+```{r}
+library(tidyverse)
+
+# Define the number of teams 
+num_teams <- 8
+teams <- paste("Team", 1:num_teams)
+
+# Assign random strengths to each team 
+team_strengths <- data.frame(
+  Team = teams,
+  Strength = (1:num_teams)
+)
+
+# add column for true ranks of team_strengths
+team_strengths <- team_strengths %>% arrange(-Strength) %>% mutate(Rank = row_number()) %>% arrange(Team)
+```
+
+## simulate a single match
+
+```{r}
+simulate_match <- function(team1, team2, strengths) {
+  strength1 <- strengths$Strength[strengths$Team == team1]
+  strength2 <- strengths$Strength[strengths$Team == team2]
+  
+  prob_team1_wins <- exp(strength1-strength2) / (1 + exp(strength1-strength2))
+  
+  winner <- ifelse(runif(1) < prob_team1_wins, team1, team2)
+  return(winner)
+}
+```
+
+## simulate a single round robin tournament
+
+```{r}
+simulate_roundrobin <- function(teams, strengths){
+  n <- length(teams)
+  win_counts <- numeric(n)
+  for (i in seq_along(teams)){
+    for (j in seq_along(teams)){
+      if (i != j){
+        match_winner <- simulate_match(teams[i],teams[j],strengths)
+        if (match_winner == teams[i]) {
+          win_counts[i] <- win_counts[i] + 1
+        } else {
+          win_counts[j] <- win_counts[j] + 1
+        }
+      }
+    }
+  }
+  results <- data.frame(
+    Team = teams,
+    Wins = win_counts
+  )
+  
+  # Ranks teams based on number of wins (includes ties)
+  results$RankHat <- rank(-results$Wins, ties.method = "average")
+  results <- results[order(results$RankHat),]
+  
+  results <- results %>% inner_join(team_strengths, by = 'Team') %>% select(Team, Strength, Rank, RankHat, Wins)
+  
+  return(results)
+}
+
+rr <- simulate_roundrobin(teams, team_strengths)
+# kendall correlation
+kendallcor <- cor(rr$RankHat, rr$Rank, method="kendall")
+# spearman correlation
+spearmancor <- cor(rr$RankHat, rr$Rank, method="spearman")
+```
+
+Kendall Coefficient
+
+Kendall Coefficient is a statistic used to measure the ordinal association between two measured quantities.
+
+-   If the agreement between the two rankings is perfect (i.e., the two rankings are the same) the coefficient has value 1.
+-   If the disagreement between the two rankings is perfect (i.e., one ranking is the reverse of the other) the coefficient has value −1
+    -   We do not have any values of the coefficient that are less than 0
+
+Spearman Coefficent
+
+Spearman Correlation is a non-parametric correlation also known as rank-based correlation coefficient. It measures the strength and direction of the monotonic relationship between two ranked variables. It ranges from -1 to +1:
+
+-   **+1**: A perfect positive monotonic relationship.
+
+-   **0**: No monotonic relationship.
+
+-   **-1**: A perfect negative monotonic relationship.
+
+### simulate many round robin tournaments using the same set of 8 teams, get kendall and spearman coefficients
+
+```{r}
+# Define the number of simulations
+n <- 1000  # Set the number of simulations
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+kendallcor <- c()
+spearmancor <- c()
+
+# Run multiple simulations
+for (i in 1:n) {
+  simulation <- simulate_roundrobin(teams, team_strengths)  # Call the tournament simulation function
+  ranks <- simulation$Rank
+  team_order <- simulation$Team
+  total_ranks[i, team_order] <- ranks
+  
+  kendallcor[i] <- cor(simulation$RankHat, simulation$Rank, method="kendall")
+  spearmancor[i] <- cor(simulation$RankHat, simulation$Rank, method="spearman")
+}
+
+# Calculate average ranks for each team
+average_ranks <- data.frame(AvgRankHat = colMeans(total_ranks, na.rm = TRUE), Strength = team_strengths$Strength, Rank = team_strengths$Rank)
+average_ranks
+
+# distribution of kendall correlation
+print('kendall')
+hist(kendallcor)
+mean(kendallcor)
+median(kendallcor)
+
+# distribution of spearman correlation
+print('spearman')
+hist(spearmancor)
+mean(spearmancor)
+median(spearmancor)
+```
+
+
+
+
+
+
+# ROUND ROBIN CODE
+
+## simulate a single match
+
+```{r}
+simulate_match <- function(team1, team2, strengths) {
+  strength1 <- strengths$Strength[strengths$Team == team1]
+  strength2 <- strengths$Strength[strengths$Team == team2]
+  
+  prob_team1_wins <- exp(strength1-strength2) / (1 + exp(strength1-strength2))
+  
+  winner <- ifelse(runif(1) < prob_team1_wins, team1, team2)
+  return(winner)
+}
+```
+
+## simulate a single round robin tournament
+
+```{r}
+simulate_roundrobin <- function(teams, strengths){
+  n <- length(teams)
+  win_counts <- numeric(n)
+  for (i in seq_along(teams)){
+    for (j in seq_along(teams)){
+      if (i != j){
+        match_winner <- simulate_match(teams[i],teams[j],strengths)
+        if (match_winner == teams[i]) {
+          win_counts[i] <- win_counts[i] + 1
+        } else {
+          win_counts[j] <- win_counts[j] + 1
+        }
+      }
+    }
+  }
+  results <- data.frame(
+    Team = teams,
+    Wins = win_counts
+  )
+  
+  # Ranks teams based on number of wins (includes ties)
+  results$RankHat <- rank(-results$Wins, ties.method = "average")
+  results <- results[order(results$RankHat),]
+  
+  results <- results %>% inner_join(team_strengths, by = 'Team') %>% select(Team, Strength, Rank, RankHat, Wins)
+  
+  return(results)
+}
+```
+
+
+# code that is changed for different team strengths/number sims, etc.
+## generate team strengths using normal distribution
+```{r}
+# Define the number of teams 
+num_teams <- 8
+teams <- paste("Team", 1:num_teams)
+
+# Assign random strengths to each team 
+team_strengths <- data.frame(
+  Team = teams,
+  Strength = rep(0,8))
+
+# add column for true ranks of team_strengths
+team_strengths <- team_strengths %>% arrange(-Strength) %>% mutate(Rank = row_number()) %>% arrange(Team)
+team_strengths
+```
+
+run round robin simulation
+```{r}
+# Define the number of simulations
+n <- 1000  # Set the number of simulations
+total_ranks <- data.frame(matrix(NA, nrow = n, ncol = length(teams)))
+colnames(total_ranks) <- teams
+
+kendallcor <- c()
+spearmancor <- c()
+
+# Run multiple simulations
+for (i in 1:n) {
+  simulation <- simulate_roundrobin(teams, team_strengths)  # Call the tournament simulation function
+  ranks <- simulation$Rank
+  team_order <- simulation$Team
+  total_ranks[i, team_order] <- ranks
+  
+  kendallcor[i] <- cor(simulation$RankHat, simulation$Rank, method="kendall")
+  spearmancor[i] <- cor(simulation$RankHat, simulation$Rank, method="spearman")
+}
+
+# Calculate average ranks for each team
+average_ranks <- data.frame(AvgRankHat = colMeans(total_ranks, na.rm = TRUE), Strength = team_strengths$Strength, Rank = team_strengths$Rank)
+average_ranks
+
+# distribution of kendall correlation
+print('kendall')
+hist(kendallcor)
+mean(kendallcor)
+median(kendallcor)
+
+# distribution of spearman correlation
+print('spearman')
+hist(spearmancor)
+mean(spearmancor)
+median(spearmancor)
+```
+
+# controlling the strengths but still have normal distribution
+```{r}
+thetas <- qnorm((seq(0,1,length=9) + 1/16)[-9])
+thetas
+
+# qq plot way
+qnorm(((1:8) - 0.5) / 8, 0, 0.5)
+
+# plot with variability on x and average of correlation coefficient on y
+
+# qunif
+```
