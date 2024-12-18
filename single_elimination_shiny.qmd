@@ -1,0 +1,863 @@
+---
+title: "single_elimination"
+format: 
+  html:
+    embed-resources: true
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(shiny)
+```
+
+# Simulate a Single Match
+
+```{r}
+# Function to simulate a match using Bradley-Terry model
+simulate_match <- function(team1, team2, strength1, strength2) {
+  if (is.na(team1)) {
+    return(team2)
+  } else if (is.na(team2)) {
+    return(team1)
+  } else {
+    p <- exp(strength1 - strength2) / (1 + exp(strength1 - strength2))
+    return(ifelse(runif(1) < p, team1, team2))  # Randomize outcome
+  }
+}
+
+```
+
+# Single Elimination Tournament Structures
+
+## Creating the traditional tournament structure for n teams
+
+```{r}
+generate_tournament_structure <- function(n) {
+
+  is_power_of_two <- function(x) {
+    x > 0 && (x & (x - 1)) == 0
+  }
+  
+  # If n is not a power of 2, round up to the next power of 2 and add placeholders
+  if (!is_power_of_two(n)) {
+    next_power_of_two <- 2^ceiling(log2(n))
+    extra_teams <- next_power_of_two - n
+    #message(sprintf("Rounding up to %d teams. Adding %d NA placeholders.", next_power_of_two, extra_teams))
+    n <- next_power_of_two
+  } else {
+    extra_teams <- 0
+  }
+
+  rounds <- log(n, base = 2) - 1
+  teams <- c(1, 2)  # Initial list of teams
+  
+  for (i in 1:rounds) {
+    teams <- nextLayer(teams)
+  }
+  
+  while (extra_teams > 0){
+      teams[which.max(teams)] <- NA
+      extra_teams <- extra_teams - 1
+  }
+  
+  return(teams)
+}
+
+nextLayer <- function(teams) {
+  out <- c()  # Initialize an empty vector
+  length <- length(teams) * 2 + 1  # Calculate the length for pairing
+  
+  # Generate the next layer by pairing teams
+  for (i in teams) {
+    out <- c(out, i, length - i)  # Push the current team and its pair
+  }
+  
+  return(out)
+}
+
+```
+
+# Simulating a Tournament
+
+```{r}
+# Simulate the single-elimination tournament
+simulate_tournament <- function(num_teams,distribution,seeding_structure = NULL, ties=T, series=1, third_place = T) {
+
+if (num_teams <= 3) {
+  stop("Number of Teams must be greater than 3.")
+}
+teams <- paste("Team",num_teams:1)
+if (log2(num_teams) %% 1 != 0) {
+  power_of_2 <- 2^ceiling(log2(num_teams))
+  teams <- c(teams, rep(NA, power_of_2 - num_teams))
+}
+if (distribution == "Normal"){
+  strengths <- sapply(num_teams, function(n) { qnorm(1:n/(n+1)) })
+  normal_strengths <- data.frame(
+  Team = teams,
+  Strength = c(strengths, rep(NA, length(teams) - num_teams)),
+  Wins = rep(0,length(teams)),
+  Ranks = rep(NA,length(teams))
+)
+normal_strengths$True_Rank <- rank(-normal_strengths$Strength, ties.method = "average")
+df <- arrange(normal_strengths, True_Rank)
+}
+else if (distribution == "Uniform"){
+  strengths <- sapply(num_teams, function(n) { qunif(1:n/(n+1) , 0 , sqrt(12)) })
+  unif_strength <- data.frame(
+  Team = teams,
+  Strength = c(strengths, rep(NA, length(teams) - num_teams)),
+  Wins = rep(0,length(teams)),
+  Ranks = rep(NA,length(teams))
+)
+unif_strength$True_Rank <- rank(-unif_strength$Strength, ties.method = "average")
+df <- arrange(unif_strength, True_Rank)
+}
+else {
+  stop("Distribution must be Normal or Uniform")
+}
+  
+  
+  # Sets seed to that of common best vs worst structure
+  if (is.null(seeding_structure)){
+    seeding_structure <- matrix(generate_tournament_structure(num_teams), nrow = 1)
+  } else{
+    seeding_structure <- matrix(seeding_structure, nrow = 1)
+  }
+  if(series %% 2 == 0) {
+    stop("Series must be an odd number to avoid potential ties.")
+  }
+    
+  
+  results <- list()  # Initialize the results list
+  
+  for (i in 1:nrow(seeding_structure)) {
+    # Create a new data frame based on the current permutation in 'test'
+    permutation <- seeding_structure[i, ]
+    permuted_df <- df
+    permuted_df$Team <- df$Team[permutation]  # Update team order 
+    permuted_df$Strength <- df$Strength[permutation]
+    permuted_df$Ranks <- NA  # Initialize ranks column
+    permuted_df$Wins <- 0  # Initialize wins column
+    permuted_df$True_Rank <- df$True_Rank[permutation]
+    
+    teams <- permuted_df$Team
+    strengths <- permuted_df$Strength
+    round_number <- ceiling(log2(length(teams)))
+    
+    # Track the losers of the semifinals for the third-place match
+    losers_semis <- c()
+    
+  while (length(teams) > 1) {
+    #cat("\n--- New Round ---\n")
+    next_round <- c() # Makes sure only winners are included in next round
+    
+    for (j in seq(1, length(teams), by = 2)) { # Gets 2 teams for each match
+      team1 <- teams[j]
+      team2 <- teams[j+1]
+      
+      strength1 <- strengths[which(permuted_df$Team == team1)]
+      strength2 <- strengths[which(permuted_df$Team == team2)]
+      
+      wins_team1 <- 0
+      wins_team2 <- 0
+      for (game in 1:series){
+      match_winner <- simulate_match(team1, team2, strength1, strength2)
+      #cat(sprintf("Matchup:  %s vs %s | Strengths: %.2f vs %.2f | Winner: %s\n", 
+      #      team1, team2, strength1, strength2, match_winner))
+      if (match_winner == team1) {
+            wins_team1 <- wins_team1 + 1
+          } else {
+            wins_team2 <- wins_team2 + 1
+          }
+          
+          # Determine the overall winner if a majority is reached
+          if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+            break
+          }
+        }
+        
+        # Determine the match winner based on series results
+        series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
+      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
+      next_round <- c(next_round, series_winner)
+      
+      # Function to calculate the rank values for a given round
+    get_rank_values <- function(n) {
+      # Calculate the rank values as the average of the last n/2 teams
+      suppressWarnings({
+        if (n / 2 + 1 == num_teams) {
+          rank_values <- num_teams
+        } else {
+          rank_values <- (n / 2 + 1):min(num_teams, n)
+        }
+      })
+      return(rank_values)
+    }
+      if (round_number > 2){
+      # Assign ranks based on the current round
+        n <- 2^(round_number)
+        rank_values <- suppressWarnings(get_rank_values(n))
+        #print(match_winner)
+        if (match_winner == team1) {
+          if (ties == TRUE){
+          permuted_df$Ranks[permuted_df$Team == team2] <- suppressWarnings(mean(rank_values))
+          }
+          else if (ties == FALSE){
+          permuted_df$Ranks[permuted_df$Team == team2] <- n
+          }
+        } else {
+          if (ties == TRUE){
+          permuted_df$Ranks[permuted_df$Team == team1] <-  suppressWarnings(mean(rank_values))
+          }
+          else if (ties == FALSE){
+          permuted_df$Ranks[permuted_df$Team == team1] <- n
+          }
+        }
+      } else if (round_number == 2) {  # Semifinals
+        n <- 2^(round_number)
+        rank_values <- get_rank_values(n)
+        if (match_winner == team1) {
+          if (ties == TRUE){
+          permuted_df$Ranks[permuted_df$Team == team2] <-
+          mean(rank_values)
+          }
+          else if (ties == FALSE & third_place == FALSE){
+          permuted_df$Ranks[permuted_df$Team == team2] <- n
+          }
+          losers_semis <- c(losers_semis, team2)
+        } else {
+          if (ties == TRUE){
+          permuted_df$Ranks[permuted_df$Team == team1] <-
+          mean(rank_values)
+          }
+          else if (ties == FALSE & third_place == FALSE){
+          permuted_df$Ranks[permuted_df$Team == team1] <- n
+          }
+          losers_semis <- c(losers_semis, team1)
+
+          }
+        }else if (round_number == 1) { # Finals
+          permuted_df <- permuted_df %>%
+            filter(!is.na(Team))
+           n <- 2^(round_number)
+        rank_values <- get_rank_values(n)
+        if (match_winner == team1) {
+          permuted_df$Ranks[permuted_df$Team == team2] <- 2
+        permuted_df$Ranks[permuted_df$Team == team1] <- 1
+        permuted_df$Wins[permuted_df$Team == team1] <-
+        permuted_df$Wins[permuted_df$Team == team1] + 1
+        } else {
+          permuted_df$Ranks[permuted_df$Team == team1] <- 2
+          permuted_df$Ranks[permuted_df$Team == team2] <- 1
+          permuted_df$Wins[permuted_df$Team == team2] <-
+          permuted_df$Wins[permuted_df$Team == team2] + 1
+        }
+      }
+    }
+    
+    teams <- next_round  # Winners move to the next round
+    round_number <- round_number - 1
+  }
+    
+  # Third place match between the losers of the semifinals
+  if (third_place == TRUE){
+    team1 <- losers_semis[1]
+    team2 <- losers_semis[2]
+    strength1 <- permuted_df$Strength[permuted_df$Team == team1]
+    strength2 <- permuted_df$Strength[permuted_df$Team == team2]
+    wins_team1 <- 0
+    wins_team2 <- 0
+    for (game in 1:series) {
+      match_winner <- simulate_match(team1, team2, strength1, strength2)
+      if (match_winner == team1) {
+        wins_team1 <- wins_team1 + 1
+      } else {
+        wins_team2 <- wins_team2 + 1
+      }
+     # Determine the overall winner if a majority is reached
+      if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+      break
+      }
+    }
+   # Assign third place and fourth place ranks
+      if (wins_team1 > wins_team2) {
+        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team1))
+        permuted_df$Ranks[permuted_df$Team == team1] <- 3
+        permuted_df$Ranks[permuted_df$Team == team2] <- 4
+      } else {
+        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team2))
+        permuted_df$Ranks[permuted_df$Team == team2] <- 3
+        permuted_df$Ranks[permuted_df$Team == team1] <- 4
+      }
+    }
+  
+    
+  results[[i]] <- permuted_df # Store the results of this permutation
+  }
+  
+  final_results <- do.call(rbind, results)
+
+  # Generalized function to remove ties by assigning unique ranks
+remove_ties <- function(df) {
+  suppressWarnings({
+  df <- df %>%
+    group_by(Ranks) %>%
+    mutate(
+      Ranks = ifelse(
+        Ranks == 2,  # Do not change if rank is 2
+        Ranks, 
+        ifelse(
+          log2(Ranks) %% 1 == 0,  # Check if Ranks is a power of 2
+          ifelse(
+            Ranks / 2 + 1 == num_teams,  
+            num_teams,  
+            sample((Ranks / 2 + 1):(min(Ranks, num_teams)), n(), replace = FALSE)  # Regular case
+          ),
+          Ranks  # Keep Ranks as is if it's not a power of 2
+        )
+      )
+    ) %>%
+    ungroup()
+  })
+  return(df)
+}
+
+  # Remove ties if ties = FALSE
+  if (!ties) {
+    final_results <- remove_ties(final_results)
+  }
+  
+  final_results <- final_results[order(final_results$Ranks),]
+  return(final_results)
+}
+
+test <- simulate_tournament(num_teams = 10, distribution = "Normal", ties=F, series=3, third_place=T, seeding_structure = c(1,NA,2,NA,3,NA,4,5,6,7,8,NA,9,NA,10,NA))
+test
+
+
+```
+
+## Shiny User Interface Tournament Simulation
+
+```{r}
+# Define the Shiny app UI
+ui <- fluidPage(
+  titlePanel("Single-Elimination Tournament Simulator"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("num_teams", "Number of Teams:", value = 8, min = 4, step = 1),
+      textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", placeholder = "e.g. 1 8 4 5 3 6 3 7"),
+      selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
+      checkboxInput("ties", "Allow Ties?", value = TRUE),
+      numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
+      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
+      actionButton("run_sim", "Run Simulation")
+    ),
+    
+    mainPanel(
+      h4("Tournament Results"),
+      tableOutput("ranked_results")
+    )
+  )
+)
+
+# Define the server logic
+server <- function(input, output) {
+  custom_seeding <- reactive({
+    if (input$seeding_input != "") {
+      # Convert the comma-separated string into a numeric vector
+      seeding_vector <- unlist(strsplit(input$seeding_input, " "))
+      seeding_vector[seeding_vector == "NA"] <- NA
+      seeding_vector <- as.numeric(seeding_vector)
+      num_teams_next_power_of_two <- 2^ceiling(log2(input$num_teams))
+      # Validate that it matches the number of teams
+      if (length(seeding_vector) == num_teams_next_power_of_two) {
+        return(seeding_vector)
+      } else {
+        showNotification(paste("Seeding structure length must match", num_teams_next_power_of_two), type = "error")
+        return(NULL)
+      }
+    } else {
+      return(generate_tournament_structure(input$num_teams))
+    }
+  })
+  
+  tournament_results <- eventReactive(input$run_sim, {
+    req(input$num_teams > 3, input$series %% 2 == 1)  # Ensure valid inputs
+    
+    seed_structure <- custom_seeding()
+    
+    simulate_tournament(
+      num_teams = input$num_teams,
+      distribution = input$distribution,
+      ties = input$ties,
+      series = input$series,
+      third_place = input$third_place,
+      seeding_structure = seed_structure
+    )
+  })
+  
+  output$ranked_results <- renderTable({
+    results <- tournament_results()
+    results[order(-results$Strength), ]  # Order by Strength descending
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## Shiny Number of Wins
+
+```{r}
+# Shiny app UI
+ui <- fluidPage(
+  titlePanel("Tournament Simulation with Total Wins Visualization"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("num_teams", "Number of Teams:", value = 8, min = 2, step = 1),
+      textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", placeholder = "e.g. 1 8 4 5 3 6 3 7"),
+      selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
+      numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
+      numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
+      checkboxInput("ties", "Allow Ties?", value = TRUE),
+      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
+      actionButton("run_sim", "Run Simulation")
+    ),
+    
+    mainPanel(
+      h4("Total Wins Summary"),
+      plotOutput("wins_plot")
+    )
+  )
+)
+
+# Shiny server logic
+server <- function(input, output) {
+  custom_seeding <- reactive({
+    if (input$seeding_input != "") {
+      # Convert the comma-separated string into a numeric vector
+      seeding_vector <- unlist(strsplit(input$seeding_input, " "))
+      seeding_vector[seeding_vector == "NA"] <- NA
+      seeding_vector <- as.numeric(seeding_vector)
+      num_teams_next_power_of_two <- 2^ceiling(log2(input$num_teams))
+      # Validate that it matches the number of teams
+      if (length(seeding_vector) == num_teams_next_power_of_two) {
+        return(seeding_vector)
+      } else {
+        showNotification(paste("Seeding structure length must match", num_teams_next_power_of_two), type = "error")
+        return(NULL)
+      }
+    } else {
+      return(generate_tournament_structure(input$num_teams))
+    }
+  })
+  
+  simulation_results <- eventReactive(input$run_sim, {
+    req(input$num_teams > 3, input$series %% 2 == 1)  # Ensure valid inputs
+    seed_structure <- custom_seeding()
+    # Run simulations
+    replicate_results <- replicate(
+      input$num_simulations,
+      simulate_tournament(
+        num_teams = input$num_teams,
+        distribution = input$distribution,
+        ties = input$ties,
+        series = input$series,
+        third_place = input$third_place,
+        seeding_structure = seed_structure
+      ),
+      simplify = FALSE
+    )
+    
+    # Combine all results and summarize total wins
+    all_results <- do.call(rbind, replicate_results)
+    total_wins_summary <- all_results %>%
+      group_by(Team) %>%
+      summarise(
+        Total_Wins = sum(Wins, na.rm = TRUE),
+        .groups = 'drop'
+      ) %>%
+      arrange(desc(Total_Wins))
+    return(total_wins_summary)
+  })
+  
+  output$wins_plot <- renderPlot({
+    req(simulation_results())
+    results <- simulation_results()
+    
+    ggplot(results, aes(x = reorder(Team, -Total_Wins), y = Total_Wins, fill = Total_Wins)) +
+      geom_text(aes(label = Total_Wins), vjust = -0.5, size = 4, color = "black") +
+      geom_bar(stat = "identity") +
+      labs(
+        title = "Total Wins Across Simulations",
+        x = "Team",
+        y = "Total Wins"
+      ) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      scale_fill_gradient(low = "skyblue", high = "blue")
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+
+# Multiple Simulations for 1 Seeding Structure
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Tournament Simulation"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("num_teams", "Number of Teams:", 8, min = 4, max = 32, step = 1),
+      selectInput("distribution", "Distribution Type:", choices = c("Normal", "Uniform")),
+      textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", placeholder = "e.g. 1 8 4 5 3 6 3 7"),
+      numericInput("replicates", "Number of Replicates:", 100, min = 1, max = 1000, step = 1),
+      numericInput("series", "Number of Games in a Series (odd number):", 5, min = 3, max = 11, step = 2),
+      checkboxInput("ties", "Allow Ties?", value = TRUE),
+      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
+      actionButton("run_sim", "Run Tournament Simulation")
+    ),
+    
+    mainPanel(
+      tableOutput("summary_results"),
+      verbatimTextOutput("kendall_correlation"),
+      verbatimTextOutput("spearman_correlation")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+ custom_seeding <- reactive({
+    if (input$seeding_input != "") {
+      # Convert the comma-separated string into a numeric vector
+      seeding_vector <- unlist(strsplit(input$seeding_input, " "))
+      seeding_vector[seeding_vector == "NA"] <- NA
+      seeding_vector <- as.numeric(seeding_vector)
+      num_teams_next_power_of_two <- 2^ceiling(log2(input$num_teams))
+      # Validate that it matches the number of teams
+      if (length(seeding_vector) == num_teams_next_power_of_two) {
+        return(seeding_vector)
+      } else {
+        showNotification(paste("Seeding structure length must match", num_teams_next_power_of_two), type = "error")
+        return(NULL)
+      }
+    } else {
+      return(generate_tournament_structure(input$num_teams))
+    }
+  })
+ 
+ 
+  # Function to run tournament simulations
+  observeEvent(input$run_sim, {
+    req(input$num_teams, input$distribution, input$replicates, input$series)
+    
+    # Initialize lists to store correlation results
+    kendall_correlations <- numeric(input$replicates)
+    spearman_correlations <- numeric(input$replicates)
+    
+    seed_structure <- custom_seeding()
+    
+    # Run tournament simulations for the specified number of replicates
+    simulation_results <- list()
+    for (replicate in 1:input$replicates) {
+      simulation_results[[replicate]] <- simulate_tournament(
+        num_teams = input$num_teams,
+        distribution = input$distribution,
+        ties = input$ties,
+        series = input$series,
+        third_place = input$third_place,
+        seeding_structure = seed_structure
+      )
+      
+      # Combine all results into one data frame
+      all_results <- do.call(rbind, simulation_results)
+      
+      # Compute average ranks across all replicates
+      average_ranks <- all_results %>%
+        group_by(Team, True_Rank) %>%
+        summarise(Average_Rank = mean(Ranks, na.rm = TRUE), .groups = 'drop') %>%
+        arrange(Team)
+      
+      # Calculate Kendall Tau correlation for the current replicate
+      kendall_correlations[replicate] <- cor(average_ranks$Average_Rank, average_ranks$True_Rank, method = "kendall", use = "complete.obs")
+      
+      # Calculate Spearman correlation for the current replicate
+      spearman_correlations[replicate] <- cor(average_ranks$Average_Rank, average_ranks$True_Rank, method = "spearman", use = "complete.obs")
+    }
+    
+    # Compute average Kendall Tau and Spearman correlations across all replicates
+    avg_kendall_cor <- mean(kendall_correlations, na.rm = TRUE)
+    avg_spearman_cor <- mean(spearman_correlations, na.rm = TRUE)
+    
+    # Show summary results in table
+    output$summary_results <- renderTable({
+      average_ranks
+    })
+    
+    # Display average Kendall Tau correlation
+    output$kendall_correlation <- renderPrint({
+      cat("Average Kendall Tau Correlation:", avg_kendall_cor, "\n")
+    })
+    
+    # Display average Spearman correlation
+    output$spearman_correlation <- renderPrint({
+      cat("Average Spearman Correlation:", avg_spearman_cor, "\n")
+    })
+  })
+}
+
+shinyApp(ui, server)
+
+```
+
+## Shiny Probability of Top 3 Correct
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Tournament Simulation with Total Wins Visualization"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("num_teams", "Number of Teams:", value = 8, min = 2, step = 1),
+      textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", placeholder = "e.g. 1 8 4 5 3 6 3 7"),
+      selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
+      numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
+      numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
+      checkboxInput("ties", "Allow Ties?", value = TRUE),
+      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
+      actionButton("run_sim", "Run Simulation")
+    ),
+    
+    mainPanel(
+      h4("Top 3 Correct"),
+      verbatimTextOutput("top3_output")
+    )
+  )
+)
+
+# Shiny server logic
+server <- function(input, output) {
+  custom_seeding <- reactive({
+    if (input$seeding_input != "") {
+      # Convert the comma-separated string into a numeric vector
+      seeding_vector <- unlist(strsplit(input$seeding_input, " "))
+      seeding_vector[seeding_vector == "NA"] <- NA
+      seeding_vector <- as.numeric(seeding_vector)
+      num_teams_next_power_of_two <- 2^ceiling(log2(input$num_teams))
+      # Validate that it matches the number of teams
+      if (length(seeding_vector) == num_teams_next_power_of_two) {
+        return(seeding_vector)
+      } else {
+        showNotification(paste("Seeding structure length must match", num_teams_next_power_of_two), type = "error")
+        return(NULL)
+      }
+    } else {
+      return(generate_tournament_structure(input$num_teams))
+    }
+  })
+  
+  simulation_results <- eventReactive(input$run_sim, {
+    req(input$num_teams > 3, input$series %% 2 == 1)  # Ensure valid inputs
+    seed_structure <- custom_seeding()
+    
+    # Run simulations
+    replicate_results <- replicate(
+      input$num_simulations,
+      simulate_tournament(
+        num_teams = input$num_teams,
+        distribution = input$distribution,
+        ties = input$ties,
+        series = input$series,
+        third_place = input$third_place,
+        seeding_structure = seed_structure
+      ),
+      simplify = FALSE
+    )
+    
+    # Combine all results into one dataframe and add a Simulation column
+    all_results <- do.call(rbind, replicate_results)
+    all_results$Simulation <- rep(1:input$num_simulations, each = nrow(all_results) / input$num_simulations)
+    
+    return(all_results)
+  })
+
+  
+  # Identify top-3 ranks for each simulation and calculate the probability
+  top_three_probability <- reactive({
+    all_results <- simulation_results()
+    
+    # Group by Simulation and filter for top 3 True_Rank and Ranks
+    top_three_results <- all_results %>%
+      group_by(Simulation) %>%
+      filter(True_Rank %in% 1:3 & Ranks %in% 1:3) %>%
+      arrange(Simulation, Ranks) %>%
+      summarize(top_3_true_rank = list(True_Rank), top_3_rank = list(Ranks), .groups = 'drop') %>%
+      mutate(match = mapply(function(true, rank) setequal(true, rank), top_3_true_rank, top_3_rank))
+    
+    # Calculate probability of matching top 3 True_Rank with Ranks
+    match_count <- sum(top_three_results$match)
+    total_simulations <- n_distinct(all_results$Simulation)
+    
+    probability <- match_count / total_simulations
+    return(probability)
+  })
+  
+  # Output the probability to the UI
+  output$top3_output <- renderText({
+    probability <- top_three_probability()
+    
+    paste("Probability of Top 3 Seeds with Ranks 1-3: ", round(probability,4))
+  })
+}
+
+shinyApp(ui=ui,server=server)
+```
+
+## Shiny Conditional Probability Curve
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Conditional Probability of Team Ranks in Tournament"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("num_teams", "Number of Teams:", value = 8, min = 2, step = 1),
+      textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", 
+                placeholder = "e.g. 1 8 4 5 3 6 7 2"),
+      selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
+      numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
+      numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
+      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
+      actionButton("run_sim", "Run Simulation")
+    ),
+    
+    mainPanel(
+      plotOutput("probability_plot")
+    )
+  )
+)
+
+# Server
+server <- function(input, output) {
+  
+  # Helper Function: Parse Custom Seeding Structure
+  parse_seeding <- function(seeding_input, num_teams) {
+    if (seeding_input != "") {
+      seeding_vector <- unlist(strsplit(seeding_input, " "))
+      seeding_vector[seeding_vector == "NA"] <- NA
+      seeding_vector <- as.numeric(seeding_vector)
+      
+      num_teams_next_power_of_two <- 2^ceiling(log2(num_teams))
+      if (length(seeding_vector) == num_teams_next_power_of_two) {
+        return(seeding_vector)
+      } else {
+        showNotification(
+          paste("Seeding structure length must match", num_teams_next_power_of_two), 
+          type = "error"
+        )
+        return(NULL)
+      }
+    } else {
+      return(NULL)
+    }
+  }
+  
+  # Curve Function to Calculate Conditional Probabilities
+  curve <- function(sim, num_teams) {
+    probability <- numeric(num_teams)
+    for (i in 1:num_teams) {
+      if (i == 1) {
+        probability[i] <- nrow(sim[sim$Ranks == 1 & sim$True_Rank == 1, ]) / length(unique(sim$Simulation))
+      } else {
+        top_ranks <- sim[sim$Ranks <= (i - 1) & sim$True_Rank <= (i - 1), ]
+        better_teams <- 1:(i - 1)
+        numerator <- sum(sapply(unique(top_ranks$Simulation), function(sim_id) {
+          sim_subset <- sim[sim$Simulation == sim_id, ]
+          if (all(better_teams %in% sim_subset$True_Rank[sim_subset$Ranks <= (i - 1)])) {
+            return(sum(sim_subset$Ranks == i & sim_subset$True_Rank == i))
+          } else {
+            return(0)
+          }
+        }))
+        denominator <- sum(sapply(unique(top_ranks$Simulation), function(sim_id) {
+          sim_subset <- top_ranks[top_ranks$Simulation == sim_id, ]
+          all(better_teams %in% sim_subset$True_Rank)
+        }))
+        probability[i] <- numerator / denominator
+      }
+    }
+    return(probability)
+  }
+  
+  # Reactive Event: Run Simulations
+  simulation_data <- eventReactive(input$run_sim, {
+    num_teams <- input$num_teams
+    distribution <- input$distribution
+    series <- input$series
+    num_simulations <- input$num_simulations
+    third_place <- input$third_place
+    
+    # Parse custom seeding structure
+    seeding_structure <- parse_seeding(input$seeding_input, num_teams)
+    
+    # Run simulations
+    replicate_results <- replicate(
+      num_simulations,
+      simulate_tournament(
+        num_teams = num_teams,
+        distribution = distribution,
+        series = series,
+        ties = FALSE,
+        third_place = third_place,
+        seeding_structure = seeding_structure
+      ),
+      simplify = FALSE
+    )
+    
+    # Combine all results into one dataframe
+    all_results <- do.call(rbind, replicate_results)
+    all_results$Simulation <- rep(1:num_simulations, each = nrow(all_results) / num_simulations)
+    
+    # Calculate conditional probabilities
+    sim_probs <- curve(all_results, num_teams)
+    probabilities <- data.frame(x = 1:num_teams, y = sim_probs)
+    probabilities$Line <- "Simulated"
+    
+    # Baseline probabilities
+    baseline_prob <- 1 / (num_teams:1)
+    baseline <- data.frame(x = 1:num_teams, y = baseline_prob)
+    baseline$Line <- "Baseline"
+    
+    # Combine for plotting
+    rbind(baseline, probabilities)
+  })
+  
+  # Plot Output
+  output$probability_plot <- renderPlot({
+    req(simulation_data())
+    ggplot(data = simulation_data(), aes(x = x, y = y, color = Line, group = Line)) +
+      geom_point() +
+      geom_line() +
+      ylim(0, 1) +
+      labs(
+        x = "Rank",
+        y = "Conditional Probability",
+        title = "Simulated vs Baseline Conditional Probabilities"
+      ) +
+      theme_minimal()
+  })
+}
+
+# Run the App
+shinyApp(ui = ui, server = server)
+```

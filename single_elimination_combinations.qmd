@@ -1,8 +1,7 @@
 ---
-title: "single_elimination"
-format: 
-  html:
-    embed-resources: true
+title: "Combinations Tournament Structure"
+author: "Zach Culp"
+format: html
 editor: visual
 ---
 
@@ -74,7 +73,6 @@ which(apply(seeding_structure, 1, function(x) all(x == c(1, 8, 4, 5, 2, 7, 3, 6)
 ## 4 Teams (all combinations)
 
 ```{r}
-#num_teams <- 4
 #teams <- paste("Team",num_teams:1)
 #team_map <- setNames(1:num_teams, teams)
 #tourn <- do.call(rbind, args = combinat::permn(1:num_teams))
@@ -96,54 +94,6 @@ which(apply(seeding_structure, 1, function(x) all(x == c(1, 8, 4, 5, 2, 7, 3, 6)
 #team_map <- setNames(1:num_teams, teams)
 #tourn <- do.call(rbind, args = combinat::permn(1:num_teams))
 #tourn[tourn[,1] == 1,]
-```
-
-## Creating the traditional tournament structure for n teams
-
-```{r}
-generate_tournament_structure <- function(n) {
-  
-  is_power_of_two <- function(x) {
-    x > 0 && (x & (x - 1)) == 0
-  }
-  
-  # If n is not a power of 2, round up to the next power of 2 and add placeholders
-  if (!is_power_of_two(n)) {
-    next_power_of_two <- 2^ceiling(log2(n))
-    extra_teams <- next_power_of_two - n
-    message(sprintf("Rounding up to %d teams. Adding %d NA placeholders.", next_power_of_two, extra_teams))
-    n <- next_power_of_two
-  } else {
-    extra_teams <- 0
-  }
-
-  rounds <- log(n, base = 2) - 1
-  teams <- c(1, 2)  # Initial list of teams
-  
-  for (i in 1:rounds) {
-    teams <- nextLayer(teams)
-  }
-  
-  while (extra_teams > 0){
-      teams[which.max(teams)] <- NA
-      extra_teams <- extra_teams - 1
-  }
-  
-  return(teams)
-}
-
-nextLayer <- function(teams) {
-  out <- c()  # Initialize an empty vector
-  length <- length(teams) * 2 + 1  # Calculate the length for pairing
-  
-  # Generate the next layer by pairing teams
-  for (i in teams) {
-    out <- c(out, i, length - i)  # Push the current team and its pair
-  }
-  
-  return(out)
-}
-
 ```
 
 # Setting Up the Teams and Strengths
@@ -182,7 +132,6 @@ strengths_list <- list(
 # defining the rank value for each finish
 rank_values <- c(
   # Add more ranks as needed
-  round_of_sixteen = 12.5,
   quarterfinalist = 6.5,
   semifinalist = 3.5,
   fourth_place = 4,
@@ -214,7 +163,7 @@ simulate_tournament <- function(df,seeding_structure = NULL, ties=T, series=1, t
   # Sets seed to that of common best vs worst structure
   n <- length(unique(df$Team))
   if (is.null(seeding_structure)){
-    seeding_structure <- matrix(generate_tournament_structure(n), nrow = 1)
+    seeding_structure <- matrix(c(1, 8, 4, 5, 3, 6, 2, 7), nrow = 1)
   } 
   if(series %% 2 == 0) {
     stop("Series must be an odd number to avoid potential ties.")
@@ -397,7 +346,6 @@ total_wins_series <- series_results %>%
 
 # Print the total wins summary
 print(total_wins_series)
-
 ```
 
 # Single Tournament Simulation Results
@@ -595,11 +543,6 @@ graphing <- function(df, distribution_name){
 # Example: Call graphing function for both distributions
 graphing(sims_norm, "Normal")
 graphing(sims_unif, "Uniform")
-
-```
-
-```{r}
-seeding_structure[c(42,86,104,74,41,139,75,117,141,140),]
 ```
 
 # Individual Spearman Correlations by Seeding Structure
@@ -667,7 +610,6 @@ output_spearman <- function(strengths_list, seeding_structure, seeding_structure
 
 # Example usage
 #output_results(strengths_list, seeds = seeds)
-
 ```
 
 # Average Spearman Correlation by Seeding Structure
@@ -774,115 +716,3 @@ print(norm_worst_5_seeds)
 print(unif_top_5_seeds)
 print(unif_worst_5_seeds)
 ```
-
-# Probability of Top 3 Correct
-
-```{r}
-# Function to run multiple simulations
-run_simulations <- function(df, seeding_structure = NULL, seed_char = NULL, replicates = 1000, series = 1,ties=FALSE) {
-  # Default seeding structure
-  if (is.null(seeding_structure)) {
-    seeding_structure <- matrix(c(1, 8, 4, 5, 2, 7, 3, 6), nrow = 1)
-  }
-  
-  # Store results for all simulations
-  all_simulations <- lapply(1:replicates, function(rep) {
-    # Simulate tournament for each seeding structure
-    lapply(1:nrow(seeding_structure), function(seed_num) {
-      simulate_tournament(df,seeding_structure,series = series,third_place = TRUE
-      ,ties=FALSE) %>%
-        mutate(Simulation = rep, Seed_Num = seed_num, Seeding_Structure = seed_char[seed_num])
-    }) %>%
-      do.call(rbind, .)
-  }) %>%
-    do.call(rbind, .)
-  
-  return(all_simulations)
-}
-
-
-# Analyze Top-Three Ranks
-analyze_top_three <- function(simulations) {
-  
-  # Identify top-3 ranks for each simulation
-  top_three_results <- simulations %>%
-    group_by(Simulation) %>%
-    filter(Ranks %in% 1:3 & True_Rank %in% 1:3) %>%
-    summarize(match_count = n_distinct(True_Rank), .groups = 'drop') %>%
-    filter(match_count == 3)
-  
-  top_three_prob = nrow(top_three_results) / n_distinct(simulations$Simulation)
-  return(top_three_prob)
-}
-
-simulations <- run_simulations(normal_strengths, replicates = 1000, series = 3, ties=FALSE)
-
-# Analyze top-three occurrences
-top_three_summary <- analyze_top_three(simulations)
-
-# Print results
-print(top_three_summary)
-
-```
-
--   Probability that the top 3 are correct (1,2,3) in any order
-
--   16 team seeding
-
--   byes and third team game
-
--   curve showing top i seeds correct (for 2 is 1 and 2 in the final); overlap a curve showing the correct order; probability of 1, 2\|1, 3\|(1,2) or (2,1) etc; use %in%
-
--   series best of n
-
-    ```{r}
-    curve <- function(sim){
-      probability <- numeric(num_teams)
-      for (i in 1:num_teams){
-        if (i==1){
-          probability[i] <- nrow(sim[sim$Ranks == 1 & sim$True_Rank == 1, ]) / length(unique(sim$Simulation))
-        }
-        else{
-        top_ranks <- sim[sim$Ranks <= (i-1) & sim$True_Rank <= (i-1), ]
-        better_teams <- 1:(i-1)
-        numerator <- sum(sapply(unique(top_ranks$Simulation), function(sim_id){
-          sim_subset <- sim[sim$Simulation == sim_id, ]
-          
-          if(all(better_teams %in% sim_subset$True_Rank[sim_subset$Ranks <= (i - 1)])){
-          return(sum(sim_subset$Ranks == i & sim_subset$True_Rank == i))
-          }
-          else{
-            return(0)
-          }
-          }))
-           
-        denominator <- sum(sapply(unique(top_ranks$Simulation), function(sim_id){
-            sim_subset <- top_ranks[top_ranks$Simulation == sim_id, ]
-            all(better_teams %in% sim_subset$True_Rank)
-          }))
-        #print(i)
-        #print(numerator)
-        #print(denominator)
-        probability[i] <- numerator / denominator
-        }
-      }
-      return(probability)
-    }
-    simulations <- run_simulations(normal_strengths, replicates = 2000, series = 7, ties=FALSE)
-    sim_probs <- curve(simulations)
-    probabilities <- data.frame(x=c(1:num_teams), y=sim_probs)
-    probabilities$Line <- "Simulated"
-
-    baseline_prob <- 1/(num_teams:1)
-    baseline <- data.frame(x=c(1:num_teams), y=baseline_prob)
-    baseline$Line <- "Baseline"
-
-    prob_plot <- rbind(baseline,probabilities)
-
-    ggplot(data=prob_plot, aes(x=x,y=y, color=Line, group=Line)) + geom_point() + geom_line() + ylim(0,1) + labs(
-      x = "Rank",
-      y = "Conditional Probability"
-    )
-
-    # Interesting to note that 3 is almost always greater than 2
-    ```
