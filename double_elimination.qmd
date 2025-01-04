@@ -1,10 +1,11 @@
 ---
-title: "single_elimination"
-format: 
-  html:
-    embed-resources: true
+title: "Double Elimination Tournament"
+author: "Zach Culp"
+format: html
 editor: visual
 ---
+
+# Double Elimination Tournament
 
 ```{r}
 library(tidyverse)
@@ -12,17 +13,14 @@ library(dplyr)
 library(shiny)
 ```
 
-### Things To Do
-
--   Add a re-seeded option
-
--   Custom strengths (likely as an input to the function)
-
-# Simulate a Single Match
+## Simulate a Single Match
 
 ```{r}
 # Function to simulate a match using Bradley-Terry model
 simulate_match <- function(team1, team2, strength1, strength2) {
+  if(is.na(team1) && is.na(team2)){
+    return(NA)
+  }
   if (is.na(team1)) {
     return(team2)
   } else if (is.na(team2)) {
@@ -32,10 +30,7 @@ simulate_match <- function(team1, team2, strength1, strength2) {
     return(ifelse(runif(1) < p, team1, team2))  # Randomize outcome
   }
 }
-
 ```
-
-# Single Elimination Tournament Structures
 
 ## Creating the traditional tournament structure for n teams
 
@@ -97,16 +92,14 @@ nextLayer <- function(teams) {
   
   return(out)
 }
-generate_elimination_tournament_structure(8)
-generate_elimination_tournament_structure(16)
+
 
 ```
 
-# Simulating a Tournament
+## Creating a Single Simulation of a Double Elimination Tournament
 
 ```{r}
-# Simulate the single-elimination tournament
-simulate_single_elimination_tournament <- function(num_teams,distribution,seeding_structure = NULL, ties=T, series=1, third_place = T) {
+simulate_double_elimination_tournament <- function(num_teams,distribution,seeding_structure = NULL, ties=T, series=1) {
   
   if (num_teams <= 3) {
     stop("Number of Teams must be greater than 3.")
@@ -138,7 +131,7 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
     )
     df <- arrange(unif_strength, true_rank)
   }
-  else if (distribution == "Manual") {
+     else if (distribution == "Manual") {
     cat("Please enter the strengths for each team in descending rank order:\n")
     strengths <- numeric(num_teams)
     for (i in num_teams:1) {
@@ -190,19 +183,24 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
     permuted_df$game_wins <- 0  # Initialize wins column
     permuted_df$game_losses <- 0
     
+    team_rank <- num_teams
+    winners_bracket <- teams
     strengths <- permuted_df$true_strength
-    round_number <- ceiling(log2(length(teams)))
     
-    # Track the losers of the semifinals for the third-place match
-    losers_semis <- c()
-    
-    while (length(teams) > 1) {
-      #cat("\n--- New Round ---\n")
-      next_round <- c() # Makes sure only winners are included in next round
+    losers_bracket <- c()
+  
+    # gets results of the winners bracket
+    while (length(winners_bracket) > 1 || length(losers_bracket > 0)) {
+      eliminated <- c()
+      if (length(winners_bracket) > 1) {
+      #cat("\n--- Winner's Bracket --- \n")
+      next_winners <- c() 
+      round_losers <- c()
       
-      for (j in seq(1, length(teams), by = 2)) { # Gets 2 teams for each match
-        team1 <- teams[j]
-        team2 <- teams[j+1]
+      for (j in seq(1, length(winners_bracket), by = 2)) { # Gets 2 teams for each match
+        if (j + 1 > length(winners_bracket)) break
+        team1 <- winners_bracket[j]
+        team2 <- winners_bracket[j+1]
         
         strength1 <- strengths[which(permuted_df$true_rank == team1)]
         strength2 <- strengths[which(permuted_df$true_rank == team2)]
@@ -223,102 +221,223 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
             losses_team1 <- losses_team1 + 1
           }
           }
-          else {wins_team2 <- series / 2 + 1}
+          else {wins_team2 <- (series+1) / 2}
           
           # Determine the overall winner if a majority is reached
           if (wins_team1 > series / 2 || wins_team2 > series / 2) {
             break
           }
         }
-       
-        # adds wins and losses of the series to the teams unless they have a bye
+        # Update the game_wins and game_losses outside of the loop
         if (!any(is.na(c(team1, team2)))) {
-          permuted_df <- permuted_df %>%
-            mutate(game_wins = ifelse(true_rank == team1, game_wins + wins_team1, game_wins)) %>%
-            mutate(game_wins = ifelse(true_rank == team2, game_wins + wins_team2, game_wins)) %>%
-            mutate(game_losses = ifelse(true_rank == team1, game_losses + losses_team1, game_losses)) %>%
-            mutate(game_losses = ifelse(true_rank == team2, game_losses + losses_team2, game_losses)) 
-           }
-        
+          #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+        permuted_df <- permuted_df %>%
+          mutate(game_wins = case_when(
+            true_rank == team1 ~ game_wins + wins_team1,
+            true_rank == team2 ~ game_wins + wins_team2,
+            TRUE ~ game_wins
+          )) %>%
+          mutate(game_losses = case_when(
+            true_rank == team1 ~ game_losses + losses_team1,
+            true_rank == team2 ~ game_losses + losses_team2,
+            TRUE ~ game_losses
+          ))
+        }
         # Determine the match winner based on series results
         series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
-        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
-        next_round <- c(next_round, series_winner)
-        
-        if (round_number > 2){
-          # Assign ranks based on the current round
-          n <- 2^(round_number)
-          #print(series_winner)
-            if (!is.na(team1) & series_winner == team1) {
-                permuted_df$rank_hat[permuted_df$true_rank == team2] <- n
-            } else {
-                permuted_df$rank_hat[permuted_df$true_rank == team1] <- n
-            }
-        } else if (round_number == 2) {  # Semifinals
-          n <- 2^(round_number)
-          if (match_winner == team1) {
-              permuted_df$rank_hat[permuted_df$true_rank == team2] <- n
-            losers_semis <- c(losers_semis, team2)
-          } else {
-              permuted_df$rank_hat[permuted_df$true_rank == team1] <- n
-            losers_semis <- c(losers_semis, team1)
-          }
-        }else if (round_number == 1) { # Finals
-          permuted_df <- permuted_df %>%
-            filter(!is.na(true_rank))
-          n <- 2^(round_number)
-          if (series_winner == team1) {
-            permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
-            permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
-          } else {
-            permuted_df$rank_hat[permuted_df$true_rank == team1] <- 2
-            permuted_df$rank_hat[permuted_df$true_rank == team2] <- 1
-          }
+        series_loser <- ifelse(series_winner == team1, team2, team1)
+        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n: | Loser: %s\n", team1, team2, series_winner, series_loser))
+        next_winners <- c(next_winners, series_winner)
+        round_losers <- c(round_losers, series_loser)
+    }
+     winners_bracket <- next_winners  # Winners move to the next round
+     losers_bracket <- c(losers_bracket, round_losers)
+     if(length(losers_bracket) %% 2 != 0){losers_bracket <- c(losers_bracket, NA)}
+     
+      }
+      
+    # Losers' bracket
+    if (length(losers_bracket) > 0) {
+      if(length(losers_bracket) > 1){
+      #cat("\n--- Loser's Bracket --- \n")
+      }
+      next_losers <- c()
+      
+      # alternates games for losers bracket
+      if(length(losers_bracket) > 2){
+        if(length(losers_bracket) == 4 && is.na(losers_bracket[4])){
+          losers_bracket <- losers_bracket
+        } else{
+          top_bracket <- losers_bracket[seq(1,length(losers_bracket), by = 2)]
+          bottom_bracket <- losers_bracket[seq(2,length(losers_bracket), by = 2)]
+          losers_bracket <- c(top_bracket,bottom_bracket)
         }
       }
       
-      teams <- next_round  # Winners move to the next round
-      round_number <- round_number - 1
-    }
-    
-    # Third place match between the losers of the semifinals
-    if (third_place == TRUE){
-      team1 <- losers_semis[1]
-      team2 <- losers_semis[2]
-      strength1 <- permuted_df$true_strength[permuted_df$true_rank == team1]
-      strength2 <- permuted_df$true_strength[permuted_df$true_rank == team2]
-      wins_team1 <- 0
-      wins_team2 <- 0
-      for (game in 1:series) {
-        match_winner <- simulate_match(team1, team2, strength1, strength2)
-        if (match_winner == team1) {
-          wins_team1 <- wins_team1 + 1
-        } else {
-          wins_team2 <- wins_team2 + 1
+      for (j in seq(1, length(losers_bracket), by = 2)) {
+        if (j + 1 > length(losers_bracket)) break
+        team1 <- losers_bracket[j]
+        team2 <- losers_bracket[j + 1]
+        strength1 <- strengths[which(permuted_df$true_rank == team1)]
+        strength2 <- strengths[which(permuted_df$true_rank == team2)]
+        
+        wins_team1 <- 0
+        wins_team2 <- 0
+        losses_team1 <- 0
+        losses_team2 <- 0
+        
+        # Play series
+        for (game in 1:series) {
+          match_winner <- simulate_match(team1, team2, strength1, strength2)
+          if(is.na(match_winner)){
+            wins_team1 == wins_team1 + 1
+          }
+          if(!is.na(team1)) {
+            if (match_winner == team1) {
+              wins_team1 <- wins_team1 + 1
+              losses_team2 <- losses_team2 + 1
+            } else {
+              wins_team2 <- wins_team2 + 1
+              losses_team1 <- losses_team1 + 1
+            }
+          }
+          else {wins_team2 <- (series+1) / 2}
+          
+          # Determine overall series winner
+          if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+            break
+          }
         }
-        # Determine the overall winner if a majority is reached
-        if (wins_team1 > series / 2 || wins_team2 > series / 2) {
-          break
+        if (!any(is.na(c(team1, team2)))) {
+          #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+          permuted_df <- permuted_df %>%
+          mutate(game_wins = case_when(
+            true_rank == team1 ~ game_wins + wins_team1,
+            true_rank == team2 ~ game_wins + wins_team2,
+            TRUE ~ game_wins
+          )) %>%
+          mutate(game_losses = case_when(
+            true_rank == team1 ~ game_losses + losses_team1,
+            true_rank == team2 ~ game_losses + losses_team2,
+            TRUE ~ game_losses
+          ))
+        }
+          
+        if(is.na(team1) && is.na(team2)){
+          series_winner <- NA
+          next_losers <- c(next_losers, NA)
+        } else{
+        series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
+        series_loser <- ifelse(wins_team1 > wins_team2, team2, team1)
+        next_losers <- c(next_losers, series_winner)
+        eliminated <- c(eliminated, series_loser)
+        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
         }
       }
-      # Assign third place and fourth place ranks
-      if (wins_team1 > wins_team2) {
-        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team1))
-        permuted_df$rank_hat[permuted_df$true_rank == team1] <- 3
-        permuted_df$rank_hat[permuted_df$true_rank == team2] <- 4
+        team_rank <- team_rank - 1
+        permuted_df$rank_hat[permuted_df$true_rank %in% eliminated] <- team_rank
+        losers_bracket <- next_losers
+
+    }
+
+      # Final match for loser's bracket (aka third place game)
+if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
+  
+# Final matchup between winners and losers
+    #cat("\n--- Final Match ---\n")
+    final_match <- c(winners_bracket, losers_bracket)
+    if(length(final_match) == 2){
+    team1 <- final_match[1]
+    team2 <- final_match[2]
+    strength1 <- strengths[which(permuted_df$true_rank == team1)]
+    strength2 <- strengths[which(permuted_df$true_rank == team2)]
+    
+    wins_team1 <- 0
+    wins_team2 <- 0
+    losses_team1 <- 0
+    losses_team2 <- 0
+    
+    for (game in 1:series) {
+      match_winner <- simulate_match(team1, team2, strength1, strength2)
+      if (match_winner == team1) {
+        wins_team1 <- wins_team1 + 1
+        losses_team2 <- losses_team2 + 1
       } else {
-        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team2))
-        permuted_df$rank_hat[permuted_df$true_rank == team2] <- 3
-        permuted_df$rank_hat[permuted_df$true_rank == team1] <- 4
+        wins_team2 <- wins_team2 + 1
+        losses_team1 <- losses_team1 + 1
+      }
+      
+      if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+        break
       }
     }
-    
-    permuted_df$seed <- rep(paste(seeding_structure[i, ], collapse = ", "), nrow(permuted_df))
-    results[[i]] <- permuted_df # Store the results of this permutation
+    if (!any(is.na(c(team1, team2)))) {
+      #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+      permuted_df <- permuted_df %>%
+        mutate(game_wins = case_when(
+          true_rank == team1 ~ game_wins + wins_team1,
+          true_rank == team2 ~ game_wins + wins_team2,
+          TRUE ~ game_wins
+        )) %>%
+        mutate(game_losses = case_when(
+          true_rank == team1 ~ game_losses + losses_team1,
+          true_rank == team2 ~ game_losses + losses_team2,
+          TRUE ~ game_losses
+          ))
+    }
+      
+    if (wins_team1 > wins_team2) {
+      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
+      permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
+      permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
+    } else {
+      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
+      # second game if the loser's bracket team wins
+      for (game in 1:series) {
+      match_winner <- simulate_match(team1, team2, strength1, strength2)
+      if (match_winner == team1) {
+        wins_team1 <- wins_team1 + 1
+        losses_team2 <- losses_team2 + 1
+      } else {
+        wins_team2 <- wins_team2 + 1
+        losses_team1 <- losses_team1 + 1
+      }
+      
+      if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+        break
+      }
+    }
+      if (!any(is.na(c(team1, team2)))) {
+        #cat(sprintf("Wins - %s: %d | %s: %d\n", team1, wins_team1, team2, wins_team2))
+        permuted_df <- permuted_df %>%
+          mutate(game_wins = case_when(
+            true_rank == team1 ~ game_wins + wins_team1,
+            true_rank == team2 ~ game_wins + wins_team2 - 1, # wins_team2 = 2 in loop but only need to add one game
+            TRUE ~ game_wins
+          )) %>%
+          mutate(game_losses = case_when(
+            true_rank == team1 ~ game_losses + losses_team1 - 1,
+            true_rank == team2 ~ game_losses + losses_team2,
+            TRUE ~ game_losses
+          ))
+      }
+      if (wins_team1 > wins_team2) {
+      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
+      permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
+      permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
+    } else {
+      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
+      permuted_df$rank_hat[permuted_df$true_rank == team2] <- 1
+      permuted_df$rank_hat[permuted_df$true_rank == team1] <- 2
+        }
+      }
+    }
   }
-  
+}
+    permuted_df$seed <- rep(paste(seeding_structure[i, ], collapse = ", "), nrow(permuted_df))
+    results[[i]] <- permuted_df
+}
   final_results <- do.call(rbind, results)
-  
   
   # Remove ties if ties = FALSE
   if (!ties) {
@@ -326,7 +445,8 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
       filter(!is.na(true_rank)) %>%
       arrange(rank_hat) %>%
       mutate(rank_hat = rank(rank_hat, ties.method = "random"))
-  } else{
+  }
+  else{
     final_results <- final_results %>%
       filter(!is.na(true_rank)) %>%
       arrange(rank_hat) %>%
@@ -340,10 +460,9 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
   return(final_results)
 }
 
-test <- simulate_single_elimination_tournament(num_teams = 12, distribution = "Normal", ties=T, series=1, third_place=T, seeding_structure = c(NA,1,6,7,3,12,11,NA,9,NA,4,10,5,8,2,NA))
+test <- simulate_double_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1)
 test
-
-#manual_test <- simulate_single_elimination_tournament(num_teams = 4, distribution = "Manual", ties=T, series=1, third_place=T)
+#manual_test <- simulate_double_elimination_tournament(num_teams = 4, distribution = "Manual", ties=F, series=1)
 #manual_test
 
 ```
@@ -351,19 +470,16 @@ test
 ## Shiny User Interface Tournament Simulation
 
 ```{r}
-# Define the Shiny app UI
 ui <- fluidPage(
-  titlePanel("Single-Elimination Tournament Simulator"),
+  titlePanel("Double-Elimination Tournament Simulator"),
   
   sidebarLayout(
     sidebarPanel(
       numericInput("num_teams", "Number of Teams:", value = 8, min = 4, step = 1),
       textInput("seeding_input", "Custom Seeding Structure (space-separated, NA for byes):", placeholder = "e.g. 1 8 4 5 3 6 2 7"),
       selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
-      uiOutput("manual_strengths_ui"), # Dynamic UI for Manual strengths
       checkboxInput("ties", "Allow Ties?", value = TRUE),
       numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
-      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
       actionButton("run_sim", "Run Simulation")
     ),
     
@@ -394,18 +510,17 @@ server <- function(input, output) {
       return(generate_elimination_tournament_structure(input$num_teams))
     }
   })
-
+  
   tournament_results <- eventReactive(input$run_sim, {
     req(input$num_teams > 3, input$series %% 2 == 1)  # Ensure valid inputs
     
     seed_structure <- custom_seeding()
     
-    simulate_single_elimination_tournament(
+    simulate_double_elimination_tournament(
       num_teams = input$num_teams,
       distribution = input$distribution,
       ties = input$ties,
       series = input$series,
-      third_place = input$third_place,
       seeding_structure = seed_structure
     )
   })
@@ -422,7 +537,6 @@ shinyApp(ui = ui, server = server)
 ## Shiny Number of Wins
 
 ```{r}
-# Shiny app UI
 ui <- fluidPage(
   titlePanel("Tournament Simulation with Total Wins Visualization"),
   
@@ -434,7 +548,6 @@ ui <- fluidPage(
       numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
       numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
       checkboxInput("ties", "Allow Ties?", value = TRUE),
-      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
       actionButton("run_sim", "Run Simulation")
     ),
     
@@ -472,12 +585,11 @@ server <- function(input, output) {
     # Run simulations
     replicate_results <- replicate(
       input$num_simulations,
-      simulate_single_elimination_tournament(
+      simulate_double_elimination_tournament(
         num_teams = input$num_teams,
         distribution = input$distribution,
         ties = input$ties,
         series = input$series,
-        third_place = input$third_place,
         seeding_structure = seed_structure
       ),
       simplify = FALSE
@@ -520,6 +632,8 @@ shinyApp(ui = ui, server = server)
 # Multiple Simulations for 1 Seeding Structure
 
 ```{r}
+library(shiny)
+
 ui <- fluidPage(
   titlePanel("Tournament Simulation"),
   
@@ -531,7 +645,6 @@ ui <- fluidPage(
       numericInput("replicates", "Number of Replicates:", 100, min = 1, max = 1000, step = 1),
       numericInput("series", "Number of Games in a Series (odd number):", 1, min = 1, max = 11, step = 2),
       checkboxInput("ties", "Allow Ties?", value = TRUE),
-      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
       actionButton("run_sim", "Run Tournament Simulation")
     ),
     
@@ -577,12 +690,11 @@ server <- function(input, output, session) {
     # Run tournament simulations for the specified number of replicates
     simulation_results <- list()
     for (replicate in 1:input$replicates) {
-      simulation_results[[replicate]] <- simulate_single_elimination_tournament(
+      simulation_results[[replicate]] <- simulate_double_elimination_tournament(
         num_teams = input$num_teams,
         distribution = input$distribution,
         ties = input$ties,
         series = input$series,
-        third_place = input$third_place,
         seeding_structure = seed_structure
       )
       
@@ -624,7 +736,6 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
-
 ```
 
 ## Shiny Probability of Top 3 Correct
@@ -641,7 +752,6 @@ ui <- fluidPage(
       numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
       numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
       checkboxInput("ties", "Allow Ties?", value = TRUE),
-      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
       actionButton("run_sim", "Run Simulation")
     ),
     
@@ -680,12 +790,11 @@ server <- function(input, output) {
     # Run simulations
     replicate_results <- replicate(
       input$num_simulations,
-      simulate_single_elimination_tournament(
+      simulate_double_elimination_tournament(
         num_teams = input$num_teams,
         distribution = input$distribution,
         ties = input$ties,
         series = input$series,
-        third_place = input$third_place,
         seeding_structure = seed_structure
       ),
       simplify = FALSE
@@ -744,7 +853,6 @@ ui <- fluidPage(
       selectInput("distribution", "Strength Distribution:", choices = c("Normal", "Uniform")),
       numericInput("series", "Best of Series (Odd Number):", value = 1, min = 1, step = 2),
       numericInput("num_simulations", "Number of Simulations:", value = 100, min = 10, step = 10),
-      checkboxInput("third_place", "Include Third Place Match?", value = TRUE),
       actionButton("run_sim", "Run Simulation")
     ),
     
@@ -812,7 +920,6 @@ server <- function(input, output) {
     distribution <- input$distribution
     series <- input$series
     num_simulations <- input$num_simulations
-    third_place <- input$third_place
     
     # Parse custom seeding structure
     seeding_structure <- parse_seeding(input$seeding_input, num_teams)
@@ -820,21 +927,20 @@ server <- function(input, output) {
     # Run simulations
     replicate_results <- replicate(
       num_simulations,
-      simulate_single_elimination_tournament(
+      simulate_double_elimination_tournament(
         num_teams = num_teams,
         distribution = distribution,
         series = series,
         ties = FALSE,
-        third_place = third_place,
         seeding_structure = seeding_structure
       ),
       simplify = FALSE
     )
     
     # Combine all results into one dataframe
-    all_results <- do.call(rbind, replicate_results)
-    all_results$simulation <- rep(1:num_simulations, each = nrow(all_results) / num_simulations)
-    # list_rbind(x=all_results, names_to = "simulation")
+    #all_results <- do.call(rbind, replicate_results)
+    #all_results$simulation <- rep(1:num_simulations, each = nrow(all_results) / num_simulations)
+    all_results <- list_rbind(x=replicate_results, names_to = "simulation")
     
     # Calculate conditional probabilities
     sim_probs <- curve(all_results, num_teams)
