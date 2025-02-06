@@ -443,8 +443,8 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
   if (!ties) {
     final_results <- final_results %>%
       filter(!is.na(true_rank)) %>%
-      arrange(rank_hat) %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+      arrange(true_rank) %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "first"))
   }
   else{
     final_results <- final_results %>%
@@ -460,10 +460,32 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
   return(final_results)
 }
 
-test <- simulate_double_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1)
-test
+#test <- simulate_double_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1)
+#test
 #manual_test <- simulate_double_elimination_tournament(num_teams = 4, distribution = "Manual", ties=F, series=1)
 #manual_test
+
+# Gets all results of a normal distribution num_teams between 4 and 64 single-game elimination
+de_norm_results <- list()
+for (teams in c(4,8,16,32,64)) {
+  de_norm_results[[as.character(teams)]] <- list()
+  for (replicate in 1:10000) {
+    # Store each simulation result in the list with unique indexing
+    de_norm_results[[as.character(teams)]][[replicate]] <- simulate_double_elimination_tournament(
+      num_teams = teams,
+      distribution = "Normal",
+      ties = FALSE,
+      series = 1
+    )
+  }
+}
+
+de_norm_results <- do.call(rbind, lapply(names(all_normal_results), function(teams) {
+  team_results <- do.call(rbind, all_normal_results[[teams]])
+  team_results$teams <- as.numeric(teams)
+  return(team_results)
+}))
+de_norm_results
 
 ```
 

@@ -1,0 +1,121 @@
+---
+title: "Simulation Curves"
+format: html
+editor: visual
+---
+
+## Simulation Curves
+
+The curves show the conditional probabilities of the true ranking being equal to the observed ranking in the simulations given that the teams with a better true rank (1 denotes the best) are ranked better in the observed rankings. For example, in a 4 team tournament the probabilities would look like the following:
+
+$$
+P(R_1 = 1)
+$$
+
+$$
+P(R_2 = 2 | R_1 \leq 1) = \frac{P(R_1 \leq 1 \cap R_2 = 2)}{P(R_1 \leq 1)}
+$$
+
+$$
+P(R_3 = 3 | R_1 \leq 2 \cap R_2 \leq2) = \frac{P(R_1 \leq 2 \cap R_2 \leq2 \cap R_3 = 3)}{P(R_1 \leq 2 \cap R_2 \leq2)}
+$$
+
+$$
+P(R_4 = 4 | R_1 \leq 3 \cap R_2 \leq 3 \cap R_3 \leq 3) = \frac{P(R_1 \leq 3 \cap R_2 \leq 3 \cap R_3 \leq 3 \cap R_4 = 4) }{P(R_1 \leq 3 \cap R_2 \leq 3 \cap R_3 \leq 3)} = 1
+$$
+
+Each curve is compared to the baseline curve, which can be found by the following formula:
+
+$$
+P(R_i = i) = \frac{1}{n - i}, \text{ where n is the number of teams and i is the true rank}
+$$
+
+The baseline curve is the same conditional probabilities solved if each team had the same true rank (each team would be equally likely to win every game). Points above the baseline curve suggest that the tournament structure is more accurate to the true ranks than random chance.
+
+## Calculating the Curve
+
+```{r}
+curve <- function(sim, num_teams) {
+  probability <- numeric(num_teams)
+  for (i in 1:num_teams) {
+    if (i == 1) {
+      probability[i] <- nrow(sim[sim$rank_hat == 1 & sim$true_rank == 1, ]) / length(unique(sim$simulation))
+    } else {
+      top_ranks <- sim[sim$rank_hat <= (i - 1) & sim$true_rank <= (i - 1), ]
+      better_teams <- 1:(i - 1)
+      numerator <- sum(sapply(unique(top_ranks$simulation), function(sim_id) {
+        sim_subset <- sim[sim$simulation == sim_id, ]
+        if (all(better_teams %in% sim_subset$true_rank[sim_subset$rank_hat <= (i - 1)])) {
+           return(sum(sim_subset$rank_hat == i & sim_subset$true_rank == i))
+        } else {
+          return(0)
+        }
+      }))
+      denominator <- sum(sapply(unique(top_ranks$simulation), function(sim_id) {
+        sim_subset <- top_ranks[top_ranks$simulation == sim_id, ]
+        all(better_teams %in% sim_subset$true_rank)
+      }))
+      probability[i] <- numerator / denominator
+    }
+  }
+  
+  # Baseline probabilities
+  baseline_prob <- 1 / (num_teams:1)
+  baseline <- data.frame(x = 1:num_teams, y = baseline_prob)
+  baseline$line <- "Baseline"
+    
+  # Simulated probabilities
+  probabilities <- data.frame(x = 1:num_teams, y = probability)
+  probabilities$line <- "Simulated"
+    
+  # Combine for plotting
+  test_plot <- rbind(baseline, probabilities)
+  
+  # Generate ggplot
+  p <- ggplot(data = test_plot, aes(x = x, y = y, color = line, group = line)) +
+    geom_point() +
+    geom_line() +
+    ylim(0, 1) +
+    labs(
+      x = "Rank",
+      y = "Conditional Probability",
+      title = "Simulated vs Baseline Conditional Probabilities"
+    ) +
+    theme_minimal()
+  
+  return(p)
+}
+
+```
+
+### Round Robin Tournament Structure
+
+```{r}
+rr_probs_plot <- curve(test_rr, 8)
+print(rr_probs_plot)
+
+# with randomly assigning ties
+test_rr_noTies <- test_rr %>%
+  group_by(simulation) %>%
+  mutate(rank_hat = rank(rank_hat,ties.method="random"))
+rr_noTies_probs_plot <- curve(test_rr_noTies, 8)
+print(rr_noTies_probs_plot)
+
+```
+
+### Single Elimination Tournament Structure
+
+```{r}
+se_norm_results$simulation <- rep(1:10000, each = nrow(se_norm_results) / 10000)
+se_probs_plot <- curve(se_norm_results, 8)
+print(se_probs_plot)
+
+```
+
+### Double Elimination Tournament Structure
+
+```{r}
+de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
+de_probs_plot <- curve(de_norm_results_eight, 8)
+print(de_probs_plot)
+```
