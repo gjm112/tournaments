@@ -324,8 +324,8 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
   if (!ties) {
     final_results <- final_results %>%
       filter(!is.na(true_rank)) %>%
-      arrange(rank_hat) %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+      arrange(true_rank) %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "first"))
   } else{
     final_results <- final_results %>%
       filter(!is.na(true_rank)) %>%
@@ -340,11 +340,59 @@ simulate_single_elimination_tournament <- function(num_teams,distribution,seedin
   return(final_results)
 }
 
-test <- simulate_single_elimination_tournament(num_teams = 12, distribution = "Normal", ties=T, series=1, third_place=T, seeding_structure = c(NA,1,6,7,3,12,11,NA,9,NA,4,10,5,8,2,NA))
+test <- simulate_single_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1, third_place=T)
 test
 
 #manual_test <- simulate_single_elimination_tournament(num_teams = 4, distribution = "Manual", ties=T, series=1, third_place=T)
 #manual_test
+
+# Gets all results of a normal distribution num_teams between 4 and 64 single-game elimination
+all_normal_results <- list()
+for (teams in c(4,8,16,32,64)) {
+  all_normal_results[[as.character(teams)]] <- list()
+  for (replicate in 1:10000) {
+    # Store each simulation result in the list with unique indexing
+    all_normal_results[[as.character(teams)]][[replicate]] <- simulate_single_elimination_tournament(
+      num_teams = teams,
+      distribution = "Normal",
+      ties = FALSE,
+      series = 1,
+      third_place = TRUE
+    )
+  }
+}
+
+all_results_norm <- do.call(rbind, lapply(names(all_normal_results), function(teams) {
+  team_results <- do.call(rbind, all_normal_results[[teams]])
+  team_results$teams <- as.numeric(teams)
+  return(team_results)
+}))
+
+all_results_norm
+
+# Gets all results of a uniform distribution num_teams between 4 and 64 single-game elimination
+all_unif_results <- list()
+for (teams in c(4,8,16,32,64)) {
+  all_unif_results[[as.character(teams)]] <- list()
+  for (replicate in 1:100) {
+    # Store each simulation result in the list with unique indexing
+    all_unif_results[[as.character(teams)]][[replicate]] <- simulate_single_elimination_tournament(
+      num_teams = teams,
+      distribution = "Uniform",
+      ties = FALSE,
+      series = 1,
+      third_place = TRUE
+    )
+  }
+}
+
+all_results_unif <- do.call(rbind, lapply(names(all_unif_results), function(teams) {
+  team_results <- do.call(rbind, all_unif_results[[teams]])
+  team_results$teams <- as.numeric(teams)
+  return(team_results)
+}))
+
+all_results_unif
 
 ```
 
