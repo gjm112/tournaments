@@ -1,5 +1,5 @@
 ---
-title: "fix rr"
+title: "rr"
 format: html
 editor: visual
 ---
@@ -8,7 +8,7 @@ editor: visual
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
-# Fix Round Robin Code
+# Round Robin Code
 
 ### reference: strength weights
 
@@ -69,12 +69,13 @@ simulate_roundrobin_r <- function(teams, strengths, r){
   results$Rank_Hat <- rank(-results$Game_Wins, ties.method = "average")
   results <- results[order(results$Rank_Hat),]
   
-  results <- results %>% inner_join(strengths, by = 'Team') %>% select(Team, True_Rank, True_Strength, Rank_Hat, Game_Wins)
+  results <- results %>% 
+    inner_join(strengths, by = 'Team') %>% 
+    select(Team, True_Rank, True_Strength, Rank_Hat, Game_Wins)
   
   return(results)
 }
 ```
-
 
 ## Uniform Distribution of Strengths
 
@@ -82,23 +83,36 @@ run tournament for n rounds
 
 # Saving Output in Different Way
 
-- have code to simulate one match, round robin tournament for n rounds
+-   have code to simulate one match, round robin tournament for n rounds
 
-- just need to fix run_tournament function to save output differently?
+-   just need to fix run_tournament function to save output differently?
 
 ## Uniform Dist, Save Each Sim
 
 ```{r}
-run_tournament <- function(num_teams, num_rounds){
+run_tournament <- function(num_teams=4, num_rounds=1, dist='uniform'){
   # define teams
   teams <- paste("Team", 1:num_teams)
+  
+  if (dist == "uniform"){
+    stren <- qunif(1:num_teams/(num_teams+1), 0, num_teams+1)
+  }
+  else if (dist == "normal"){
+    stren = qnorm(((1:num_teams) - 0.5) / num_teams, 0, 1)
+  }
+  
   # put Teams and True_Strength into data frame
   team_strengths <- data.frame(
     Team = teams,
-    True_Strength = qunif(1:num_teams/(num_teams+1), 0, sqrt(12)))
+    True_Strength = stren)
   
   # add True_Rank and Seed, order columns
-  team_strengths <- team_strengths %>% arrange(-True_Strength) %>% mutate(True_Rank = row_number()) %>% arrange(Team) %>% mutate(Seed = NA) %>% select(Team, True_Rank, True_Strength, Seed)
+  team_strengths <- team_strengths %>% 
+    arrange(-True_Strength) %>% 
+    mutate(True_Rank = row_number()) %>% 
+    arrange(Team) %>% 
+    mutate(Seed = NA) %>% 
+    select(Team, True_Rank, True_Strength, Seed)
   
   
   # simulation set up
@@ -137,7 +151,7 @@ run_tournament <- function(num_teams, num_rounds){
   k_mean <- mean(kendallcor)
   s_mean <- mean(spearmancor)
   
-  results <- list(average_ranks = average_ranks, k_mean = k_mean, s_mean = s_mean, simulation_list = simulation_list)
+  results <- list(average_ranks = average_ranks, k_mean = k_mean, s_mean = s_mean, simulation_list = simulation_list, all_k = kendallcor, all_s = spearmancor)
   
   return(results)
 }
@@ -148,14 +162,20 @@ run_tournament <- function(num_teams, num_rounds){
 ```{r}
 # run simulation using run_tournament() 
   # inputs are number of teams and number of rounds
-results <- run_tournament(8, 1)
+results <- run_tournament(8, 1, "uniform")
 sims <- results$simulation_list
 
-results
+# results
 ```
 
-- run 1000 simulations for different numbers of teams
-  - uniform and normal distributions for strengths
-  - 3-8 teams, 16 teams
-  
-- save them as list objects
+-   run 1000 simulations for different numbers of teams
+    -   uniform and normal distributions for strengths
+    -   3-8 teams, 16 teams
+-   save them as list objects
+
+## Correlation Coefficients Histograms
+
+```{r}
+hist(results$all_k, main = "Kendall Cor Dist", xlab = "Kendall Correlation")
+hist(results$all_s, main = "Spearman Cor Dist", xlab = "Spearman Correlation")
+```
