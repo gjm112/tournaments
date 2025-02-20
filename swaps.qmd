@@ -1,0 +1,210 @@
+---
+title: "Swaps"
+author: "Zach Culp"
+format: html
+editor: visual
+---
+
+## Number of Swaps to Get Correct Seeding
+
+Notation: PS = number of positions away from the true rank that the predicted rank is
+
+For example, if $R_1 = 3$, then $PS_1 = -2$. PS follows a discrete probability distribution with range of $-n+1 < PS < n-1$, where $n$ is the number of teams in the tournament. My prediction is that E(PS) should be 0 in a fair tournament. Then, if we see multiple tournaments with a predicted PS around 0, the variance can be a determining factor to how well the tournament is structures.
+
+```{r}
+library(tidyverse)
+se_norm_results <- all_results_norm %>% filter(teams == 8)
+
+se_norm_results$simulation <- rep(1:10000, each = nrow(curves_test) / 10000)
+
+create_ps <- function(df){
+  df <- df %>%
+  mutate(ps = true_rank - rank_hat) %>%
+  group_by(true_rank) %>%
+  summarize(
+    
+    mean_ps = mean(ps),
+    sd_ps = sd(ps)
+  )
+  return(df)
+}
+se_test <- create_ps(se_norm_results)
+de_test <- create_ps(de_norm_results %>% filter(teams == 8))
+rr_test <- create_ps(test_rr_noTies)
+
+library(combinat)
+perms_list <- permn(8)
+all_data <- list()
+# Loop through each permutation and create the data frame
+for (i in 1:length(perms_list)) {
+  # Create a temporary data frame for the current permutation
+  temp_df <- data.frame(
+    true_rank = rep(1:8, each = 1),  # Each row gets a true_rank from 1 to 8
+    rank_hat = perms_list[[i]],      # The current permutation's ranks
+    simulation = rep(i, 8)           # Assign the simulation number to each row
+  )
+  # Add the temporary data frame to the list
+  all_data[[i]] <- temp_df
+}
+# Combine all the data frames into one
+perms_df <- do.call(rbind, all_data)
+perms_test <- create_ps(perms_df)
+```
+
+### Graph
+
+```{r}
+# Combine the two datasets into one for easier plotting
+se_test <- se_test %>%
+  mutate(type = "Single Elimination")  # Add a label for the type of data
+
+perms_test <- perms_test %>%
+  mutate(type = "Baseline")   # Add a label for the type of data
+
+rr_test <- rr_test %>%
+  mutate(type = "Round Robin")
+
+de_test <- de_test %>%
+  mutate(type = "Double Elimination")
+
+# Combine both data frames into one
+combined_swaps_data <- bind_rows(se_test, perms_test, rr_test, de_test)
+
+# Plotting using ggplot2
+ggplot(combined_swaps_data, aes(x = true_rank, y = mean_ps, color = type, group = type)) +
+  geom_point(size = 3) +  # Plot the points
+  geom_line() +  # Connect the points with lines
+  geom_errorbar(aes(ymin = mean_ps - sd_ps, ymax = mean_ps + sd_ps), width = 0.2) +  # Add error bars (standard deviation)
+  scale_color_manual(values = c("Single Elimination" = "blue", "Baseline" = "red", "Round Robin" = "green", "Double Elimination" = "yellow")) +  # Set colors for the groups
+  labs(
+    title = "Comparison of Mean PS with Standard Deviation for Simulated vs Baseline",
+    x = "True Rank",
+    y = "Mean PS",
+    color = "Simulation Type"
+  ) +
+  theme_minimal() + # Apply a clean theme
+  theme(
+      panel.background = element_rect(fill = "gray75"),  # Set background color to light gray
+      plot.background = element_rect(fill = "gray80"),  # Set the plot background color to a lighter gray
+      legend.background = element_rect(fill = "gray80")  # Set the legend background color
+    )
+```
+
+### Baseline Probabilities of Under/Over Performance
+
+An overall graph of the probabilities of correctly predicting the rankings versus overpredicting and underpredicting. If the tournament results were randomly decided the probabilities would be the following:
+
+$P(R_i = i) = \frac{1}{n}$
+
+$P(R_i < i) = \frac{i-1}{n}$
+
+$P(R_i > i) = \frac{n-i}{n}$
+
+```{r}
+# Function to calculate probabilities of ps conditions
+calculate_probs <- function(df) {
+  df %>%
+    mutate(ps = true_rank - rank_hat) %>%
+    group_by(true_rank) %>%
+    summarize(
+      ps_equal = sum(ps == 0) / n(),
+      ps_less = sum(ps < 0) / n(),
+      ps_more = sum(ps > 0) / n()
+    )
+}
+
+# Apply the function to each data frame
+probs_rr_test <- calculate_probs(test_rr_noTies)
+probs_se_test <- calculate_probs(se_norm_results)
+probs_perms_test <- calculate_probs(perms_df)
+probs_de_test <- calculate_probs(de_norm_results_eight)
+
+# Combine the two datasets into one for easier plotting
+probs_se_test <- probs_se_test %>%
+  mutate(type = "Single Elimination")  # Add a label for the type of data
+
+probs_perms_test <- probs_perms_test %>%
+  mutate(type = "Baseline")   # Add a label for the type of data
+
+probs_rr_test <- probs_rr_test %>%
+  mutate(type = "Round Robin")
+
+probs_de_test <- probs_de_test %>%
+  mutate(type = "Double Elimination")
+
+# Combining datasets
+combined_probs_swaps_data <- bind_rows(probs_rr_test, probs_se_test, probs_perms_test, probs_de_test)
+
+# R_i < i plot
+ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_less, color = type, group = type)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_color_manual(values = c("Single Elimination" = "blue", 
+                                "Baseline" = "red", 
+                                "Round Robin" = "green",
+                                "Double Elimination" = "yellow")) +  
+  labs(
+    title = "Probability of Simulation Under Predicting Ranks for Each Tournament",
+    x = "True Rank",
+    y = expression(P(R[i] < i)),
+    color = "Simulation Type"
+  ) +
+  theme_minimal() +  # Apply a clean theme
+  theme(
+    panel.background = element_rect(fill = "gray75"),  
+    plot.background = element_rect(fill = "gray80"), 
+    legend.background = element_rect(fill = "gray80")  
+  ) +
+  scale_y_continuous(limits = c(0, 1))  
+
+
+# R_i = i plot
+ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_equal, color = type, group = type)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_color_manual(values = c("Single Elimination" = "blue", 
+                                "Baseline" = "red", 
+                                "Round Robin" = "green",
+                                "Double Elimination" = "yellow")) +  
+  labs(
+    title = "Probability of Simulation Correctly Predicting Ranks for Each Tournament",
+    x = "True Rank",
+    y = expression(P(R[i] == i)),
+    color = "Simulation Type"
+  ) +
+  theme_minimal() +  # Apply a clean theme
+  theme(
+    panel.background = element_rect(fill = "gray75"),  
+    plot.background = element_rect(fill = "gray80"), 
+    legend.background = element_rect(fill = "gray80")  
+  ) +
+  scale_y_continuous(limits = c(0, 1))  
+
+
+# R_i > i plot
+ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_more, color = type, group = type)) +
+  geom_point(size = 3) +  
+  geom_line() +
+  scale_color_manual(values = c("Single Elimination" = "blue", 
+                                "Baseline" = "red", 
+                                "Round Robin" = "green",
+                                "Double Elimination" = "yellow")) +  
+  labs(
+    title = "Probability of Simulation Over Predicting Ranks for Each Tournament",
+    x = "True Rank",
+    y = expression(P(R[i] > i)),
+    color = "Simulation Type"
+  ) +
+  theme_minimal() +  # Apply a clean theme
+  theme(
+    panel.background = element_rect(fill = "gray75"),  
+    plot.background = element_rect(fill = "gray80"), 
+    legend.background = element_rect(fill = "gray80")  
+  ) +
+  scale_y_continuous(limits = c(0, 1))  
+
+```
+
+\
+
+\
