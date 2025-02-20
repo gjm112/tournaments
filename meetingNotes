@@ -61,8 +61,6 @@ other
     - logistic regression with indictors for the competitors
 - Glickman - researcher
 
-
-
 ## 9/26
 
 - Bradley Terry model
@@ -99,6 +97,7 @@ other
             - then compare the tournaments
         - how close can we get the coefficient to one in the fewest number of games?
         - what kind of tournament works better for a transitive vs intransitive model?
+
 - **TO DO**: functions to start simulating tournaments
     - start with Bradley Terry type model
     - take in a vector of 4 teams/strengths, and returns a ranking
@@ -114,13 +113,11 @@ other
         - single elimination - allow byes, need seeding structure?
 - paper name for repechage: Run It Back
 
-
-
 ## 10/10
 
 - round robin function
-    - theta = vector of strengths using runif()
-    - theta_i / (theta_i + theta_j) = prob i > j
+    - $\theta$ = vector of strengths using `runif()`
+    - $\theta_i / (\theta_i + \theta_j)$ = prob(i > j)
     - function inputs: team list and strength list
     - output: team, number of wins, and ranking
         - want to know correlation between original strength and output ranking
@@ -128,8 +125,8 @@ other
     - inputs: teams, true rank, seeds
         - types of seeding:
             - shuffle with replacement
-            - f(theta hat) - some function of the rankings
-            - true rank (theta)
+            - $f(\theta)$ - some function of the rankings
+            - true rank ($\theta$)
         - types of structure
             - bracketology (1v8, 2v7, etc.)
                 - compare to how bad 1v2, 3v4, etc. is
@@ -137,12 +134,13 @@ other
                     - for 4 teams, A can only play 3 different teams, so 3 possibilities
                     - what about reseeding after each round?
             - bye handling
-                - step 2 is ways to handle byes, right now 2^n teams
+                - step 2 is ways to handle byes, right now $2^n$ teams
 - ladder tournament, caterpillar, waterfall?
     - ladder tournament: could go on forever
         - https://en.wikipedia.org/wiki/Ladder_tournament
+
 - **TO DO:** focus for next week
-    - round robin distribution of correlations (kendall rank) between true strengths and function output ranks
+    - round robin distribution of correlations (Kendall rank) between true strengths and function output ranks
         - team, score (different in each simulation), rank (diff, call rank hat), true strength
         - correlation between rank hat and rank
             - distribution of correlations between different simulations
@@ -152,23 +150,39 @@ other
         - for every seeding structure, get correlation distribution for ranks and predicted ranks
         - 4 teams - 3 options: ABCD, ACBD, ADBC
             - which seeding structure gets closest to true strength ranks
-    - generate probabilities using exp(i-j)/(1+exp(i-j))
-        - vector of thetas (strengths) - more than just between 0 and 1
+    - generate probabilities using $\exp(i-j)/(1+\exp(i-j))$
+        - vector of $\theta$s (strengths) - more than just between 0 and 1
 - generalize these approaches so we do not have to rewrite for every type
     - pass in true strengths, seeds, and structure
-- josie - how many unique seeding structures in an 8 team tournament
-    - if n = 2^k teams, how many unique structures (number of rounds is k-1)
+- how many unique seeding structures in an 8 team tournament
+    - if $n = 2^k$ teams, how many unique structures (number of rounds is k-1)
+    - answer: $(2^n)!/2^{(2^n-1)}$
+        - a(n) is also the number of knockout tournament seedings with 2^n teams
+        - ex. 8 teams = $2^n$
+            - $8!/2^7 = 315$
 
+## 10/17 Progress
+
+- number of distinct tournament setups for $2^n$ teams: $(2^n)!/2^{(2^n-1)}$
+- added round robin distribution of correlations (Kendall rank) between true strengths and function output ranks
+    - team, strength, rank, rank hat, wins
+- generating winning probabilities using $\exp(i-j)/(1+\exp(i-j))$
+    - why would we want to use this?
+- histograms for correlations
+    - Bradley Terry Model
+        - mean = 0.6945, median = 0.6944
+    - using exponential distribution thing
+        - mean = 0.4321, median = 0.4536
+         
 
 ## 10/18
 
 - round robin with two or three rounds and compare kendall coefficient
 - $e^x / (1+e^x) = e^{(i-j)}/(1+e^{(i-j)})$
     - start with all real numbers → (0, 1]
-        - rather than decimals (0, 1] → all reals
-    - could do vector of all zeros, should get coefficient near 0
-        - then do vector with (1, 2, …, 8)
-        - could do random distribution, normal distribution (possibly closest to reality)
+        - rather than decimals (0, 1] → all reals (Bradley Terry)
+    - start with vector of strengths (1, 2, …, 8)
+        - could do random distribution or normal distribution (possibly closest to reality)
     - simulate strengths one time and see what that looks like
         - then maybe simulation of simulations (random leagues with normal distribution)
             - one season versus concept of a league
@@ -188,7 +202,6 @@ other
         - use $e^x / (1+e^x)$ for winning probability
     - Zach: work on single elimination function
 
-
 ## 10/31
 
 - don’t want to generate strengths randomly because we want to control them more
@@ -199,14 +212,13 @@ other
         - different by one, different by two, etc
 - comparing correlations between different tournament structures
 
-
 round robin
+
 - what if they play twice or three times
 - partial round robin
     - every time plays exactly 2 or whatever games
     - balanced design
     - Taguchi
-
 
 ## 11/8
 
@@ -222,3 +234,27 @@ round robin
 - run single elimination of best 5 structures a lot more times to get better idea of kendalls tau
     - take one tournament structure and write out every possible tournament outcome (128 outcomes) to get different kendall’s taus. can get exact distribution
         - do best and worst correlation
+
+## 12/13
+
+- how we are evaluating the tournaments
+    - probability curve of the top team winning the whole thing
+        - prob(best team won the tournament)
+        - prob(second best in 2nd | best was first)
+        - prob(third best in 3rd | top 1 and 2 teams in top 2)
+            - order for 1 and 2 does not matter
+        - prob(fourth in 4th | top 1, 2, 3 teams are in top 3)
+            - basically throwing out top teams and seeing if we can identify the highest of the remaining teams
+            - **probability of identifying next highest team out of n remaining teams**
+            - if the teams are all strength: 1 / # of remaining teams
+                - if all the orderings are equally likely
+        - can plot this curve with this baseline of all the orderings being equal (1/n)
+            - shows how tournament structure does and how it differs from the baseline
+        - get a curve above this baseline curve
+            - however far you pull off the baseline is how good the tournament structure is
+            - x is the rank of the strengths
+- kendalls tau of the ranking is easy for round robin because everyone plays everyone
+    - need similar measure for other structures
+        - two extremes: did it get the top one right and did it get everyone right
+            - Olympics: want 1, 2, 3 to be correct then it does not matter
+- how many switches does it take to get original order from the predicted tournament order
