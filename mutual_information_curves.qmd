@@ -1,0 +1,142 @@
+---
+title: "Mutual Information Plots"
+format: html
+editor: visual
+---
+
+## Mutual Information Plots
+
+From Wikipedia, weight mutual information formula:
+
+$I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}$
+
+```{r}
+library(combinat)
+library(tidyverse)
+
+mut_info <- function(sims, num_teams, rank_weights = NULL){
+  # Handle missing weights (default to equal weights if not provided)
+  if (is.null(rank_weights)){
+    rank_weights <- rep(1,num_teams)
+  }
+  # Extract y values from sims, assuming `rank_hat` contains a list of rankings per simulation
+  y_df <- sims %>%
+    group_by(simulation) %>%
+    summarise(rank_hat = list(rank_hat)) %>%  # Ensure rank_hat is a list column
+    mutate(rank_hat = map(rank_hat, unlist)) %>%  # Unlist rank_hat properly
+    unnest_wider(rank_hat, names_sep = "_")  # Expand into separate columns
+    
+  # Rename y columns
+  colnames(y_df)[-1] <- paste0("y", 1:num_teams)
+  
+  # Create x matrix, representing positions 1:num_teams
+  x_matrix <- matrix(rep(1:num_teams, times = nrow(y_df)), ncol = num_teams, byrow = TRUE)
+  x_df <- as.data.frame(x_matrix)
+  colnames(x_df) <- paste0("x", 1:num_teams)
+  
+  # Combine x and y data frames
+  perms_df <- cbind(x_df, y_df %>% select(-simulation))
+  perms_df <- perms_df %>%
+    mutate(across(starts_with("x"), as.numeric)) %>%
+    mutate(across(starts_with("y"), as.numeric))
+  
+  # Generate all possible permutations of rankings
+  all_perms <- as.data.frame(do.call(rbind, permn(1:num_teams)))
+  colnames(all_perms) <- paste0("y", 1:num_teams)
+
+  # Count occurrences of each observed ranking
+  prob_df <- perms_df %>%
+    group_by(across(starts_with("x")),across(starts_with("y")))  %>%
+    summarise(count = n(), .groups = "drop")
+  
+  # Merge with full permutation set to ensure all permutations exist
+  prob_df <- right_join(all_perms, prob_df, by = colnames(all_perms)) %>%
+    mutate(count = replace_na(count, 0)) %>%
+    mutate(probability = count / sum(count))  # Normalize probabilities
+
+    w <- numeric(nrow(prob_df))  # Initialize weight vector for the number of rows in prob_df
+  
+  for (i in 1:num_teams) {
+    x_i <- paste0("x", i)
+    y_i <- paste0("y", i)
+    
+    # Loop through each row of prob_df
+    for (j in 1:nrow(prob_df)) {
+      # Calculate the squared difference between x_i and y_i for each row j
+      diff <- abs(prob_df[[x_i]][j] - prob_df[[y_i]][j])
+    w[j] <- w[j] + rank_weights[i]* diff^2  # Sum squared differences for each row
+    }
+  }
+  w <- ifelse(w == 0.0000, 1, 1 / w)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
+  w <- w/sum(w)
+  # Compute weights dynamically for each row
+  weighted_df <- prob_df %>%
+    mutate(w = w)
+
+  mutual_info <- factorial(num_teams) * sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/nrow(weighted_df) * weighted_df$probability)))
+
+  # Return the weighted data frame with mutual information weights
+  return(mutual_info)
+}
+mut_info(all_results_norm,8, c(10,5,1,0,0,0,0,0))
+mut_info(de_norm_results_eight,8, c(10,5,1,0,0,0,0,0))
+mut_info(test_rr_noTies,8, c(10,5,1,0,0,0,0,0))
+mut_info(seven_games_se_results,8, c(10,5,1,0,0,0,0,0))
+
+de_norm_results_eight <- de_norm_results %>% filter(teams == 8)
+de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
+all_results_norm$simulation <- rep(1:10000, each = nrow(all_results_norm) / 10000)
+seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
+# with randomly assigning ties
+test_rr_noTies <- test_rr %>%
+  group_by(simulation) %>%
+  mutate(rank_hat = rank(rank_hat,ties.method="random"))
+
+# Initialize variables
+num_vars <- 8  # Total length of the vector
+indices <- 1:num_vars  # Store the number of 1's in each step
+
+# Function to compute mutual information for a given dataset
+compute_mut_plots <- function(dataset) {
+  results <- numeric(num_vars)
+  for (i in 1:num_vars) {
+    binary_vector <- c(rep(1, i), rep(0, num_vars - i))  # Construct vector
+    results[i] <- mut_info(dataset, num_vars, binary_vector)  # Compute MI
+  }
+  return(results)
+}
+
+# Compute mutual information for each dataset
+mi_de_norm <- compute_mut_plots(de_norm_results_eight)
+mi_se_norm <- compute_mut_plots(all_results_norm)
+mi_test_rr <- compute_mut_plots(test_rr_noTies)
+mi_seven_se <- compute_mut_plots(seven_games_se_results)
+
+# Plot results
+plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm, mi_test_rr, mi_seven_se)),
+     xlab="Number of 1's in the vector", ylab="Mutual Information Bits", main="Mutual Information vs. Number of 1's")
+
+# Add other datasets
+lines(indices, mi_se_norm, type="b", pch=19, col="red")
+lines(indices, mi_test_rr, type="b", pch=19, col="green")
+lines(indices, mi_seven_se, type = "b", pch=19, col="black")
+
+# Add legend
+legend("topleft", legend=c("Double Elimination", "Single Elimination", "Round Robin", "7 Game Single Elimination"), 
+       col=c("blue", "red", "green", "black"), pch=19, lty=1)
+
+
+### Single Elimination vs Double Elimination ###
+
+# Plot results
+plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm)),
+     xlab="Number of 1's in the vector", ylab="Mutual Information Bits", main="Single Elimination vs Double Elimination")
+
+# Add other datasets
+lines(indices, mi_se_norm, type="b", pch=19, col="red")
+
+# Add legend
+legend("bottomright", legend=c("Double Elimination", "Single Elimination"), 
+       col=c("blue", "red"), pch=19, lty=1)
+
+```
