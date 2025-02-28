@@ -67,13 +67,13 @@ mut_info <- function(sims, num_teams, rank_weights = NULL){
     w[j] <- w[j] + rank_weights[i]* diff^2  # Sum squared differences for each row
     }
   }
-  w <- ifelse(w == 0.0000, 1, 1 / w)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
+  w <- 1 / (w + 1)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
   w <- w/sum(w)
   # Compute weights dynamically for each row
   weighted_df <- prob_df %>%
     mutate(w = w)
 
-  mutual_info <- factorial(num_teams) * sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/nrow(weighted_df) * weighted_df$probability)))
+  mutual_info <- factorial(num_teams) * sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * weighted_df$probability)))
 
   # Return the weighted data frame with mutual information weights
   return(mutual_info)
@@ -82,10 +82,14 @@ mut_info(all_results_norm,8, c(10,5,1,0,0,0,0,0))
 mut_info(de_norm_results_eight,8, c(10,5,1,0,0,0,0,0))
 mut_info(test_rr_noTies,8, c(10,5,1,0,0,0,0,0))
 mut_info(seven_games_se_results,8, c(10,5,1,0,0,0,0,0))
+mut_info(perms_df,8,c(1,0,0,0,0,0,0,0))
 
 de_norm_results_eight <- de_norm_results %>% filter(teams == 8)
 de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
+test_unif$simulation <- rep(1:10000, each = nrow(test_unif) / 10000)
+equal_strengths$simulation <- rep(1:10000, each = nrow(equal_strengths) / 10000)
 all_results_norm$simulation <- rep(1:10000, each = nrow(all_results_norm) / 10000)
+bad_seeding_structure$simulation <- rep(1:10000, each = nrow(bad_seeding_structure) / 10000)
 seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
 # with randomly assigning ties
 test_rr_noTies <- test_rr %>%
@@ -106,37 +110,68 @@ compute_mut_plots <- function(dataset) {
   return(results)
 }
 
+perms_list <- permn(8)
+all_data <- list()
+# Loop through each permutation and create the data frame
+for (i in 1:length(perms_list)) {
+  # Create a temporary data frame for the current permutation
+  temp_df <- data.frame(
+    true_rank = rep(1:8, each = 1),  # Each row gets a true_rank from 1 to 8
+    rank_hat = perms_list[[i]],      # The current permutation's ranks
+    simulation = rep(i, 8)           # Assign the simulation number to each row
+  )
+  # Add the temporary data frame to the list
+  all_data[[i]] <- temp_df
+}
+# Combine all the data frames into one
+perms_df <- do.call(rbind, all_data)
+
+
 # Compute mutual information for each dataset
 mi_de_norm <- compute_mut_plots(de_norm_results_eight)
 mi_se_norm <- compute_mut_plots(all_results_norm)
 mi_test_rr <- compute_mut_plots(test_rr_noTies)
 mi_seven_se <- compute_mut_plots(seven_games_se_results)
+mi_random <- compute_mut_plots(equal_strengths)
+mi_se_unif <- compute_mut_plots(test_unif)
+mi_bad <- compute_mut_plots(bad_seeding_structure)
+mi_perms <- compute_mut_plots(perms_df)
 
 # Plot results
-plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm, mi_test_rr, mi_seven_se)),
+plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm, mi_test_rr, mi_seven_se, mi_random, mi_se_unif)),
      xlab="Number of 1's in the vector", ylab="Mutual Information Bits", main="Mutual Information vs. Number of 1's")
 
 # Add other datasets
 lines(indices, mi_se_norm, type="b", pch=19, col="red")
 lines(indices, mi_test_rr, type="b", pch=19, col="green")
 lines(indices, mi_seven_se, type = "b", pch=19, col="black")
+lines(indices, mi_random, type="b", pch=19, col="purple")
+lines(indices, mi_se_unif, type="b", pch=19, col="orange")
 
 # Add legend
-legend("topleft", legend=c("Double Elimination", "Single Elimination", "Round Robin", "7 Game Single Elimination"), 
-       col=c("blue", "red", "green", "black"), pch=19, lty=1)
+legend("topleft", legend=c("Double Elimination", "Single Elimination", "Round Robin", "7 Game Single Elimination", "Random Single Elimination", "Uniform Single Elimination"), 
+       col=c("blue", "red", "green", "black", "purple", "orange"), pch=19, lty=1)
 
 
-### Single Elimination vs Double Elimination ###
-
-# Plot results
-plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm)),
-     xlab="Number of 1's in the vector", ylab="Mutual Information Bits", main="Single Elimination vs Double Elimination")
-
-# Add other datasets
-lines(indices, mi_se_norm, type="b", pch=19, col="red")
-
-# Add legend
-legend("bottomright", legend=c("Double Elimination", "Single Elimination"), 
-       col=c("blue", "red"), pch=19, lty=1)
-
+mi_plots_df <- data.frame(
+  indices = indices,
+  DE = mi_de_norm,
+  Norm_SE = mi_se_norm,
+  Random_SE = mi_random,
+  Unif_SE = mi_se_unif,
+  Bad_Seeds_SE = mi_bad,
+  Perms = mi_perms
+)
+# Reshape data into long format for ggplot
+df_long <- pivot_longer(mi_plots_df, cols = -indices, names_to = "Method", values_to = "MI")
+ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
+  geom_line() +           # Add lines
+  geom_point() +          # Add points
+  labs(
+    title = "Single Elimination vs Double Elimination",
+    x = "Number of 1's in the vector",
+    y = "Mutual Information Bits"
+  ) +
+  theme_minimal() +       # Use a clean theme
+  theme(legend.position = "right")
 ```
