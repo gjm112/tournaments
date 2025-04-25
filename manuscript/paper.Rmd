@@ -1,0 +1,142 @@
+---
+title: |
+  |  \large Tournaments 
+author: | 
+  | \large Zach Culp \vspace{-1.1mm}
+  | \normalsize  \vspace{-1mm}
+  | \normalsize Loyola Chicago \vspace{-1mm}
+  | \normalsize Chicago \vspace{-1mm}
+  | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm}
+  |
+  | \large Josie Peterburgs \vspace{-1.1mm}
+  | \normalsize College of Education \vspace{-1mm}
+  | \normalsize University of Texas at Austin \vspace{-1mm}
+  | \normalsize Austin, TX 78712 \vspace{-1mm}
+  | \normalsize [`brian.mills@austin.utexas.edu`](mailto:brian.mills@austin.utexas.edu) \vspace{-1mm}
+  |
+  | \large Ryan McShane \vspace{-1.1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
+  | \normalsize [`lderango@luc.edu`](mailto:lderango@luc.edu) \vspace{-1mm}
+  |
+  | \large Gregory J. Matthews \vspace{-1.1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
+  | \normalsize Center for Data Science and Consulting \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
+  | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
+abstract: | 
+ | Here is the abstract.
+ | 
+  \vspace{2mm}
+  | Keywords: survival analysis, hockey
+bibliography: references.bib
+fontsize: 12pt
+link-citations: true
+linkcolor: cyan
+urlcolor: cyan
+output:
+  pdf_document:
+    df_print: kable
+    number_sections: true
+    keep_tex: true
+header-includes:
+ \usepackage{setspace}
+ \setstretch{1.15}
+ \usepackage{float}
+ \floatplacement{figure}{t}
+---
+
+```{r setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.align = "center",
+	message = FALSE,
+	warning = FALSE
+)
+
+gjm <- function(x, color = "red") {
+  sprintf("\\textcolor{%s}{%s}", color, x)}
+```
+
+```{r pkgs}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+theme_set(theme_minimal())
+```
+
+# Introduction
+There are hundreds of different tournament structures that dictate how a set of teams compete against each other to determine an overall ranking. Different tournament structures have unique strengths and weaknesses, affecting how well they reflect the true rankings of the teams. The goal of a tournament is to find the best teams, but how can we quantify how well a tournament performs? In some instances, the tournament organizers only award the overall winner, but other times, the top three or ten teams are awarded. Because of this, organizers may prefer one structure over another based on their needs. Tournament organizers must also take into account factors like cost, timeliness, entertainment value, and fairness when choosing a tournament structure.
+
+      
+To evaluate a tournament’s effectiveness, we propose a numerical metric that quantifies how accurately it orders teams based on their true rankings. Tournament results can be viewed as a "message" attempting to convey the true team rankings. However, various factors introduce noise, leading to information loss. We use principles from information theory to measure this information loss across multiple tournament simulations to assess the reliability of different formats.
+
+
+
+
+# Methods
+Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 > \theta_2 > \ldots > \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when theta is sorted from largest to smallest so that $r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an $n$- dimensional vector valued random variable that gives the results of a tournament as a vector of the indexes of the vector $\boldsymbol{\theta}$.  The index in the first position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished first, The index in the second position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished second, and so on.  
+
+Examples: 
+$\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (1, 2, 3, 4) This means that the tournament got the order correct.
+
+$\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) This means that the third best team according to thetas won the tournament, second best team finished second, the best team finished third and the worst team finished 4th.  
+
+
+
+
+
+
+
+
+
+# ryan way 
+Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 < \theta_2 < \ldots < \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the rank of the vector $\boldsymbol{\theta}$ from largest to smallest so that $r(\boldsymbol{\theta}) = \{n, n-1, \ldots, 2, 1\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be a vector valued random variable that gives the results of a tournament as a vector of ranks.  
+
+Figure out what $\hat{r}$ should look like.  
+
+
+
+
+
+
+
+
+$r = \{1,2,3,4\}$ which is the
+
+
+Let $\boldsymbol{x} = (x_1, x_2, \ldots, x_n) $ be the permutation of indexes of $\boldsymbol{\theta}$ such that $x_1 = {i | \theta_i = max(\boldstyle{\theta})}$
+
+Let $x$ be  
+
+x is the true ranking and y is the output
+
+$$
+I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$
+
+
+Rajski's distance: 
+$$
+1 - \frac{I(X,Y)}{H(X,Y)}
+$$
+
+
+# Results
+
+Zach, put your stuff here.
+
+# Conclusion {#sec:conclusion}
+
+
+
+# Acknowledgements {-}
+
+# Supplementary Material {-}
+
+# References
+
+
+
