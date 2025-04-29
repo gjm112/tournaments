@@ -77,12 +77,53 @@ To evaluate a tournament’s effectiveness, we propose a numerical metric that q
 
 
 # Methods
-Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 > \theta_2 > \ldots > \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when theta is sorted from largest to smallest so that $r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an $n$- dimensional vector valued random variable that gives the results of a tournament as a vector of the indexes of the vector $\boldsymbol{\theta}$.  The index in the first position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished first, The index in the second position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished second, and so on.  
+Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 > \theta_2 > \ldots > \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when theta is sorted from largest to smallest so that $r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an $n$- dimensional vector valued random variable that gives the results of a tournament as a vector of the indexes of the vector $\boldsymbol{\theta}$.  The index in the first position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished first, the index in the second position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished second, and so on.
 
-Examples: 
-$\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (1, 2, 3, 4) This means that the tournament got the order correct.
+For example, in a 4 team tournament, $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that the team with index 3 (i.e. the true third best team) won the tournament, the true second best team finished second, the true best team finished third and the true 4th team finished 4th in that particular tournament.  If $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (1, 2, 3, 4), this means that the random outcome of the tournament was the same as the true ordering of the teams.  
 
-$\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) This means that the third best team according to thetas won the tournament, second best team finished second, the best team finished third and the worst team finished 4th.  
+If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the "goodness" of a tournament in terms of its ability to accurately transmit the true ranking.  We can then use concepts from information theory to assess the ability of a tournament to correctly rank teams.  Specifically, we start with the concept of mutual information (CITE).  For two random variables $X$ and $Y$ mutual information is defined as: 
+
+$$
+I(X;Y)=\sum_{y\in Y}\sum_{x\in X}p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$.
+
+In our setting, we replace $X$ and $Y$ with $r(\boldsymbol{\theta})$ and $\hat{r}(T(\phi, s),\boldsymbol{\theta})$, and we could seek to estimate $I(r(\boldsymbol{\theta}),\hat{r}(T(\phi, s),\boldsymbol{\theta}))$.  We note here that $r(\boldsymbol{\theta})$ is not a random variable, however, since the indexing of the teams in the vector $\boldsymbol{\theta}$ is arbitrary (we use 1, 2, 3, etc. for convenience, but any indexing is valid), we can view this a random variable where all permutation so of the $n$ teams are equally likely.  Therefore when calculating  the mutual information in this setting, we set $p(r(\boldsymbol{\theta})) = \frac{1}{n!}$.  By a similar argument we set $\hat{r}(T(\phi, s),\boldsymbol{\theta}) = \frac{1}{n!}$.  This 
+
+Note that one is 1/N!
+
+And this does work because consistently getting the order incorrect is perfect information.  
+
+
+
+
+
+
+
+$$
+I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$
+
+
+
+
+
+
+
+Let $x$ be  
+
+x is the true ranking and y is the output
+
+
+
+
+Rajski's distance: 
+$$
+1 - \frac{I(X,Y)}{H(X,Y)}
+$$
+
+
+
+
 
 
 
