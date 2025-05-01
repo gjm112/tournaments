@@ -1,0 +1,341 @@
+---
+title: "Group Stage Play"
+author: "Zach Culp"
+format: html
+editor: visual
+---
+
+## Group Stage
+
+### Simulate Game
+
+```{r}
+simulate_match <- function(team1, team2, strength1, strength2) {
+  if(is.na(team1) && is.na(team2)){
+    return(NA)
+  }
+  if (is.na(team1)) {
+    return(team2)
+  } else if (is.na(team2)) {
+    return(team1)
+  } else {
+    p <- exp(strength1 - strength2) / (1 + exp(strength1 - strength2))
+    return(ifelse(runif(1) < p, team1, team2))  # Randomize outcome
+  }
+}
+```
+
+### Simulate Each Group
+
+```{r}
+simulate_group_play <- function(strengths, rounds=1){
+  teams <- strengths$true_rank
+  n <- length(teams)
+  win_counts <- numeric(n)
+  loss_counts <- numeric(n)
+  for (i in 1:rounds){
+    for (i in seq_along(teams)){
+      for (j in seq_along(teams)){
+        if (i != j){
+          team1 <- teams[i]
+          team2 <- teams[j]
+          strength1 <- strengths$true_strength[strengths$true_rank == team1]
+          strength2 <- strengths$true_strength[strengths$true_rank == team2]
+          match_winner <- simulate_match(teams[i],teams[j],strength1, strength2)
+          if (match_winner == teams[i]) {
+            win_counts[i] <- win_counts[i] + 1
+            loss_counts[j] <- loss_counts[j] + 1
+          } else {
+            win_counts[j] <- win_counts[j] + 1
+            loss_counts[i] <- loss_counts[i] + 1
+          }
+        }
+      }
+    }
+  }
+  results <- data.frame(
+    true_rank = teams,
+    game_wins = win_counts,
+    game_loses = loss_counts,
+    true_strength = strengths$true_strength,
+    groups = strengths$groups
+  )
+  
+  # Ranks teams based on number of wins (includes ties)
+  results$rank_hat <- rank(-results$game_wins, ties.method = "random")
+  results <- results[order(results$rank_hat),]
+  
+  return(results)
+}
+
+simulate_groups <- function(group_length, num_teams, distribution, num_advance){
+  teams <- paste(num_teams:1)
+  if (distribution == "Normal"){
+    strengths <- sapply(num_teams, function(n) { qnorm(1:n/(n+1)) })
+    normal_strengths <- data.frame(
+      true_rank = as.numeric(teams),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+      rank_hat = rep(NA,length(teams)),
+      game_wins = rep(0,length(teams)),
+      game_losses = rep(0,length(teams))
+    )
+    df <- arrange(normal_strengths, true_rank)
+  }
+  else if (distribution == "Same"){
+    strengths <- sapply(num_teams, function(n) {rep(0,n)})
+    normal_strengths <- data.frame(
+      true_rank = as.numeric(teams),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+      rank_hat = rep(NA,length(teams)),
+      game_wins = rep(0,length(teams)),
+      game_losses = rep(0,length(teams))
+    )
+    df <- arrange(normal_strengths, true_rank)
+  }
+  else if (distribution == "Uniform"){
+    strengths <- sapply(num_teams, function(n) { qunif(1:n/(n+1) , 0 , sqrt(12)) })
+    unif_strength <- data.frame(
+      true_rank = as.numeric(teams),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+      game_wins = rep(0,length(teams)),
+      game_losses = rep(0,length(teams)),
+      rank_hat = rep(NA,length(teams))
+    )
+    df <- arrange(unif_strength, true_rank)
+  }
+  
+  num_groups <- num_teams / group_length
+  # Create tiers based on sorted true_strength
+  df <- df %>% arrange(desc(true_strength))
+  tiers <- split(df, ceiling(seq_along(df$true_rank) / num_groups))
+  
+  # Initialize group vector
+  df$groups <- NA
+  
+  # Assign one team from each tier to each group randomly
+  for (tier in tiers) {
+    group_ids <- sample(1:num_groups)  # random group order for this tier
+    df$groups[match(tier$true_rank, df$true_rank)] <- group_ids
+  }
+
+  all_results <- list()
+  for (g in unique(df$groups)){
+    group_df <- df[df$groups == g, ]
+    group_results <- simulate_group_play(strengths = group_df)
+    group_results$groups <- g
+    all_results[[g]] <- group_results
+  }
+  print(all_results)
+  final_df <- do.call(rbind, all_results)
+  teams_in_knockout <- final_df %>%
+    arrange(rank_hat, game_wins) %>%
+    head(num_advance * num_groups)
+  return(teams_in_knockout)
+}
+create_knockout_matches <- function(df) {
+  group_list <- sort(unique(df$groups))
+  matches <- list()
+  
+  for (i in seq(1, length(group_list), by = 2)) {
+    g1 <- group_list[i]
+    g2 <- group_list[i + 1]
+    
+    # Get the winner from group g1 and runner-up from group g2
+    team1 <- df[df$groups == g1 & df$rank_hat == 1, ]
+    team2 <- df[df$groups == g2 & df$rank_hat == 2, ]
+    
+    # Get the winner from group g2 and runner-up from group g1
+    team3 <- df[df$groups == g2 & df$rank_hat == 1, ]
+    team4 <- df[df$groups == g1 & df$rank_hat == 2, ]
+    
+    matches[[length(matches) + 1]] <- data.frame(
+      Match = paste("Match", length(matches) + 1),
+      TeamA = team1$true_rank,
+      TeamB = team2$true_rank
+    )
+    
+    matches[[length(matches) + 1]] <- data.frame(
+      Match = paste("Match", length(matches) + 1),
+      TeamA = team3$true_rank,
+      TeamB = team4$true_rank
+    )
+  }
+
+  do.call(rbind, matches)
+}
+simulate_knockout <- function(df, series=1, third_place = T){
+  
+  seeding_structure <- create_knockout_matches(df)
+  
+  for (i in nrow(df)){
+    for (g in unique(df$groups)){
+      
+    }
+  }
+  
+  results <- list()  # Initialize the results list
+  
+  for (i in 1:nrow(seeding_structure)) {
+    # Create a new data frame based on the current permutation in 'test'
+    permutation <- seeding_structure[i, ]
+    permuted_df <- df
+    permuted_df$true_rank <- df$true_rank[permutation]  # Update team order 
+    teams <- permuted_df$true_rank
+    permuted_df$true_strength <- df$true_strength[permutation]
+    permuted_df$rank_hat <- NA  # Initialize ranks column
+    permuted_df$game_wins <- 0  # Initialize wins column
+    permuted_df$game_losses <- 0
+    
+    strengths <- permuted_df$true_strength
+    round_number <- ceiling(log2(length(teams)))
+    
+    # Track the losers of the semifinals for the third-place match
+    losers_semis <- c()
+    
+    while (length(teams) > 1) {
+      #cat("\n--- New Round ---\n")
+      next_round <- c() # Makes sure only winners are included in next round
+      
+      for (j in seq(1, length(teams), by = 2)) { # Gets 2 teams for each match
+        team1 <- teams[j]
+        team2 <- teams[j+1]
+        
+        strength1 <- strengths[which(permuted_df$true_rank == team1)]
+        strength2 <- strengths[which(permuted_df$true_rank == team2)]
+        
+        wins_team1 <- 0
+        wins_team2 <- 0
+        losses_team1 <- 0
+        losses_team2 <- 0
+        for (game in 1:series){
+          match_winner <- simulate_match(team1, team2, strength1, strength2)
+          #cat(sprintf("Matchup:  %s vs %s | Strengths: %.2f vs %.2f | Winner: %s\n", team1, team2, strength1, strength2, match_winner))
+          if(!is.na(team1)) {
+          if (match_winner == team1) {
+            wins_team1 <- wins_team1 + 1
+            losses_team2 <- losses_team2 + 1
+          } else {
+            wins_team2 <- wins_team2 + 1
+            losses_team1 <- losses_team1 + 1
+          }
+          }
+          else {wins_team2 <- series / 2 + 1}
+          
+          # Determine the overall winner if a majority is reached
+          if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+            break
+          }
+        }
+       
+        # adds wins and losses of the series to the teams unless they have a bye
+        if (!any(is.na(c(team1, team2)))) {
+          permuted_df <- permuted_df %>%
+            mutate(game_wins = ifelse(true_rank == team1, game_wins + wins_team1, game_wins)) %>%
+            mutate(game_wins = ifelse(true_rank == team2, game_wins + wins_team2, game_wins)) %>%
+            mutate(game_losses = ifelse(true_rank == team1, game_losses + losses_team1, game_losses)) %>%
+            mutate(game_losses = ifelse(true_rank == team2, game_losses + losses_team2, game_losses)) 
+           }
+        
+        # Determine the match winner based on series results
+        series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
+        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
+        next_round <- c(next_round, series_winner)
+        
+        if (round_number > 2){
+          # Assign ranks based on the current round
+          n <- 2^(round_number)
+          #print(series_winner)
+            if (!is.na(team1) & series_winner == team1) {
+                permuted_df$rank_hat[permuted_df$true_rank == team2] <- n
+            } else {
+                permuted_df$rank_hat[permuted_df$true_rank == team1] <- n
+            }
+        } else if (round_number == 2) {  # Semifinals
+          n <- 2^(round_number)
+          if (match_winner == team1) {
+              permuted_df$rank_hat[permuted_df$true_rank == team2] <- n
+            losers_semis <- c(losers_semis, team2)
+          } else {
+              permuted_df$rank_hat[permuted_df$true_rank == team1] <- n
+            losers_semis <- c(losers_semis, team1)
+          }
+        }else if (round_number == 1) { # Finals
+          permuted_df <- permuted_df %>%
+            filter(!is.na(true_rank))
+          n <- 2^(round_number)
+          if (series_winner == team1) {
+            permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
+            permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
+          } else {
+            permuted_df$rank_hat[permuted_df$true_rank == team1] <- 2
+            permuted_df$rank_hat[permuted_df$true_rank == team2] <- 1
+          }
+        }
+      }
+      
+      teams <- next_round  # Winners move to the next round
+      round_number <- round_number - 1
+    }
+    
+    # Third place match between the losers of the semifinals
+    if (third_place == TRUE){
+      team1 <- losers_semis[1]
+      team2 <- losers_semis[2]
+      strength1 <- permuted_df$true_strength[permuted_df$true_rank == team1]
+      strength2 <- permuted_df$true_strength[permuted_df$true_rank == team2]
+      wins_team1 <- 0
+      wins_team2 <- 0
+      for (game in 1:series) {
+        match_winner <- simulate_match(team1, team2, strength1, strength2)
+        if (match_winner == team1) {
+          wins_team1 <- wins_team1 + 1
+        } else {
+          wins_team2 <- wins_team2 + 1
+        }
+        # Determine the overall winner if a majority is reached
+        if (wins_team1 > series / 2 || wins_team2 > series / 2) {
+          break
+        }
+      }
+      # Assign third place and fourth place ranks
+      if (wins_team1 > wins_team2) {
+        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team1))
+        permuted_df$rank_hat[permuted_df$true_rank == team1] <- 3
+        permuted_df$rank_hat[permuted_df$true_rank == team2] <- 4
+      } else {
+        #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team2))
+        permuted_df$rank_hat[permuted_df$true_rank == team2] <- 3
+        permuted_df$rank_hat[permuted_df$true_rank == team1] <- 4
+      }
+    }
+    
+    permuted_df$seed <- rep(paste(seeding_structure[i, ], collapse = ", "), nrow(permuted_df))
+    results[[i]] <- permuted_df # Store the results of this permutation
+  }
+  
+  final_results <- do.call(rbind, results)
+  
+  
+  # Remove ties if ties = FALSE
+  if (!ties) {
+    final_results <- final_results %>%
+      filter(!is.na(true_rank)) %>%
+      arrange(true_rank) %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+  } else{
+    final_results <- final_results %>%
+      filter(!is.na(true_rank)) %>%
+      arrange(rank_hat) %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "average"))
+  }
+  
+  final_results <- final_results %>%
+    mutate(distribution = distribution) %>%
+    mutate(true_rank = as.numeric(true_rank)) %>%
+    arrange(true_rank)
+  return(final_results)
+}
+
+knockout_teams <- simulate_groups(4,8,"Normal",2)
+create_knockout_matches(knockout_teams)
+```

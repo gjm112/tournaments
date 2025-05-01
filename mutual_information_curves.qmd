@@ -6,9 +6,17 @@ editor: visual
 
 ## Mutual Information Plots
 
-From Wikipedia, weight mutual information formula:
+From Wikipedia, weighted mutual information formula:
 
 $I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}$
+
+Rajski's distance: $1 - \frac{I(X,Y)}{H(X,Y)}$
+
+Interpretation: the fraction of uncertainty not explained by mutual information
+
+<https://en.wikipedia.org/wiki/Inverse_distance_weighting>
+
+Every permutation is not possible to elimination tournaments, so should we divide by every possible permutation for 8 teams, or just every possible permutation in the tournament structure?
 
 ```{r}
 library(combinat)
@@ -48,13 +56,13 @@ mut_info <- function(sims, num_teams, rank_weights = NULL){
   prob_df <- perms_df %>%
     group_by(across(starts_with("x")),across(starts_with("y")))  %>%
     summarise(count = n(), .groups = "drop")
-  
+
   # Merge with full permutation set to ensure all permutations exist
   prob_df <- right_join(all_perms, prob_df, by = colnames(all_perms)) %>%
     mutate(count = replace_na(count, 0)) %>%
     mutate(probability = count / sum(count))  # Normalize probabilities
-
-    w <- numeric(nrow(prob_df))  # Initialize weight vector for the number of rows in prob_df
+  
+  w <- numeric(nrow(prob_df))  # Initialize weight vector for the number of rows in prob_df
   
   for (i in 1:num_teams) {
     x_i <- paste0("x", i)
@@ -62,70 +70,85 @@ mut_info <- function(sims, num_teams, rank_weights = NULL){
     
     # Loop through each row of prob_df
     for (j in 1:nrow(prob_df)) {
+      #x_vals <- as.numeric(prob_df[j, paste0("x", 1:num_teams)])
+      #y_vals <- as.numeric(prob_df[j, paste0("y", 1:num_teams)])
       # Calculate the squared difference between x_i and y_i for each row j
       diff <- abs(prob_df[[x_i]][j] - prob_df[[y_i]][j])
-    w[j] <- w[j] + rank_weights[i]* diff^2  # Sum squared differences for each row
+      #rank_diff <- abs(rank(x_vals) - rank(y_vals))
+      w[j] <- w[j] + rank_weights[i] * diff^2  # Sum squared differences for each row
+      # Count inversions (pairs where order is flipped)
+      #inversions <- sum(outer(x_vals, x_vals, ">") & outer(y_vals, y_vals, "<"))
+      #w[j] <- sum(exp(rank_diff) - 1)
+      #w[j] <- w[j] + rank_weights[i] * (exp(inversions) - 1)
+      #w[j] <- cor(x_vals, y_vals, method = "spearman", use = "complete.obs")
+      # Kendal's Tau as weights?
     }
   }
-  w <- 1 / (w + 1)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
-  w <- w/sum(w)
+  #w <- (w + 1) / 2
+  #w[w == Inf] <- 0
+  w <- 1 / (w+1)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
+  #w <- w/sum(w)
   # Compute weights dynamically for each row
   weighted_df <- prob_df %>%
     mutate(w = w)
+  #print(weighted_df)
 
-  mutual_info <- factorial(num_teams) * sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * weighted_df$probability)))
+  numerator <- sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * (1/factorial(num_teams)))))
+  denominator <- log2(factorial(num_teams))
 
+  Raj_dist <- 1 - numerator/denominator
+ 
   # Return the weighted data frame with mutual information weights
-  return(mutual_info)
+  return(Raj_dist)
 }
-mut_info(all_results_norm,8, c(10,5,1,0,0,0,0,0))
-mut_info(de_norm_results_eight,8, c(10,5,1,0,0,0,0,0))
-mut_info(test_rr_noTies,8, c(10,5,1,0,0,0,0,0))
-mut_info(seven_games_se_results,8, c(10,5,1,0,0,0,0,0))
-mut_info(perms_df,8,c(1,0,0,0,0,0,0,0))
 
 de_norm_results_eight <- de_norm_results %>% filter(teams == 8)
 de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
-test_unif$simulation <- rep(1:10000, each = nrow(test_unif) / 10000)
-equal_strengths$simulation <- rep(1:10000, each = nrow(equal_strengths) / 10000)
+
 all_results_norm$simulation <- rep(1:10000, each = nrow(all_results_norm) / 10000)
-bad_seeding_structure$simulation <- rep(1:10000, each = nrow(bad_seeding_structure) / 10000)
 seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
 # with randomly assigning ties
 test_rr_noTies <- test_rr %>%
   group_by(simulation) %>%
   mutate(rank_hat = rank(rank_hat,ties.method="random"))
-
-# Initialize variables
-num_vars <- 8  # Total length of the vector
-indices <- 1:num_vars  # Store the number of 1's in each step
-
-# Function to compute mutual information for a given dataset
-compute_mut_plots <- function(dataset) {
-  results <- numeric(num_vars)
-  for (i in 1:num_vars) {
-    binary_vector <- c(rep(1, i), rep(0, num_vars - i))  # Construct vector
-    results[i] <- mut_info(dataset, num_vars, binary_vector)  # Compute MI
-  }
-  return(results)
-}
-
 perms_list <- permn(8)
 all_data <- list()
 # Loop through each permutation and create the data frame
 for (i in 1:length(perms_list)) {
-  # Create a temporary data frame for the current permutation
-  temp_df <- data.frame(
-    true_rank = rep(1:8, each = 1),  # Each row gets a true_rank from 1 to 8
-    rank_hat = perms_list[[i]],      # The current permutation's ranks
-    simulation = rep(i, 8)           # Assign the simulation number to each row
-  )
-  # Add the temporary data frame to the list
-  all_data[[i]] <- temp_df
+# Create a temporary data frame for the current permutation
+temp_df <- data.frame(
+true_rank = rep(1:8, each = 1),  # Each row gets a true_rank from 1 to 8
+rank_hat = perms_list[[i]],      # The current permutation's ranks
+simulation = rep(i, 8)           # Assign the simulation number to each row
+)
+# Add the temporary data frame to the list
+all_data[[i]] <- temp_df
 }
 # Combine all the data frames into one
 perms_df <- do.call(rbind, all_data)
 
+best <- data.frame(
+  true_rank = rep(1:8, times = 10000),  # Repeat 1-8 for 10,000 simulations
+  rank_hat = rep(1:8, times = 10000),   # Ensure rank_hat matches true_rank
+  simulation = rep(1:10000, each = 8)   # Assign each set to a simulation
+)
+worst <- data.frame(
+  true_rank = rep(1:8, times = 10000),  # Repeat 1-8 for 10,000 simulations
+  rank_hat = rep(8:1, times = 10000),   # Ensure rank_hat matches true_rank
+  simulation = rep(1:10000, each = 8)   # Assign each set to a simulation
+)
+
+
+# Function to compute mutual information for a given dataset
+compute_mut_plots <- function(dataset) {
+  num_teams <- length(unique(dataset$true_rank))
+  results <- numeric(num_teams)
+  for (i in 1:num_teams) {
+    binary_vector <- c(rep(1, i), rep(0, num_teams - i))  # Construct vector
+    results[i] <- mut_info(dataset, num_teams, binary_vector)  # Compute MI
+  }
+  return(results)
+}
 
 # Compute mutual information for each dataset
 mi_de_norm <- compute_mut_plots(de_norm_results_eight)
@@ -136,42 +159,101 @@ mi_random <- compute_mut_plots(equal_strengths)
 mi_se_unif <- compute_mut_plots(test_unif)
 mi_bad <- compute_mut_plots(bad_seeding_structure)
 mi_perms <- compute_mut_plots(perms_df)
-
-# Plot results
-plot(indices, mi_de_norm, type="b", pch=19, col="blue", ylim=range(c(mi_de_norm, mi_se_norm, mi_test_rr, mi_seven_se, mi_random, mi_se_unif)),
-     xlab="Number of 1's in the vector", ylab="Mutual Information Bits", main="Mutual Information vs. Number of 1's")
-
-# Add other datasets
-lines(indices, mi_se_norm, type="b", pch=19, col="red")
-lines(indices, mi_test_rr, type="b", pch=19, col="green")
-lines(indices, mi_seven_se, type = "b", pch=19, col="black")
-lines(indices, mi_random, type="b", pch=19, col="purple")
-lines(indices, mi_se_unif, type="b", pch=19, col="orange")
-
-# Add legend
-legend("topleft", legend=c("Double Elimination", "Single Elimination", "Round Robin", "7 Game Single Elimination", "Random Single Elimination", "Uniform Single Elimination"), 
-       col=c("blue", "red", "green", "black", "purple", "orange"), pch=19, lty=1)
-
+mi_best <- compute_mut_plots(best)
+mi_worst <- compute_mut_plots(worst)
 
 mi_plots_df <- data.frame(
-  indices = indices,
-  DE = mi_de_norm,
-  Norm_SE = mi_se_norm,
-  Random_SE = mi_random,
-  Unif_SE = mi_se_unif,
-  Bad_Seeds_SE = mi_bad,
-  Perms = mi_perms
+indices = 1:8,
+"Double Elimination" = (1-mi_de_norm),
+"Single Elimination" = (1-mi_se_norm),
+"Equal Strengths Single Elimination" = (1-mi_random),
+#"Unif_SE" = (1-mi_se_unif),
+"Bad Seeding Structure Single Elimination" = (1-mi_bad),
+"Every Possible Permutation" = (1-mi_perms),
+"Round Robin" = (1-mi_test_rr),
+"Worst Possible" = (1-mi_worst),
+"Best Possible" = (1-mi_best)
 )
+
 # Reshape data into long format for ggplot
 df_long <- pivot_longer(mi_plots_df, cols = -indices, names_to = "Method", values_to = "MI")
 ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
-  geom_line() +           # Add lines
-  geom_point() +          # Add points
-  labs(
-    title = "Single Elimination vs Double Elimination",
-    x = "Number of 1's in the vector",
-    y = "Mutual Information Bits"
+geom_line() +           # Add lines
+geom_point() +          # Add points
+labs(
+title = "Comparison of Tournament Structures with Normal Strengths",
+x = "Top i Number of Teams",
+y = "Mutual Information \\ Entropy (log10 scale)"
+) +
+theme_minimal() +       # Use a clean theme
+theme(legend.position = "right") +
+  scale_y_log10(
+    labels = scales::label_number() 
+  )
+
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+# Apply normalization to all columns except "indices"
+mi_norm_plot <- mi_plots_df
+mi_norm_plot[ , -1] <- t(apply(mi_plots_df[ , -1], 1, normalize))
+# Reshape data into long format for ggplot
+df_long_norm <- pivot_longer(mi_norm_plot, cols = -indices, names_to = "Method", values_to = "MI")
+windowsFonts(Arial = windowsFont("Arial"))
+ggplot(df_long_norm, aes(x = indices, y = MI, color = Method, group = Method)) +
+geom_line(linewidth = 2.5) +           # Add lines
+geom_point(size=3) +          # Add points
+labs(
+title = "Comparison of Tournament Structures with Normal Strengths",
+x = "Top i Number of Teams",
+y = "Normalized Mutual Information \\ Entropy (log10 scale)"
+) +
+theme_minimal() +       # Use a clean theme
+theme(text = element_text(family = "Arial", size = 32),
+  legend.position = "bottom",
+  legend.box = "vertical",
+  plot.title = element_text(hjust = 0.5, size = 36),
+  axis.title = element_text(size = 30),
+  axis.text = element_text(size=30)) +
+  guides(color = guide_legend(nrow = 4)) +
+  scale_y_log10(
+    labels = scales::label_number() 
   ) +
-  theme_minimal() +       # Use a clean theme
-  theme(legend.position = "right")
+  scale_color_viridis_d(option = "H")
+ggsave(
+  filename = "tournament_comparison_plot.png",  # Change file type if needed
+  plot = last_plot(),  # Saves the last ggplot created
+  dpi = 600,        
+  bg = "white",
+  units = "in",
+  width = 15.28,
+  height = 13.43
+)
 ```
+
+include number of games (might be a range)
+
+Single Elimination - third place and without third place; series = 3,5,7
+
+Double Elimination
+
+-   Repechage
+
+-   True Double Elimination
+
+-   Consolation Bracket (loser's bracket best place is third)
+
+Triple Elimination
+
+Deterministic Outcomes
+
+Round Robin - with k rounds (1,2,3,5,7)
+
+Stepladder - 8 vs 7, winner plays 6, etc.
+
+Group Stage - winners of group advance, top 2 advance
+
+Staged Round Robin/Jacobian Ladder - top 2 in each group form new group, bottom 2 new group (each new group is a new round robin)
+
+High School Tennis Ladder - 1 vs 2, 3 vs 4, etc., Re-rank 2 vs 3, 4 vs 5, 6 vs 7, number of teams - 1 iterations

@@ -51,7 +51,7 @@ perms_df <- do.call(rbind, all_data)
 perms_test <- create_ps(perms_df)
 ```
 
-### Graph
+### Graph (skip this, to be deleted later)
 
 ```{r}
 # Combine the two datasets into one for easier plotting
@@ -70,46 +70,42 @@ de_test <- de_test %>%
 # Combine both data frames into one
 combined_swaps_data <- bind_rows(se_test, perms_test, rr_test, de_test)
 
+# not used anymore
+
 # Plotting using ggplot2
-ggplot(combined_swaps_data, aes(x = true_rank, y = mean_ps, color = type, group = type)) +
-  geom_point(size = 3) +  # Plot the points
-  geom_line() +  # Connect the points with lines
-  geom_errorbar(aes(ymin = mean_ps - sd_ps, ymax = mean_ps + sd_ps), width = 0.2) +  # Add error bars (standard deviation)
-  scale_color_manual(values = c("Single Elimination" = "blue", "Baseline" = "red", "Round Robin" = "green", "Double Elimination" = "yellow")) +  # Set colors for the groups
-  labs(
-    title = "Comparison of Mean PS with Standard Deviation for Simulated vs Baseline",
-    x = "True Rank",
-    y = "Mean PS",
-    color = "Simulation Type"
-  ) +
-  theme_minimal() + # Apply a clean theme
-  theme(
-      panel.background = element_rect(fill = "gray75"),  # Set background color to light gray
-      plot.background = element_rect(fill = "gray80"),  # Set the plot background color to a lighter gray
-      legend.background = element_rect(fill = "gray80")  # Set the legend background color
-    )
+#ggplot(combined_swaps_data, aes(x = true_rank, y = mean_ps, color = type, group = type)) +
+#  geom_point(size = 3) +  # Plot the points
+#  geom_line() +  # Connect the points with lines
+#  geom_errorbar(aes(ymin = mean_ps - sd_ps, ymax = mean_ps + sd_ps), width = 0.2) +  # Add error bars (standard deviation)
+#  scale_color_manual(values = c("Single Elimination" = "blue", "Baseline" = "red", "Round Robin" = "green", "Double Elimination" = "yellow")) +  # Set colors for the groups
+#  labs(
+#    title = "Comparison of Mean PS with Standard Deviation for Simulated vs Baseline",
+#    x = "True Rank",
+#    y = "Mean PS",
+#    color = "Simulation Type"
+#  ) +
+#  theme_minimal() + # Apply a clean theme
+#  theme(
+#      panel.background = element_rect(fill = "gray75"),  # Set background color to light gray
+#      plot.background = element_rect(fill = "gray80"),  # Set the plot background color to a lighter gray
+#      legend.background = element_rect(fill = "gray80")  # Set the legend background color
+#    )
 ```
 
-### Baseline Probabilities of Under/Over Performance
+### Probabilities of Correct Ranking or Better by Seed
 
-An overall graph of the probabilities of correctly predicting the rankings versus overpredicting and underpredicting. If the tournament results were randomly decided the probabilities would be the following:
+The baseline probability for correctly ranking each seed or ranking better than expected is:
 
-$P(R_i = i) = \frac{1}{n}$
-
-$P(R_i < i) = \frac{i-1}{n}$
-
-$P(R_i > i) = \frac{n-i}{n}$
+$P(R_i \leq i) = \frac{i}{n}$
 
 ```{r}
-# Function to calculate probabilities of ps conditions
+# Function to calculate probabilities
 calculate_probs <- function(df) {
   df %>%
-    mutate(ps = true_rank - rank_hat) %>%
+    mutate(p = true_rank - rank_hat) %>%
     group_by(true_rank) %>%
     summarize(
-      ps_equal = sum(ps == 0) / n(),
-      ps_less = sum(ps < 0) / n(),
-      ps_more = sum(ps > 0) / n()
+      p_leq = sum(p >= 0) / n(),
     )
 }
 
@@ -135,8 +131,8 @@ probs_de_test <- probs_de_test %>%
 # Combining datasets
 combined_probs_swaps_data <- bind_rows(probs_rr_test, probs_se_test, probs_perms_test, probs_de_test)
 
-# R_i < i plot
-ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_less, color = type, group = type)) +
+# R_i <= i plot
+ggplot(combined_probs_swaps_data, aes(x = true_rank, y = p_leq, color = type, group = type)) +
   geom_point(size = 3) +  
   geom_line() +
   scale_color_manual(values = c("Single Elimination" = "blue", 
@@ -158,53 +154,57 @@ ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_less, color = type, 
   scale_y_continuous(limits = c(0, 1))  
 
 
-# R_i = i plot
-ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_equal, color = type, group = type)) +
-  geom_point(size = 3) +  
-  geom_line() +
-  scale_color_manual(values = c("Single Elimination" = "blue", 
-                                "Baseline" = "red", 
-                                "Round Robin" = "green",
-                                "Double Elimination" = "yellow")) +  
-  labs(
-    title = "Probability of Simulation Correctly Predicting Ranks for Each Tournament",
-    x = "True Rank",
-    y = expression(P(R[i] == i)),
-    color = "Simulation Type"
-  ) +
-  theme_minimal() +  # Apply a clean theme
-  theme(
-    panel.background = element_rect(fill = "gray75"),  
-    plot.background = element_rect(fill = "gray80"), 
-    legend.background = element_rect(fill = "gray80")  
-  ) +
-  scale_y_continuous(limits = c(0, 1))  
-
-
-# R_i > i plot
-ggplot(combined_probs_swaps_data, aes(x = true_rank, y = ps_more, color = type, group = type)) +
-  geom_point(size = 3) +  
-  geom_line() +
-  scale_color_manual(values = c("Single Elimination" = "blue", 
-                                "Baseline" = "red", 
-                                "Round Robin" = "green",
-                                "Double Elimination" = "yellow")) +  
-  labs(
-    title = "Probability of Simulation Over Predicting Ranks for Each Tournament",
-    x = "True Rank",
-    y = expression(P(R[i] > i)),
-    color = "Simulation Type"
-  ) +
-  theme_minimal() +  # Apply a clean theme
-  theme(
-    panel.background = element_rect(fill = "gray75"),  
-    plot.background = element_rect(fill = "gray80"), 
-    legend.background = element_rect(fill = "gray80")  
-  ) +
-  scale_y_continuous(limits = c(0, 1))  
-
 ```
 
 \
+Derivative of Type - Baseline should be close to 0 for good tournament?
 
-\
+What if we created our own ranking like this:
+
+$S(T) = w_1​ P(\text{best​ team wins})+w_2​(\text{Spearman correlation})+w_3​(\text{upset probability})+w_4​(\text{games required})+ w_5​(\text{entertainment value})$\
+
+entertainment value would be something like ranking how important games are to the overall rank_hat
+
+```{r}
+
+gini_plot <- function(df,type){
+# Sort the wins for all_results_norm in ascending order
+df_sorted <- df[order(df$game_wins,decreasing=TRUE),]
+# Calculate the Gini coefficient for all_results_norm
+N <- nrow(df_sorted)
+cumulative_wins <- cumsum(df_sorted$game_wins)  # Cumulative wins
+total_wins <- sum(df_sorted$game_wins)  # Total wins
+cumulative_percent_wins <- cumulative_wins / total_wins  # Cumulative percentage of wins
+cumulative_percent_teams <- seq(1, N) / N  # Cumulative percentage of teams
+
+# Gini coefficient calculation for all_results_norm
+gini_numerator <- sum((2 * (1:N) - N - 1) * df_sorted$game_wins)
+gini_coefficient <- gini_numerator / (N * total_wins)
+gini_df <- data.frame(cumulative_percent_teams = cumulative_percent_teams, cumulative_percent_wins = cumulative_percent_wins, gini_coefficient = gini_coefficient, type=type)
+return(gini_df)
+}
+lorenz_se <- gini_plot(all_results_norm %>% filter(teams==8), "Single Elimination")
+lorenz_de <- gini_plot(de_norm_results_eight, "Double Elimination")
+colnames(test_rr_noTies)[colnames(test_rr_noTies) == "Game_Wins"] <- "game_wins"
+lorenz_rr <- gini_plot(test_rr_noTies, "Round Robin")
+#lonenz_se_seven <- gini_plot(seven_games_se_results, "7 Game Series Single Elimination")
+unique(lorenz_se$gini_coefficient)
+unique(lorenz_de$gini_coefficient)
+unique(lorenz_rr$gini_coefficient)
+# Combine all data frames
+combined_lorenz_df <- bind_rows(lorenz_se, lorenz_de, lorenz_rr)
+
+# Plot combined lorenz curves
+ggplot(combined_lorenz_df, aes(x = cumulative_percent_teams*8, y = cumulative_percent_wins, color = type)) +
+  geom_line() + 
+  geom_abline(intercept = 0, slope = 1/8, color = "red", linetype = "dashed") +  # Line of perfect equality
+  labs(x = "Cumulative Percentage of Teams", y = "Cumulative Percentage of Wins",
+       title = "Lorenz Curves of Win Distribution") +
+  scale_color_manual(values = c("Single Elimination" = "blue", 
+                                "Double Elimination" = "green", 
+                                "Round Robin" = "black")) +  # Explicitly set the colors for each type
+  theme_minimal() +
+  theme(legend.position = "top") +  # Adjust the legend position
+  guides(color = guide_legend(title = "Tournament Type"))
+
+```
