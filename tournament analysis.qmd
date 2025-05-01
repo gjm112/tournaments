@@ -1,0 +1,14 @@
+---
+title: "Statistical Analysis of Tournament Structures"
+author: "Greg, Josie, Zach, Ryan"
+format: pdf
+editor: visual
+---
+
+### Introduction
+
+There are hundreds of different tournament structures that dictate how a set of teams compete against each other to determine an overall ranking. Different tournaments have unique strengths and weaknesses, affecting how well they reflect the true rankings of the teams. The goal of a tournament is to find the best teams, but how can we quantify how well a tournament performs? In some instances, the tournament organizers only award the overall winner, but other times, the top three or ten teams are awarded. Because of this, organizers may prefer one structure over another based on their needs. Tournament organizers must also take into account factors like cost, timeliness, entertainment value, and fairness when choosing a tournament structure.
+
+```         
+To evaluate a tournament’s effectiveness, we propose a numerical metric that quantifies how accurately it orders teams based on their true rankings. Tournament results can be viewed as a “message” attempting to convey the true team rankings. However, various factors introduce noise, leading to information loss. We use principles from information theory to measure this information loss across multiple tournament simulations to assess the reliability of different formats.
+```
