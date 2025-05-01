@@ -3,14 +3,14 @@ title: "Tournaments"
 author: "Greg, Josie, Zach, Ryan"
 format: html
 editor: visual
+bibliography: references.bib
 ---
 
-@Glickman2025: Review of methods for estimating team and player strength. So this paper doesn't directly relate to our tournaments paper.  We are interested in structure and this paper is interested in estimating strength.  However, we are interested in knockout tournements (and other tournament structures) that require seeding, which is estimating player/team strength.  So estimating team player/team could be considered part of the tournament structure.  
+@Glickman2025: Review of methods for estimating team and player strength. So this paper doesn't directly relate to our tournaments paper. We are interested in structure and this paper is interested in estimating strength. However, we are interested in knockout tournements (and other tournament structures) that require seeding, which is estimating player/team strength. So estimating team player/team could be considered part of the tournament structure.
 
 Llull (1283)
 
-@KendallSmith1940: Judges makes consistent preferences.
-All about paired comparisons.  Doesn't seem to be about tournaments.  
+@KendallSmith1940: Judges makes consistent preferences. All about paired comparisons. Doesn't seem to be about tournaments.
 
 @Slater1961 Slater's I (1961): Measure of inconsistency
 

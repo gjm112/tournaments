@@ -1,0 +1,236 @@
+---
+title: |
+  |  \large Tournaments 
+author: | 
+  | \large Zach Culp \vspace{-1.1mm}
+  | \normalsize  \vspace{-1mm}
+  | \normalsize Loyola Chicago \vspace{-1mm}
+  | \normalsize Chicago \vspace{-1mm}
+  | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm}
+  |
+  | \large Josie Peterburgs \vspace{-1.1mm}
+  | \normalsize College of Education \vspace{-1mm}
+  | \normalsize University of Texas at Austin \vspace{-1mm}
+  | \normalsize Austin, TX 78712 \vspace{-1mm}
+  | \normalsize [`brian.mills@austin.utexas.edu`](mailto:brian.mills@austin.utexas.edu) \vspace{-1mm}
+  |
+  | \large Ryan McShane \vspace{-1.1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
+  | \normalsize [`lderango@luc.edu`](mailto:lderango@luc.edu) \vspace{-1mm}
+  |
+  | \large Gregory J. Matthews \vspace{-1.1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
+  | \normalsize Center for Data Science and Consulting \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
+  | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
+abstract: | 
+ | Here is the abstract.
+ | 
+  \vspace{2mm}
+  | Keywords: survival analysis, hockey
+bibliography: references.bib
+fontsize: 12pt
+link-citations: true
+linkcolor: cyan
+urlcolor: cyan
+output:
+  pdf_document:
+    df_print: kable
+    number_sections: true
+    keep_tex: true
+header-includes:
+ \usepackage{setspace}
+ \setstretch{1.15}
+ \usepackage{float}
+ \floatplacement{figure}{t}
+---
+
+```{r setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.align = "center",
+	message = FALSE,
+	warning = FALSE
+)
+
+gjm <- function(x, color = "red") {
+  sprintf("\\textcolor{%s}{%s}", color, x)}
+```
+
+```{r pkgs}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+theme_set(theme_minimal())
+```
+
+# Introduction
+There are hundreds of different tournament structures that dictate how a set of teams compete against each other to determine an overall ranking. Different tournament structures have unique strengths and weaknesses, affecting how well they reflect the true rankings of the teams. The goal of a tournament is to find the best teams, but how can we quantify how well a tournament performs? In some instances, the tournament organizers only award the overall winner, but other times, the top three or ten teams are awarded. Because of this, organizers may prefer one structure over another based on their needs. Tournament organizers must also take into account factors like cost, timeliness, entertainment value, and fairness when choosing a tournament structure.
+
+      
+To evaluate a tournament’s effectiveness, we propose a numerical metric that quantifies how accurately it orders teams based on their true rankings. Tournament results can be viewed as a "message" attempting to convey the true team rankings. However, various factors introduce noise, leading to information loss. We use principles from information theory to measure this information loss across multiple tournament simulations to assess the reliability of different formats.
+
+
+
+
+# Methods
+Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 > \theta_2 > \ldots > \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when theta is sorted from largest to smallest so that $r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an $n$- dimensional vector valued random variable that gives the results of a tournament as a vector of the indexes of the vector $\boldsymbol{\theta}$.  The index in the first position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished first, the index in the second position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished second, and so on.
+
+For example, in a 4 team tournament, $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that the team with index 3 (i.e. the true third best team) won the tournament, the true second best team finished second, the true best team finished third and the true 4th team finished 4th in that particular tournament.  If $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (1, 2, 3, 4), this means that the random outcome of the tournament was the same as the true ordering of the teams.  
+
+If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the "goodness" of a tournament in terms of its ability to accurately transmit the true ranking.  We can then use concepts from information theory to assess the ability of a tournament to correctly rank teams.  Specifically, we start with the concept of mutual information (CITE).  For two random variables $X$ and $Y$ mutual information is defined as: 
+
+$$
+I(X;Y)=\sum_{y\in Y}\sum_{x\in X}p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$.
+
+In our setting, we replace $X$ and $Y$ with $r(\boldsymbol{\theta})$ and $\hat{r}(T(\phi, s),\boldsymbol{\theta})$, and we could seek to estimate $I(r(\boldsymbol{\theta}),\hat{r}(T(\phi, s),\boldsymbol{\theta}))$.  For simplicity, we drop the arguments from the functions $r$ and $\hat{r}$ for ease of exposition.
+
+We note here that $r$ is not a random variable, however, since the indexing of the teams in the vector $\boldsymbol{\theta}$ is arbitrary (we use 1, 2, 3, etc. for convenience, but any indexing is valid), we can view this a random variable where all permutation so of the $n$ teams are equally likely.  Therefore when calculating  the mutual information in this setting, we set $p(r) = \frac{1}{n!}$.  By a similar argument we set $p(\hat{r}) = \frac{1}{n!}$.   
+
+We define the mutual information of $r$ and $\hat{r}$ to be: 
+
+$$
+I(r,\hat{r})=\sum_{r}\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})} = n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{(\frac{1}{n!})^2}
+$$.
+
+While there are $n!$ different permutations for the result of $r$, we don't need to sum across these as any specific choice of $r$ is just an arbitrary labeling of the true strength parameters vector $\boldsymbol{\theta}$.  So given $r$, the distribution of $\hat{r}$ is the same up to the labeling.  Therefore, we only need to consider a single permutation of $r$, we compute the the quantity inside the summation, and then multiple by $n!$ (effectively summing across $r$).
+
+In order to compute this quantity, we need to compute $p(r,\hat{r})$.  This probability is found by calculating the probability of a given permutation of $\hat{r}$ and $r$ is assumed to be the permutation from $\{1, 2, \ldots, n\}$.  We estimate $p(r,\hat{r})$ empirically through simulation.  
+
+However, using mutual information in this form does not suit our needs in this setting.  The problem is that mutual information in this form will yield high values of mutual information when the output from the tournament $\hat{r}$ is highly consistent *even if the ranking from the tournament is incorrect*.  As an example, if $n=4$ and the true order of \boldsymbol{\theta} is $r = \{1, 2, 3, 4\}$ and $p(\hat{r} = \{4, 3, 2, 1\}) = 1$ will be the same mutual information as when $r = \{1, 2, 3, 4\}$ and $p(\hat{r} = \{1, 2, 3, 4\}) = 1$ and in both of these cases the mutual information will be maximized at: 
+
+
+$$
+I(r,\hat{r})= n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{\left(\frac{1}{n!}\right)^2} = n! log((n!)^2)
+$$
+and for the specific case when $n=4$ would be: 
+$$
+4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
+$$. 
+
+In order to alleviate this problem, we instead consider *weighted* mutual information.  We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$.  There are any number of reasonable choices for this weighting function, and we choose to use squared error.  Specifically, 
+$$
+w(r, \hat{r}) = 
+
+\left\{  
+\begin{array}{cc}
+    \begin{array}{cc}
+      \frac{1}{\hat{r}'r} & r \ne \hat{r} \\
+      1 & r = \hat{r} \\
+    \end{array}
+\end{array}
+\right. 
+$$
+In general, though any loss function $l(r, \hat{r})$ can be used:
+$$
+w(r, \hat{r}) = 
+
+\left\{  
+\begin{array}{cc}
+    \begin{array}{cc}
+      \frac{1}{l(r, \hat{r})} & r \ne \hat{r} \\
+      1 & r = \hat{r} \\
+    \end{array}
+\end{array}
+\right. 
+$$
+
+
+
+
+Note that one is 1/N!
+
+And this does work because consistently getting the order incorrect is perfect information.  
+
+
+
+
+
+
+
+$$
+I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$
+
+
+
+
+
+
+
+Let $x$ be  
+
+x is the true ranking and y is the output
+
+
+
+
+Rajski's distance: 
+$$
+1 - \frac{I(X,Y)}{H(X,Y)}
+$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- # ryan way  -->
+<!-- Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with an associated true strength parameter $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that $(\theta_1 < \theta_2 < \ldots < \theta_n)$.  Next, let $r(\boldsymbol{\theta})$ be the rank of the vector $\boldsymbol{\theta}$ from largest to smallest so that $r(\boldsymbol{\theta}) = \{n, n-1, \ldots, 2, 1\}$.  Next define $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$.  $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (i.e. round robin) or determined as the tournament progresses (i.e. single elimination tournament).  We then let  $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be a vector valued random variable that gives the results of a tournament as a vector of ranks.   -->
+
+<!-- Figure out what $\hat{r}$ should look like.   -->
+
+
+
+
+
+
+
+
+$r = \{1,2,3,4\}$ which is the
+
+
+Let $\boldsymbol{x} = (x_1, x_2, \ldots, x_n)$ be the permutation of indexes of $\boldsymbol{\theta}$ such that $x_1 = {i | \theta_i = max(\boldsymbol{\theta})}$
+
+Let $x$ be  
+
+x is the true ranking and y is the output
+
+$$
+I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+$$
+
+
+Rajski's distance: 
+$$
+1 - \frac{I(X,Y)}{H(X,Y)}
+$$
+
+
+# Results
+
+Zach, put your stuff here.
+
+# Conclusion {#sec:conclusion}
+
+
+
+# Acknowledgements {-}
+
+# Supplementary Material {-}
+
+# References
+
+
+
