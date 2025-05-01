@@ -211,7 +211,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
         losses_team2 <- 0
         for (game in 1:series){
           match_winner <- simulate_match(team1, team2, strength1, strength2)
-          #cat(sprintf("Matchup:  %s vs %s | Strengths: %.2f vs %.2f | Winner: %s\n", team1, team2, strength1, strength2, match_winner))
+          cat(sprintf("Matchup:  %s vs %s | Strengths: %.2f vs %.2f | Winner: %s\n", team1, team2, strength1, strength2, match_winner))
           if(!is.na(team1)) {
           if (match_winner == team1) {
             wins_team1 <- wins_team1 + 1
@@ -230,7 +230,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
         }
         # Update the game_wins and game_losses outside of the loop
         if (!any(is.na(c(team1, team2)))) {
-          #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+          cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
         permuted_df <- permuted_df %>%
           mutate(game_wins = case_when(
             true_rank == team1 ~ game_wins + wins_team1,
@@ -246,7 +246,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
         # Determine the match winner based on series results
         series_winner <- ifelse(wins_team1 > wins_team2, team1, team2)
         series_loser <- ifelse(series_winner == team1, team2, team1)
-        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n: | Loser: %s\n", team1, team2, series_winner, series_loser))
+        cat(sprintf("Matchup:  %s vs %s | Winner: %s\n: | Loser: %s\n", team1, team2, series_winner, series_loser))
         next_winners <- c(next_winners, series_winner)
         round_losers <- c(round_losers, series_loser)
     }
@@ -259,7 +259,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
     # Losers' bracket
     if (length(losers_bracket) > 0) {
       if(length(losers_bracket) > 1){
-      #cat("\n--- Loser's Bracket --- \n")
+      cat("\n--- Loser's Bracket --- \n")
       }
       next_losers <- c()
       
@@ -309,7 +309,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
           }
         }
         if (!any(is.na(c(team1, team2)))) {
-          #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+          cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
           permuted_df <- permuted_df %>%
           mutate(game_wins = case_when(
             true_rank == team1 ~ game_wins + wins_team1,
@@ -331,7 +331,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
         series_loser <- ifelse(wins_team1 > wins_team2, team2, team1)
         next_losers <- c(next_losers, series_winner)
         eliminated <- c(eliminated, series_loser)
-        #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
+        cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, series_winner))
         }
       }
         team_rank <- team_rank - 1
@@ -344,7 +344,7 @@ simulate_double_elimination_tournament <- function(num_teams,distribution,seedin
 if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
   
 # Final matchup between winners and losers
-    #cat("\n--- Final Match ---\n")
+    cat("\n--- Final Match ---\n")
     final_match <- c(winners_bracket, losers_bracket)
     if(length(final_match) == 2){
     team1 <- final_match[1]
@@ -372,7 +372,7 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
       }
     }
     if (!any(is.na(c(team1, team2)))) {
-      #cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
+      cat(sprintf("Losses - %s: %d | %s: %d\n", team1, losses_team1, team2, losses_team2))
       permuted_df <- permuted_df %>%
         mutate(game_wins = case_when(
           true_rank == team1 ~ game_wins + wins_team1,
@@ -387,11 +387,11 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
     }
       
     if (wins_team1 > wins_team2) {
-      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
+      cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
       permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
       permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
     } else {
-      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
+      cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
       # second game if the loser's bracket team wins
       for (game in 1:series) {
       match_winner <- simulate_match(team1, team2, strength1, strength2)
@@ -408,7 +408,7 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
       }
     }
       if (!any(is.na(c(team1, team2)))) {
-        #cat(sprintf("Wins - %s: %d | %s: %d\n", team1, wins_team1, team2, wins_team2))
+        cat(sprintf("Wins - %s: %d | %s: %d\n", team1, wins_team1, team2, wins_team2))
         permuted_df <- permuted_df %>%
           mutate(game_wins = case_when(
             true_rank == team1 ~ game_wins + wins_team1,
@@ -422,11 +422,11 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
           ))
       }
       if (wins_team1 > wins_team2) {
-      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
+      cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team1))
       permuted_df$rank_hat[permuted_df$true_rank == team1] <- 1
       permuted_df$rank_hat[permuted_df$true_rank == team2] <- 2
     } else {
-      #cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
+      cat(sprintf("Matchup:  %s vs %s | Winner: %s\n:", team1, team2, team2))
       permuted_df$rank_hat[permuted_df$true_rank == team2] <- 1
       permuted_df$rank_hat[permuted_df$true_rank == team1] <- 2
         }
@@ -444,7 +444,7 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
     final_results <- final_results %>%
       filter(!is.na(true_rank)) %>%
       arrange(true_rank) %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "first"))
+      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
   }
   else{
     final_results <- final_results %>%
@@ -460,7 +460,7 @@ if (length(winners_bracket) == 1 && length(losers_bracket) == 1) {
   return(final_results)
 }
 
-#test <- simulate_double_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1)
+test <- simulate_double_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1)
 #test
 #manual_test <- simulate_double_elimination_tournament(num_teams = 4, distribution = "Manual", ties=F, series=1)
 #manual_test

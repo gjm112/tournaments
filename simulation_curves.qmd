@@ -32,90 +32,105 @@ $$
 
 The baseline curve is the same conditional probabilities solved if each team had the same true rank (each team would be equally likely to win every game). Points above the baseline curve suggest that the tournament structure is more accurate to the true ranks than random chance.
 
+proportion of times $R_1 = 1$ and $R_1 = 1 \text{ or } 2 \text{ and } R_2 = \text{1 or 2}$ etc.
+
+also do counts
+
 ## Calculating the Curve
 
 ```{r}
+library(tidyverse)
 curve <- function(sim, num_teams) {
   probability <- numeric(num_teams)
+  denominator <- nrow(sim)
+  prob_data <- data.frame(rank = 1:num_teams, probability = numeric(num_teams))
+  
   for (i in 1:num_teams) {
-    if (i == 1) {
-      probability[i] <- nrow(sim[sim$rank_hat == 1 & sim$true_rank == 1, ]) / length(unique(sim$simulation))
-    } else {
-      top_ranks <- sim[sim$rank_hat <= (i - 1) & sim$true_rank <= (i - 1), ]
-      better_teams <- 1:(i - 1)
-      numerator <- sum(sapply(unique(top_ranks$simulation), function(sim_id) {
-        sim_subset <- sim[sim$simulation == sim_id, ]
-        if (all(better_teams %in% sim_subset$true_rank[sim_subset$rank_hat <= (i - 1)])) {
-           return(sum(sim_subset$rank_hat == i & sim_subset$true_rank == i))
-        } else {
-          return(0)
-        }
-      }))
-      denominator <- sum(sapply(unique(top_ranks$simulation), function(sim_id) {
-        sim_subset <- top_ranks[top_ranks$simulation == sim_id, ]
-        all(better_teams %in% sim_subset$true_rank)
-      }))
-      probability[i] <- numerator / denominator
-    }
+    prob_data$probability[i] <- nrow(sim[sim$rank_hat <= i & sim$true_rank <= i,]) / denominator
   }
-  
-  # Baseline probabilities
-  baseline_prob <- 1 / (num_teams:1)
-  baseline <- data.frame(x = 1:num_teams, y = baseline_prob)
-  baseline$line <- "Baseline"
-    
-  # Simulated probabilities
-  probabilities <- data.frame(x = 1:num_teams, y = probability)
-  probabilities$line <- "Simulated"
-    
-  # Combine for plotting
-  test_plot <- rbind(baseline, probabilities)
-  
-  # Generate ggplot
-  p <- ggplot(data = test_plot, aes(x = x, y = y, color = line, group = line)) +
-    geom_point() +
-    geom_line() +
-    ylim(0, 1) +
-    labs(
-      x = "Rank",
-      y = "Conditional Probability",
-      title = "Simulated vs Baseline Conditional Probabilities"
-    ) +
-    theme_minimal()
-  
-  return(p)
+  return(prob_data)
 }
-
-```
-
-### Round Robin Tournament Structure
-
-```{r}
-rr_probs_plot <- curve(test_rr, 8)
-print(rr_probs_plot)
 
 # with randomly assigning ties
 test_rr_noTies <- test_rr %>%
   group_by(simulation) %>%
   mutate(rank_hat = rank(rank_hat,ties.method="random"))
-rr_noTies_probs_plot <- curve(test_rr_noTies, 8)
-print(rr_noTies_probs_plot)
-
-```
-
-### Single Elimination Tournament Structure
-
-```{r}
-se_norm_results$simulation <- rep(1:10000, each = nrow(se_norm_results) / 10000)
+# Get probabilities for Round Robin and Single Elimination
+rr_probs_plot <- curve(test_rr_noTies, 8)
 se_probs_plot <- curve(se_norm_results, 8)
-print(se_probs_plot)
+de_probs_plot <- curve(de_norm_results_eight,8)
+
+# Add line label to each dataset
+rr_probs_plot$line <- "Round Robin"
+se_probs_plot$line <- "Single Elimination"
+de_probs_plot$line <- "Double Elimination"
+
+# Combine all data for plotting
+test_plot <- rbind(rr_probs_plot, se_probs_plot, de_probs_plot)
+
+# Generate ggplot
+ggplot(data = test_plot, aes(x = rank, y = probability, color = line, group = line)) +
+  geom_point() +
+  geom_line() +
+  ylim(0, 1) +
+  labs(
+    x = "Rank",
+    y = "Probability",
+    title = "Probabilities"
+  ) +
+  theme_minimal()
+
 
 ```
 
-### Double Elimination Tournament Structure
-
 ```{r}
-de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
-de_probs_plot <- curve(de_norm_results_eight, 8)
-print(de_probs_plot)
+count_curve <- function(sim, num_teams) {
+  prob_data <- data.frame(rank = 1:num_teams, probability = numeric(num_teams))
+  
+  num_sims <- length(unique(sim$simulation)) 
+  
+  for (i in 1:num_teams) {
+    count <- sum(sapply(unique(sim$simulation), function(simulation) {
+      subset_sim <- sim[sim$simulation == simulation, ]
+      top_true <- subset_sim[order(subset_sim$true_rank), ][1:i, "true_rank"]
+      top_hat <- subset_sim[order(subset_sim$rank_hat), ][1:i, "true_rank"]
+      all(top_true %in% top_hat)
+    }))
+    
+    prob_data$probability[i] <- count / num_sims
+  }
+  
+  return(prob_data)
+}
+
+de_norm_results$simulation <- rep(1:10000, each = nrow(de_norm_results) / 10000)
+se_norm_results$simulation <- rep(1:10000, each = nrow(se_norm_results) / 10000)
+# with randomly assigning ties
+test_rr_noTies <- test_rr %>%
+  group_by(simulation) %>%
+  mutate(rank_hat = rank(rank_hat,ties.method="random"))
+# Get probabilities for Round Robin and Single Elimination
+rr_count_plot <- count_curve(test_rr_noTies, 8)
+se_count_plot <- count_curve(se_norm_results %>% filter(num_teams==8), 8)
+de_count_plot <- count_curve(de_norm_results %>% filter(num_teams==8),8)
+
+# Add line label to each dataset
+rr_count_plot$line <- "Round Robin"
+se_count_plot$line <- "Single Elimination"
+de_count_plot$line <- "Double Elimination"
+
+# Combine all data for plotting
+test_plot <- rbind(rr_count_plot, se_count_plot, de_count_plot)
+
+# Generate ggplot
+ggplot(data = test_plot, aes(x = rank, y = probability, color = line, group = line)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    x = "Rank",
+    y = "Count",
+    title = "Counts"
+  ) +
+  theme_minimal()
+
 ```

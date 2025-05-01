@@ -1,5 +1,5 @@
 tourn <- do.call(rbind, args = combinat::permn(1:8))
-
+tourn
 dist <- apply(X = tourn, MARGIN = 1, FUN = function(x){
   if (sum(x[5:8] == 1) > 0) {
     x[1:8] <- x[c(5:8, 1:4)]
