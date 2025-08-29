@@ -4,13 +4,13 @@ title: |
 author: | 
   | \large Zach Culp \vspace{-1.1mm}
   | \normalsize  \vspace{-1mm}
-  | \normalsize Loyola Chicago \vspace{-1mm}
-  | \normalsize Chicago \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
-  | \large Josie Peterburgs \vspace{-1.1mm}
-  | \normalsize College of Education \vspace{-1mm}
-  | \normalsize University of Texas at Austin \vspace{-1mm}
-  | \normalsize Austin, TX 78712 \vspace{-1mm}
+  | \large Josie Peterburs \vspace{-1.1mm}
+  | \normalsize \vspace{-1mm}
+  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Ryan McShane \vspace{-1.1mm}
   | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
@@ -23,14 +23,15 @@ author: |
   | \normalsize Loyola University Chicago \vspace{-1mm}
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm}
-  | \normalsize [`brian.mills@austin.utexas.edu`](mailto:brian.mills@austin.utexas.edu) \vspace{-1mm}
-  | \normalsize [`lderango@luc.edu`](mailto:lderango@luc.edu) \vspace{-1mm}
+  | \normalsize [`zculp@luc.edu`](mailto:zculp@luc.edu) \vspace{-1mm}
+  | \normalsize [`jpeterburs@luc.edu`](mailto:jpeterburs@luc.edu) \vspace{-1mm}
+  | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm}
   | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
 abstract: | 
- | Here is the abstract.
+ | We evaluate multiple tournament formats to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Remarkable" weights are applied to look at only the top n teams/competitors in a tournament. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each tournament design.
  | 
   \vspace{2mm}
-  | Keywords: survival analysis, hockey
+  | Keywords: tournament structures, mutual information
 bibliography: references.bib
 fontsize: 12pt
 link-citations: true
@@ -134,7 +135,7 @@ information is defined as:
 
 $$
 I(X;Y)=\sum_{y\in Y}\sum_{x\in X}p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
-$$.
+$$
 
 In our setting, we replace $X$ and $Y$ with $r(\boldsymbol{\theta})$ and
 $\hat{r}(T(\phi, s),\boldsymbol{\theta})$, and we could seek to estimate
@@ -154,7 +155,7 @@ We define the mutual information of $r$ and $\hat{r}$ to be:
 
 $$
 I(r,\hat{r})=\sum_{r}\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})} = n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{(\frac{1}{n!})^2}
-$$.
+$$
 
 While there are $n!$ different permutations for the result of $r$, we
 don't need to sum across these as any specific choice of $r$ is just an
@@ -175,7 +176,7 @@ in this setting. The problem is that mutual information in this form
 will yield high values of mutual information when the output from the
 tournament $\hat{r}$ is highly consistent *even if the ranking from the
 tournament is incorrect*. As an example, if $n=4$ and the true order of
-\boldsymbol{\theta} is $r = \{1, 2, 3, 4\}$ and
+$\boldsymbol{\theta}$ is $r = \{1, 2, 3, 4\}$ and
 $p(\hat{r} = \{4, 3, 2, 1\}) = 1$ will be the same mutual information as
 when $r = \{1, 2, 3, 4\}$ and $p(\hat{r} = \{1, 2, 3, 4\}) = 1$ and in
 both of these cases the mutual information will be maximized at:
@@ -184,54 +185,67 @@ $$
 I(r,\hat{r})= n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{\left(\frac{1}{n!}\right)^2} = n! log((n!)^2)
 $$ and for the specific case when $n=4$ would be: $$
 4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
-$$.
+$$
 
 In order to alleviate this problem, we instead consider *weighted*
 mutual information. We want to give more weight to permutations from
 $\hat{r}$ that are "closer" to $r$. There are any number of reasonable
 choices for this weighting function, and we choose to use squared error.
-Specifically, \$\$ w(r, \hat{r}) =
+Specifically,
 
-\\left{\
+$$
+w(r, \hat{r}) =
+\begin{cases}
+\frac{1}{\hat{r}'r}, & r \ne \hat{r} \\
+1, & r = \hat{r}
+\end{cases}
+$$
 
-\begin{array}{cc}
-    \begin{array}{cc}
-      \frac{1}{\hat{r}'r} & r \ne \hat{r} \\
-      1 & r = \hat{r} \\
-    \end{array}
-\end{array}
-
-\right. $$
 In general, though any loss function $l(r, \hat{r})$ can be used:
-$$ w(r, \hat{r}) =
 
-\\left{\
-
-\begin{array}{cc}
-    \begin{array}{cc}
-      \frac{1}{l(r, \hat{r})} & r \ne \hat{r} \\
-      1 & r = \hat{r} \\
-    \end{array}
-\end{array}
-
-\right. \$\$
+$$
+w(r, \hat{r}) =
+\begin{cases}
+\frac{1}{l(r, \hat{r})}, & r \ne \hat{r} \\
+1, & r = \hat{r}
+\end{cases}
+$$
 
 Note that one is 1/N!
 
 And this does work because consistently getting the order incorrect is
 perfect information.
 
+However, because the number of teams that need to be accurately ordered
+differs based on the tournament organizers, a second weighting function
+was found to portray the importance, or remarkability, of each value in
+$\hat{r}$. We call these "remarkable weights" ($m(r)$) to differentiate
+from the other weighting function. "Remarkable weights" are set to allow
+for a subjective belief of what determines a good tournament. For a
+four-team tournament, if the user decides that only the winner is
+important, then $m(r) = \{1,0,0,0\}$. However, if the organizers want an
+accurate leaderboard with the winner as the most important, then a
+potential $m(r)$ could be $\{3,1,1,0\}$. With the addition of the
+weighting functions, the formula for mutual information is updated:
+
 $$
-I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+I(X;Y)=\sum_{r}\sum_{\hat{r}} w(r,\hat{r}) * m(r) * p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
 $$
 
-Let $x$ be
-
-x is the true ranking and y is the output
-
-Rajski's distance: $$
-1 - \frac{I(X,Y)}{H(X,Y)}
+Because this mutual information is unitless, the formula can be
+standardized to be between 0 and 1 using the complement of Rajski's
+distance: $$
+1 - (1 - \frac{I(X,Y)}{\text{max\{}H(X), H(Y)\}})
 $$
+
+where $H(X,Y)$ is entropy given by:
+
+$$
+max\{H(X), H(Y)\} = \sum_{r}  p(r) \log p(r) = n! \log n!
+$$
+
+The complement is taken so that the more accurate tournaments are closer
+to 1 and the less accurate are closer to 0.
 
 <!-- # ryan way  -->
 
@@ -239,23 +253,7 @@ $$
 
 <!-- Figure out what $\hat{r}$ should look like.   -->
 
-$r = \{1,2,3,4\}$ which is the
-
-Let $\boldsymbol{x} = (x_1, x_2, \ldots, x_n)$ be the permutation of
-indexes of $\boldsymbol{\theta}$ such that
-$x_1 = {i | \theta_i = max(\boldsymbol{\theta})}$
-
-Let $x$ be
-
-x is the true ranking and y is the output
-
-$$
-I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
-$$
-
-Rajski's distance: $$
-1 - \frac{I(X,Y)}{H(X,Y)}
-$$
+<!-- Let $\boldsymbol{x} = (x_1, x_2, \ldots, x_n)$ be the permutation of indexes of $\boldsymbol{\theta}$ such that $x_1 = {i | \theta_i = max(\boldsymbol{\theta})}$ -->
 
 # Results
 
@@ -297,8 +295,55 @@ robin and single elimination become.
 
 # Conclusion {#sec:conclusion}
 
+This study introduced a weighted mutual information framework to
+evaluate the effectiveness of different tournament formats in preserving
+the true underlying rankings of teams. By simulating tournaments with
+varying seeding structures and applying an information-theoretic
+approach, we quantified how accurately each format conveys ranking
+information. Our findings confirm the intuitive advantage of round robin
+tournaments, which consistently outperformed single and double
+elimination formats in ranking accuracy. Additionally, we observed that
+seeding plays a critical role: poor seeding structures can significantly
+degrade performance, in some cases making outcomes less informative than
+random chance.
+
+These results underscore the trade-off between tournament accuracy and
+practical constraints such as time, cost, and entertainment value. While
+round robin offers the highest fidelity to true rankings, it is often
+impractical for large tournaments, highlighting the need for hybrid or
+adaptive structures that balance accuracy with logistical feasibility.
+
+Future work should extend this analysis to scenarios with more
+tournament structures, more teams, incorporate probabilistic strength
+models reflecting real-world uncertainty, and explore alternative
+weighting schemes for different competitive priorities (e.g., top-4
+accuracy versus full ranking). Applying these methods to actual
+tournament data could further validate their usefulness for organizers
+aiming to design fair and informative competitions.
+
 # Acknowledgements {.unnumbered}
+
+We thank the Department of Mathematics and Statistics at Loyola
+University Chicago for their support and resources in conducting this
+study. No external funding was received for this research.
 
 # Supplementary Material {.unnumbered}
 
+All supplementary material available at
+<https://github.com/gjm112/tournaments>.
+
 # References
+
+Rajski, C. (1961). "A metric space of discrete probability
+distributions". Information and Control. 4 (4): 371–377.
+[doi:10.1016/S0019-9958(61)80055-7](doi:10.1016/S0019-9958(61)80055-7){.uri}.
+
+McShane, R. (2019). *Modeling Stochastically Intransitive Relationships
+in Paired Comparison Data.* (Doctoral dissertation). Southern Methodist
+University. Retried from
+<https://scholar.smu.edu/hum_sci_statisticalscience_etds/13/>
+
+Karel Devriesere, László Csató, Dries Goossens (2024). "Tournament
+design: A review from an operational research perspective". European
+Journal of Operational Research.
+<https://doi.org/10.1016/j.ejor.2024.10.044>.
