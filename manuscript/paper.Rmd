@@ -1,20 +1,19 @@
 ---
 title: |
-  |  \large Tournaments 
+  |  \large Assessing Ranking Fidelity of Tournament Formats via Weighted Mutual Information
 author: | 
   | \large Zach Culp \vspace{-1.1mm}
-  | \normalsize  \vspace{-1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
   | \normalsize Loyola University Chicago \vspace{-1mm}
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Josie Peterburs \vspace{-1.1mm}
-  | \normalsize \vspace{-1mm}
+  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
   | \normalsize Loyola University Chicago \vspace{-1mm}
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Ryan McShane \vspace{-1.1mm}
-  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
-  | \normalsize Loyola University Chicago \vspace{-1mm}
+  | \normalsize University of Chicago \vspace{-1mm}
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Gregory J. Matthews \vspace{-1.1mm}
@@ -72,6 +71,10 @@ theme_set(theme_minimal())
 ```
 
 # Introduction
+
+@Rajski1961
+@Goosens2024
+@McShane2019
 
 There are hundreds of different tournament structures that dictate how a
 set of teams compete against each other to determine an overall ranking.
@@ -334,16 +337,3 @@ All supplementary material available at
 
 # References
 
-Rajski, C. (1961). "A metric space of discrete probability
-distributions". Information and Control. 4 (4): 371–377.
-[doi:10.1016/S0019-9958(61)80055-7](doi:10.1016/S0019-9958(61)80055-7){.uri}.
-
-McShane, R. (2019). *Modeling Stochastically Intransitive Relationships
-in Paired Comparison Data.* (Doctoral dissertation). Southern Methodist
-University. Retried from
-<https://scholar.smu.edu/hum_sci_statisticalscience_etds/13/>
-
-Karel Devriesere, László Csató, Dries Goossens (2024). "Tournament
-design: A review from an operational research perspective". European
-Journal of Operational Research.
-<https://doi.org/10.1016/j.ejor.2024.10.044>.
