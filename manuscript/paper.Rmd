@@ -1,6 +1,6 @@
 ---
 title: |
-  |  \large Tournaments 
+  | \large Tournaments 
 author: | 
   | \large Zach Culp \vspace{-1.1mm}
   | \normalsize  \vspace{-1mm}
@@ -13,11 +13,13 @@ author: |
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Ryan McShane \vspace{-1.1mm}
+  |	\normalsize  \vspace{-1mm}
   | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
   | \normalsize Loyola University Chicago \vspace{-1mm}
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Gregory J. Matthews \vspace{-1.1mm}
+  |	\normalsize  \vspace{-1mm}
   | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
   | \normalsize Center for Data Science and Consulting \vspace{-1mm}
   | \normalsize Loyola University Chicago \vspace{-1mm}
