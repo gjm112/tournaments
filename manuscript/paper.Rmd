@@ -81,19 +81,40 @@ theme_set(theme_minimal())
 
 
 
-There are hundreds of different competitions structures that dictate how a set of teams compete against each other to determine an overall ranking.  Common structures include bracket tournaments where if a team wins their competition they advance to the next round.  Bracket tournaments can be run as single elimination where competitors advance or are eliminated based on a single match (e.g. NCAA College Basketball Tournament, National Football League (NFL) playoffs, major tennis tournaments) or where each round is contested as a best of $k$ series (e.g. $k$ = 7: National Basketball Association (NBA) playoffs, National Hockey League (NHL) playoffs, $k$ varies by round: Major League Baseball (MLB), Women's National Basketball Association (WNBA)) and the series winner advance while the series loser is eliminated.  Additional styles of the bracket tournaments include variations where competitors are not eliminated after a single loss such as double elimination tournaments where competitors continue until they have lost twice.  Within double elimination tournament, there are several variations.  For instance, the NCAA College Wrestling tournament is a double elimination tournament, however, if a competitor loses a match they fall into the consolation bracket and the best they can finish after a loss before the finals is 3rd place making this not a "true" double elimination format.  Olympic judo uses a variant of this system with single elimination until the quarterfinals followed by a consolation bracket consisting of the four quarterfinal losers who still have a chance for a bronze medal (in Olympic judo they award two bronze medals to the two  competitors who each win their side of the consolation bracket). 
+There are hundreds of different competitions structures that dictate how a set of teams compete against each other to determine an overall ranking.  Common structures include bracket tournaments where if a team wins their competition they advance to the next round.  Bracket tournaments can be run as single elimination where competitors advance or are eliminated based on a single match (e.g. NCAA College Basketball Tournament, National Football League (NFL) playoffs, major tennis tournaments) or where each round is contested as a best of $k$ series (e.g. $k$ = 7: National Basketball Association (NBA) playoffs, National Hockey League (NHL) playoffs, $k$ varies by round: Major League Baseball (MLB), Women's National Basketball Association (WNBA)) and the series winner advance while the series loser is eliminated.  Additional styles of the bracket tournaments include variations where competitors are not eliminated after a single loss such as double elimination tournaments where competitors continue until they have lost twice.  Within double elimination tournament, there are several variations.  For instance, the NCAA College Wrestling tournament is a double elimination tournament, however, if a competitor loses a match they fall into the consolation bracket and the best they can finish after a loss before the finals is 3rd place making this not a "true" double elimination format.  Olympic judo uses a variant of this system with single elimination until the quarterfinals followed by a consolation bracket consisting of the four quarterfinal losers who still have a chance for a bronze medal^[in Olympic judo they award two bronze medals to the two  competitors who each win their side of the consolation bracket]. 
 
-"True" double elimination - a bracket tournament where a competitor can still finish ranked first as long as a competitor has not lost two games - is used in NCAA baseball and softball for certain rounds in their postseason.  Additional variants of double elimination include double elimination brackets with a "true third" match which includes an additional match contested between the competitors ranked 2nd (loser of the finals) and 3rd (winner of the consolation bracket) at the end of the tournament *if they have not already competed against each other*. There is also a variation of double elimination where only those competitors who have lost to a competitor that makes the finals are placed into the consolation bracket and given the chance to compete for third place.  This style of competition is used in Olympic wrestling (both freestyle and Greco-Roman).  As in Olympic judo, Olympic wrestling also award two bronze medals to the winners of each side of the consolation bracket. 
+"True" double elimination - a bracket tournament where a competitor can still finish ranked first as long as a competitor has not lost two games - is used in NCAA baseball and softball for certain rounds in their postseason.  Additional variants of double elimination include double elimination brackets with a "true third" match which includes an additional match contested between the competitors ranked 2nd (loser of the finals) and 3rd (winner of the consolation bracket) at the end of the tournament *if they have not already competed against each other*. There is also a variation of double elimination where only those competitors who have lost to a competitor that makes the finals are placed into the consolation bracket and given the chance to compete for third place.  This style of competition is used in Olympic wrestling (both freestyle and Greco-Roman)^[As in Olympic judo, Olympic wrestling also award two bronze medals to the winners of each side of the consolation bracket]. 
 
 <!-- A paragraph about Swiss, Dutch, and Monrad systems -->
 
-In bracket style competitions, only a handful of the match-ups that are possible actually occur.  When every possible competitive pairing occurs, this is referred to as a round-robin structure where every competitor plays every other competitor the same number of times.  Single round-robin, where was possible match-up occurs exactly once, is used in, for examples, the group stage of the FIFA World Cup to create a ranking to determine which teams advance to the next round.  Double round-robin, where each possible pairing occurs twice, is used in association football in English Premier League (EPL) and in chess during the FIDE candidates tournament (a tournament that decides who will challenge the world champion).  
+In bracket style competitions, only a handful of the match-ups that are possible actually occur.  When every possible competitive pairing occurs, this is referred to as a round-robin structure where every competitor plays every other competitor the same number of times.  Single round-robin, where was possible match-up occurs exactly once, is used in, for examples, the group stage of the FIFA World Cup to create a ranking to determine which teams advance to the next round.  Double round-robin, where each possible pairing occurs twice, is used in association football in English Premier League (EPL) and in chess during the FIDE candidates tournament (a tournament that decides who will challenge the world champion).  For the sake of brevity, we review only a small number of possible competition structures, but the interested reader can find a more complete list of competition structures in @Goosens2024, @Appleton1995-zn and @Csato2021.
 
-For the sake of brevity, we review only a small number of possible competition structures, but the interested reader can find a more complete list of competition structures in @Goosens2024 and @Csato2021.
+A natural question of interest after reviewing different types of competition structures is: which competition structure is best?  As with most complicated questions, the answer is "it depends".  One commonsense conceptualization for the best competition structure is that the final rankings produced by a competition structure should closely match the true rankings of the strength of the competitors. That is, a good competition structure should rank the true best team first, the true second best team second, and so on, until finally ranking the true worst team last.  We refer to this property of a competition structure as the efficacy of the structure (@Lasek2018-de, @Sziklai2022-kf).  If one were only interested in correctly ranking the true best competitor as first, with the ranks of the remaining competitors viewed as inconsequential, we refer to this here are effectivity (@Glenn1960-mn).  While there are many competition structures where efficacy and effectivity are useful measures^[efficacy is a useful measure for the EPL, for example, as the ranking of the teams matters at both the high end (i.e. entry into special tournaments) and the low end (i.e. relegation status) and effectivity is a useful measure for the NCAA College Basketball tournament (i.e. main goal is to crown a champion)], there are many other competitions where the correct ranking of more than one competitor, but not all the competitors is of import.  For instance, in Olympic competition, the goal of a competition structure is to correctly rank the top 3 competitors to award gold, silver, and bronze medals to^[Some sports award two bronze medals (e.g. wrestling, judo, boxing, tae kwon do)]. In many American sports, for instance the NFL, the goal of the competition structure of the regular season is to rank the top 7 teams in each conference to choose the playoff teams with the ranking of the teams 8 through 16 in each conference inconsequential in determining a Super Bowl champion^[The ranking of teams outside of the playoffs does matter for draft purposes though].  We coin the term "salient ranks" to refer to the ranks of a competition structure that matter.  That is the ranks 1, 2, and 3 in Olympic competition are the salient ranks in that competition structure.  In this notation, efficacy is a measure with with salient ranks 1 through $n$ where $n$ is the number of competitors, and effectivity is a measure where 1 is the only salient rank.  
+<!-- Efficacy: @Lasek2018-de, @Sziklai2022-kf -->
+<!-- Effectivity: @Glenn1960-mn -->
 
-A natural question of interest after reviewing different types of competition structures is: which tournament structure is best?  
+<!-- From Goosens 2024: The ability of a tournament to rank contestants according to their true strength is called efficacy (Lasek and Gagolewski, -->
+<!-- 2018; Sziklai et al., 2022). Efficacy with respect to only the best player is also known as effectivity (Glenn, 1960) -->
+<!-- or predictive power (Ryvkin and Ortmann, 2008; Vu and Shoham, 2011). -->
 
-Ideally, the final rankings produced by a competition structure should closely match the true rankings of the strength of the competitors.    
+If the only goal of a competition structure was high efficacy of the salient ranks, the best way to achieve this would be to play each pair of possible match ups of competitors as many times as possible.  Of course, this is impossible due to many factors including time constraints, cost constraints, and wear and tear on competitors in high impact sports (e.g. boxing, American football, etc.).  In addition, competitions where the true best team is guaranteed or nearly guaranteed to win may be less appealing to fans and may drive down demand as discussed in @Johnson2022-wz.  
+
+In light of this, many different competition structures have been proposed, several of which are mentioned previously.  Given these many competition structures, ideally there would be a way comparing the performance of different competition structures to each other. 
+
+Here, we propose a novel metric for evaluating different competition structures.  
+
+
+
+<!-- @Marchand2002-tq only cares about the probability of winning in seeded vs random draw knockout tournemnts.   -->
+
+
+
+<!-- @Johnson2022-wz: Match outcome uncertainty and the Rottenberg hypothesis -->
+
+
+
+
+
 
 Different competition structures have unique strengths and weaknesses, affecting how well they reflect the true rankings of the teams. The goal of a tournament is to find the best teams, but how can we quantify how well a tournament performs? In some instances, the tournament organizers only award the overall winner, but other times, the top three or ten teams are awarded. Because of this, organizers may prefer one structure over another based on their needs. Tournament organizers must also take into account factors like cost, timeliness, entertainment value, and fairness when choosing a tournament structure.
 
@@ -292,7 +313,9 @@ values using the best and worst results to make the range from 0 to 1,
 with 0 as the worst and 1 as the best. After normalizing, we get the
 following graph (note the y-axis is on a log10 scale):
 
-![](images/Normal_Information_Curve_Graph.png){width="408"}
+![Inofrmartion Curves \label{fig:fig1}](images/Normal_Information_Curve_Graph.png){width="408"}
+
+Figure 1 \ref{fig:fig1}
 
 Based on the graph, the intuitive best tournament, round robin, does
 show to be the best. Double elimination is slightly better than single
@@ -340,8 +363,7 @@ aiming to design fair and informative competitions.
 # Acknowledgements {.unnumbered}
 
 We thank the Department of Mathematics and Statistics at Loyola
-University Chicago for their support and resources in conducting this
-study. No external funding was received for this research.
+University Chicago for their support and resources in conducting this study. We thank Kailey Marie Lum for the suggestion of the term "salient ranks". No external funding was received for this research.
 
 # Supplementary Material {.unnumbered}
 
