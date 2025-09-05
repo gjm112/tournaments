@@ -28,7 +28,7 @@ author: |
   | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm}
   | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
 abstract: | 
- | We evaluate multiple competitions structures to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Salient" weights are applied to look at only the top n teams/competitors in a given competition structure. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each competition design.
+ | We evaluate multiple competitions structures to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Salient" weights are applied to look at only the top i out of n total teams/competitors in a given competition structure. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each competition design.
  | 
   \vspace{2mm}
   | Keywords: tournament structures, mutual information
@@ -125,7 +125,7 @@ $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when $\theta$ i
 $r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$. Next define
 $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure $s$. $\phi$ contains all the information about the scheduling of teams, which could be fully known prior to the tournament (*e.g.* round robin) or determined as the tournament progresses (*e.g.* single elimination tournament). We then let $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an $n$-dimensional vector-valued random variable that gives the results of a tournament as a vector of the indexes of the vector $\boldsymbol{\theta}$. The index in the first position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished first, the index in the second position of the vector $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the team that finished second, and so on.
 
-For example, in a 4 team tournament, $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that the team with index 3 (i.e. the true third best team) won the
+For example, in a $n$ = 4 team tournament, $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that the team with index 3 (i.e. the true third best team) won the
 tournament, the true second best team finished second, the true best team finished third and the true 4th team finished 4th in that particular tournament. If $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (1, 2, 3, 4), this means that the random outcome of the tournament was the same as the true ordering of the teams.
 
 If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the "goodness" of a tournament in terms of its ability to accurately transmit the true ranking. We can then use concepts from information theory to assess the ability of a tournament to correctly rank teams. Specifically, we start with the concept of mutual information (@Guiasu1977-nu). For two random variables $X$ and $Y$ mutual
@@ -138,8 +138,7 @@ $$
 In our setting, we replace $X$ and $Y$ with $r(\boldsymbol{\theta})$ and $\hat{r}(T(\phi, s),\boldsymbol{\theta})$, and we could seek to estimate
 $I(r(\boldsymbol{\theta}),\hat{r}(T(\phi, s),\boldsymbol{\theta}))$. For simplicity, we drop the arguments from the functions $r$ and $\hat{r}$ for ease of exposition.
 
-We note here that $r$ is not a random variable, however, since the
-indexing of the teams in the vector $\boldsymbol{\theta}$ is arbitrary (we use 1, 2, 3, etc. for convenience, but any indexing is valid), we can view this a random variable where all permutation so of the $n$ teams are equally likely. Therefore when calculating the mutual information in this setting, we set $p(r) = \frac{1}{n!}$. By a similar argument we set $p(\hat{r}) = \frac{1}{n!}$.
+We note here that $r$ is not a random variable, however, since the indexing of the teams in the vector $\boldsymbol{\theta}$ is arbitrary (we use 1, 2, 3, etc. for convenience, but any indexing is valid), we can view this a random variable where all permutation so of the $n$ teams are equally likely. Therefore when calculating the mutual information in this setting, we set $p(r) = \frac{1}{n!}$. By a similar argument we set $p(\hat{r}) = \frac{1}{n!}$.
 
 We define the mutual information of $r$ and $\hat{r}$ to be:
 
@@ -147,8 +146,7 @@ $$
 I(r,\hat{r})=\sum_{r}\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})} = n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{(\frac{1}{n!})^2}
 $$
 
-While there are $n!$ different permutations for the result of $r$, we don't need to sum across these as any specific choice of $r$ is just an arbitrary labeling of the true strength parameters vector
-$\boldsymbol{\theta}$. So given $r$, the distribution of $\hat{r}$ is the same up to the labeling. Therefore, we only need to consider a single permutation of $r$, we compute the the quantity inside the summation, and then multiple by $n!$ (effectively summing across $r$).
+While there are $n!$ different permutations for the result of $r$, we don't need to sum across these as any specific choice of $r$ is just an arbitrary labeling of the true strength parameters vector $\boldsymbol{\theta}$. So given $r$, the distribution of $\hat{r}$ is the same up to the labeling. Therefore, we only need to consider a single permutation of $r$, we compute the the quantity inside the summation, and then multiple by $n!$ (effectively summing across $r$).
 
 In order to compute this quantity, we need to compute $p(r,\hat{r})$. This probability is found by calculating the probability of a given permutation of $\hat{r}$ and $r$ is assumed to be the permutation from $\{1, 2, \ldots, n\}$. We estimate $p(r,\hat{r})$ empirically through simulation.
 
@@ -160,8 +158,7 @@ $$ and for the specific case when $n=4$ would be: $$
 4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
 $$
 
-In order to alleviate this problem, we instead consider *weighted*
-mutual information (@Guiasu1977-nu). We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$. 
+In order to alleviate this problem, we instead consider *weighted* mutual information (@Guiasu1977-nu). We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$. 
 
 In general, any loss function $l(r, \hat{r})$ can be used to define the weigting function: 
 
@@ -186,28 +183,26 @@ $$
 
 <!-- And this does work because consistently getting the order incorrect is perfect information. -->
 
-However, because the number of teams that need to be accurately ordered differs based on the choice of salient ranks, a second weighting function, $m(r)$, is used to indicate which ranks are salient.  We call these the "salient weights" to differentiate from the other weighting function.  As an example, for a four-team tournament, if the organizer decides that only the winner is important, then $m(r) = \{1,0,0,0\}$ (i.e. essentially measuring effectivity).  While we only consider indicators (i.e. 0's or 1's) in the salient weights vector, there is no reason why you couldn't weight the ranks by relative levels of importance.  For instance, letting $m(r) = \{3,1,0,0\}$ indicates that the salient ranks are 1 and 2, but getting the true best competitor as the winner is more important than ranking the true second best competitor second.  
+However, because the number of teams that need to be accurately ordered differs based on the choice of salient ranks, a second set of weights is defined, $m$, is used to indicate which ranks are salient.  We call these the "salient weights" to differentiate from the other weighting function.  As an example, for a four-team tournament, if the organizer decides that only the winner is important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity).  While here we only consider indicators (i.e. 0's or 1's) in the salient weights vector, there is no reason why you couldn't weight the ranks by relative levels of importance.  For instance, letting $m = \{3,1,0,0\}$ indicates that the salient ranks are 1 and 2, but getting the true best competitor as the winner is more important than ranking the true second best competitor second.  
 
 With the addition of the weighting functions, the formula for mutual information becomes:
 
 $$
-I(X;Y)=\sum_{r}\sum_{\hat{r}} w(r,\hat{r}) * m(r) * p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+wI_m(r, \hat{r})=\sum_{r}\sum_{\hat{r}} w(r,\hat{r}) * m * p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
 $$
 
-Because this mutual information is unitless, the formula can be
-standardized to be between 0 and 1 using the complement of Rajski's
-distance (@Rajski1961): $$
-1 - (1 - \frac{I(X,Y)}{\text{max\{}H(X), H(Y)\}})
+Because this mutual information is unitless, the formula can be standardized to be between 0 and 1 as follows: 
+$$
+\frac{wI_m(r,\hat{r})}{\text{max\{}H(r), H(\hat{r})\}}
 $$
 
-where $H(X,Y)$ is entropy given by:
+where $H(.)$ is the usual Shannon entropy.  Competition structures with higher levels of efficacy are indicated when our measure is closer to 1.  Likewise, competition structures that are near 0 by our proposed metric indicate low levels of efficacy.  
 
-$$
-max\{H(X), H(Y)\} = \sum_{r}  p(r) \log p(r) = n! \log n!
-$$
+<!-- $$ -->
+<!-- max\{H(X), H(Y)\} = \sum_{r}  p(r) \log p(r) = n! \log n! -->
+<!-- $$ -->
 
-The complement is taken so that the more accurate tournaments are closer
-to 1 and the less accurate are closer to 0.
+
 
 <!-- # ryan way  -->
 
@@ -219,31 +214,27 @@ to 1 and the less accurate are closer to 0.
 
 # Results
 
-In order to fairly compare tournament structures, we assume the true
-strengths of the teams follow a normal distribution, where each team is
-assigned an equally spaced quantile and each team's strength is the
-z-score of its respective quantile. Using this assumption, 10,000
-simulations, all with 8 total teams, were ran for a single game round
-robin (each team plays each other once), a single elimination structure
-with the usual seeding structure (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7), a
-single elimination structure with a poor seeding structure (1 vs 2, 3 vs
-4, 5 vs 6, 7 vs 8). For a better understanding of the results, the best
-possible results (every structure has the best in rank 1, the 2nd best
-in rank 2, etc), the worst possible results (every structure has the
-worst in rank 1, the 2nd worst in rank 2, etc), every possible
-permutation of the ranks once, and a single elimination tournament with
-the usual seeding structure where every team is of equal strengths.
-Because the metric found is unitless, we were able to normalize the
+What's interesting: 
+1. Single and double are really close at 1 or 2, but they separate past 3.  
+2.  The black curve crosses the yellow and green curve. 
+3.  The yellow and black curves actually increases towards the end.  
+
+
+We examined the following structure: 
+ - Single elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
+ - Double elimination 
+
+In order to fairly compare tournament structures, we assume the true strengths of the teams follow a normal distribution, where each team is assigned an equally spaced quantile and each team's strength is the z-score of its respective quantile. Using this assumption, 10,000 simulations, all with 8 total teams, were ran for a single game round robin (each team plays each other once), a single elimination structure
+with the usual seeding structure (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7), a single elimination structure with a poor seeding structure (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8). For a better understanding of the results, the best possible results (every structure has the best in rank 1, the 2nd best in rank 2, etc), the worst possible results (every structure has the worst in rank 1, the 2nd worst in rank 2, etc), every possible permutation of the ranks once, and a single elimination tournament with the usual seeding structure where every team is of equal strengths. Because the metric found is unitless, we were able to normalize the
 values using the best and worst results to make the range from 0 to 1,
 with 0 as the worst and 1 as the best. After normalizing, we get the
 following graph (note the y-axis is on a log10 scale):
 
-![Inofrmartion Curves \label{fig:fig1}](images/Normal_Information_Curve_Graph.png){width="408"}
+![Zach add a caption \label{fig:fig1}](images/Normal_Information_Curve_Graph.png){width="408"}
 
-Figure 1 \ref{fig:fig1}
+Figure \ref{fig:fig1}
 
-Based on the graph, the intuitive best tournament, round robin, does
-show to be the best. Double elimination is slightly better than single
+Based on the graph, the intuitive best tournament, round robin, does show to be the best. Double elimination is slightly better than single
 elimination, with the gap growing wider as the top number of teams
 looked at increases. However, those are under the assumption that the
 true strengths were ordered correctly in the seeding. If there is a poor
