@@ -1,6 +1,6 @@
 ---
 title: |
-  | \large Tournaments 
+  | \large Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information
 author: | 
   | \large Zach Culp \vspace{-1.1mm}
   | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
@@ -13,13 +13,7 @@ author: |
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Ryan McShane \vspace{-1.1mm}
-<<<<<<< HEAD
   | \normalsize University of Chicago \vspace{-1mm}
-=======
-  |	\normalsize  \vspace{-1mm}
-  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
-  | \normalsize Loyola University Chicago \vspace{-1mm}
->>>>>>> bfdc795aca471f5db71f78dd09ca926dbe9a407a
   | \normalsize Chicago, IL 60660 \vspace{-1mm}
   |
   | \large Gregory J. Matthews \vspace{-1.1mm}
@@ -34,7 +28,7 @@ author: |
   | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm}
   | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
 abstract: | 
- | We evaluate multiple tournament formats to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Remarkable" weights are applied to look at only the top n teams/competitors in a tournament. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each tournament design.
+ | We evaluate multiple competitions structures to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Remarkable" weights are applied to look at only the top n teams/competitors in a given competition structure. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each competition design.
  | 
   \vspace{2mm}
   | Keywords: tournament structures, mutual information
@@ -79,21 +73,33 @@ theme_set(theme_minimal())
 
 # Introduction
 
-@Rajski1961
-@Goosens2024
-@McShane2019
+<!-- @Rajski1961 -->
+<!-- @McShane2019 -->
+<!-- Csato 2020: The incentive (in)compatibility of group-based qualification systems. World cup qualifying has problems where teams are better off exerting lower effort -->
 
-There are hundreds of different tournament structures that dictate how a
-set of teams compete against each other to determine an overall ranking.
-Different tournament structures have unique strengths and weaknesses,
-affecting how well they reflect the true rankings of the teams. The goal
-of a tournament is to find the best teams, but how can we quantify how
-well a tournament performs? In some instances, the tournament organizers
-only award the overall winner, but other times, the top three or ten
-teams are awarded. Because of this, organizers may prefer one structure
-over another based on their needs. Tournament organizers must also take
-into account factors like cost, timeliness, entertainment value, and
-fairness when choosing a tournament structure.
+<!-- @Sziklai2022 -->
+
+
+
+There are hundreds of different competitions structures that dictate how a set of teams compete against each other to determine an overall ranking.  Common structures include bracket tournaments where if a team wins their competition they advance to the next round.  Bracket tournaments can be run as single elimination where competitors advance or are eliminated based on a single match (e.g. NCAA College Basketball Tournament, National Football League (NFL) playoffs, major tennis tournaments) or where each round is contested as a best of $k$ series (e.g. $k$ = 7: National Basketball Association (NBA) playoffs, National Hockey League (NHL) playoffs, $k$ varies by round: Major League Baseball (MLB), Women's National Basketball Association (WNBA)) and the series winner advance while the series loser is eliminated.  Additional styles of the bracket tournaments include variations where competitors are not eliminated after a single loss such as double elimination tournaments where competitors continue until they have lost twice.  Within double elimination tournament, there are several variations.  For instance, the NCAA College Wrestling tournament is a double elimination tournament, however, if a competitor loses a match they fall into the consolation bracket and the best they can finish after a loss before the finals is 3rd place making this not a "true" double elimination format.  Olympic judo uses a variant of this system with single elimination until the quarterfinals followed by a consolation bracket consisting of the four quarterfinal losers who still have a chance for a bronze medal (in Olympic judo they award two bronze medals to the two  competitors who each win their side of the consolation bracket). 
+
+"True" double elimination - a bracket tournament where a competitor can still finish ranked first as long as a competitor has not lost two games - is used in NCAA baseball and softball for certain rounds in their postseason.  Additional variants of double elimination include double elimination brackets with a "true third" match which includes an additional match contested between the competitors ranked 2nd (loser of the finals) and 3rd (winner of the consolation bracket) at the end of the tournament *if they have not already competed against each other*. There is also a variation of double elimination where only those competitors who have lost to a competitor that makes the finals are placed into the consolation bracket and given the chance to compete for third place.  This style of competition is used in Olympic wrestling (both freestyle and Greco-Roman).  As in Olympic judo, Olympic wrestling also award two bronze medals to the winners of each side of the consolation bracket. 
+
+<!-- A paragraph about Swiss, Dutch, and Monrad systems -->
+
+In bracket style competitions, only a handful of the match-ups that are possible actually occur.  When every possible competitive pairing occurs, this is referred to as a round-robin structure where every competitor plays every other competitor the same number of times.  Single round-robin, where was possible match-up occurs exactly once, is used in, for examples, the group stage of the FIFA World Cup to create a ranking to determine which teams advance to the next round.  Double round-robin, where each possible pairing occurs twice, is used in association football in English Premier League (EPL) and in chess during the FIDE candidates tournament (a tournament that decides who will challenge the world champion).  
+
+For the sake of brevity, we review only a small number of possible competition structures, but the interested reader can find a more complete list of competition structures in @Goosens2024 and @Csato2021.
+
+A natural question of interest after reviewing different types of competition structures is: which tournament structure is best?  
+
+Ideally, the final rankings produced by a competition structure should closely match the true rankings of the strength of the competitors.    
+
+Different competition structures have unique strengths and weaknesses, affecting how well they reflect the true rankings of the teams. The goal of a tournament is to find the best teams, but how can we quantify how well a tournament performs? In some instances, the tournament organizers only award the overall winner, but other times, the top three or ten teams are awarded. Because of this, organizers may prefer one structure over another based on their needs. Tournament organizers must also take into account factors like cost, timeliness, entertainment value, and fairness when choosing a tournament structure.
+
+
+
+
 
 To evaluate a tournament’s effectiveness, we propose a numerical metric
 that quantifies how accurately it orders teams based on their true
