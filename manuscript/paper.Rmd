@@ -1,32 +1,6 @@
 ---
 title: |
   | \large Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information
-author: | 
-  | \large Zach Culp \vspace{-1.1mm}
-  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
-  | \normalsize Loyola University Chicago \vspace{-1mm}
-  | \normalsize Chicago, IL 60660 \vspace{-1mm}
-  |
-  | \large Josie Peterburs \vspace{-1.1mm}
-  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
-  | \normalsize Loyola University Chicago \vspace{-1mm}
-  | \normalsize Chicago, IL 60660 \vspace{-1mm}
-  |
-  | \large Ryan McShane \vspace{-1.1mm}
-  | \normalsize University of Chicago \vspace{-1mm}
-  | \normalsize Chicago, IL 60660 \vspace{-1mm}
-  |
-  | \large Gregory J. Matthews \vspace{-1.1mm}
-  |	\normalsize  \vspace{-1mm}
-  | \normalsize Department of Mathematics and Statistics \vspace{-1mm}
-  | \normalsize Center for Data Science and Consulting \vspace{-1mm}
-  | \normalsize Loyola University Chicago \vspace{-1mm}
-  | \normalsize Chicago, IL 60660 \vspace{-1mm}
-  | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm}
-  | \normalsize [`zculp@luc.edu`](mailto:zculp@luc.edu) \vspace{-1mm}
-  | \normalsize [`jpeterburs@luc.edu`](mailto:jpeterburs@luc.edu) \vspace{-1mm}
-  | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm}
-  | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm}
 abstract: | 
  | We evaluate multiple competitions structures to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Salient" weights are applied to look at only the top i out of n total teams/competitors in a given competition structure. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each competition design.
  | 
@@ -405,6 +379,27 @@ indicate low levels of efficacy.
 
 # Results
 
+While we have explored many more competition scenarios, for the sake of space we present only results of tournaments with $n$ = 8 with the distribution of true strengths distributed as equally spaced quantiles of a standard normal distribution unless otherwise noted.  In order to simulate each game we compute the probability that team $j$ will beat team $k$ by taking the inverse logit transformation of the differences in their strength parameters such that  
+$$
+p_{jk} = \frac{e^{\theta_j - \theta_k}}{1 + e^{\theta_j - \theta_k}}
+$$
+where $p_{jk}$ is the probability that competitor $j$ deats competitor $k$ and $\theta_j$ and $\theta_k$ are the strength parameters of teams $j$ and $k$, respectively.  
+
+We focus on several simple competition structures focused mainly on variations of bracket tournaments to demonstrate the proof of concept of our proposed metric.  In all cases, where seeding is needed (i.e. all the bracket structures), the seeds are considered to be known and correct reflecting each team's true rank.  Note that in bracket structures, the final rankings of teams not reaching the finals was randomly assigned among possible ranks. For example, if a team in a single elimination bracket lost in the semi-finals, their possible ranks are either 3 or 4 and are equally likely; if a team loses in the quarterfinals in that same tournament , their final rank is randomly assigned from the set of ranks 5 through 8.  Each competition structure was simulated 10,000 times and those results were used to estimate $wI_m(r,\hat{r})$.
+
+Specifically, we examined the following structures:
+
+-   Single elimination bracket, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
+-   Single elimination bracket, bad seeding (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8)
+-   Double elimination bracket, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
+-   Single elimination bracket, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7) matches determined by a coin toss.  
+-   Round Robin, normally distributed strengths
+-   Every Possible Permutation: All possible $8! = 40320$ permutations of rankings are equally likely.
+
+
+
+
+
 ```{=html}
 <!--
 
@@ -422,120 +417,100 @@ indicate low levels of efficacy.
 -->
 ```
 
-We examined the following structure:
+<!-- We examined the following structure: -->
 
--   Single elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
-    and normally distributed strengths
+<!-- -   Single elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7) -->
+<!--     and normally distributed strengths -->
 
--   Single elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
-    and equal strengths (effectively each game is determined by a coin
-    toss)
+<!-- -   Single elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7) -->
+<!--     and equal strengths (effectively each game is determined by a coin -->
+<!--     toss) -->
 
--   Single elimination, bad seeding (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8) and
-    normally distributed strengths
+<!-- -   Single elimination, bad seeding (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8) and -->
+<!--     normally distributed strengths -->
 
--   Every Possible Permutation: One simulation for each $8! = 40320$
-    possible combinations that final rankings may occur
+<!-- -   Every Possible Permutation: One simulation for each $8! = 40320$ -->
+<!--     possible combinations that final rankings may occur -->
 
--   Double elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7)
+<!-- -   Double elimination, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7) -->
 
--   Round Robin, normally distributed strengths
+<!-- -   Round Robin, normally distributed strengths -->
 
-In order to fairly compare tournament structures, we assume the true
-strengths of the teams follow a normal distribution, where each team is
-assigned an equally spaced quantile and each team's strength is the
-z-score of its respective quantile. Using this assumption, 10,000
-simulations, all with 8 total teams, were ran for a single game round
-robin (each team plays each other once), a single elimination structure
-with the usual seeding structure (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7), a
-single elimination structure with a poor seeding structure (1 vs 2, 3 vs
-4, 5 vs 6, 7 vs 8). For a better understanding of the results, the best
-possible results (every structure has the best in rank 1, the 2nd best
-in rank 2, etc), the worst possible results (every structure has the
-worst in rank 1, the 2nd worst in rank 2, etc), every possible
-permutation of the ranks once, and a single elimination tournament with
-the usual seeding structure where every team is of equal strengths.
-Because the metric found is unitless, we were able to normalize the
-values using the best and worst results to make the range from 0 to 1,
-with 0 as the worst and 1 as the best. After normalizing, we get the
-following graph (note the y-axis is on a log10 scale):
+<!-- In order to fairly compare tournament structures, we assume the true -->
+<!-- strengths of the teams follow a normal distribution, where each team is -->
+<!-- assigned an equally spaced quantile and each team's strength is the -->
+<!-- z-score of its respective quantile. Using this assumption, 10,000 -->
+<!-- simulations, all with 8 total teams, were ran for a single game round -->
+<!-- robin (each team plays each other once), a single elimination structure -->
+<!-- with the usual seeding structure (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7), a -->
+<!-- single elimination structure with a poor seeding structure (1 vs 2, 3 vs -->
+<!-- 4, 5 vs 6, 7 vs 8). For a better understanding of the results, the best -->
+<!-- possible results (every structure has the best in rank 1, the 2nd best -->
+<!-- in rank 2, etc), the worst possible results (every structure has the -->
+<!-- worst in rank 1, the 2nd worst in rank 2, etc), every possible -->
+<!-- permutation of the ranks once, and a single elimination tournament with -->
+<!-- the usual seeding structure where every team is of equal strengths. -->
+<!-- Because the metric found is unitless, we were able to normalize the -->
+<!-- values using the best and worst results to make the range from 0 to 1, -->
+<!-- with 0 as the worst and 1 as the best.  -->
 
-![This chart compares the normalized mutual information (on log10 scale)
-of various tournament structures against the number of top teams being
-considered, where the team strengths are equally distanced based on a
-normal distribution.
+ 
+
+![This figure compares the normalized weight mutual information (on log10 scale) of various competition structures against the number of salient ranks. 
 \label{fig:fig1}](images/Normal_Information_Curve_Graph.png){width="408"}
 
-Based on the Figure 1 \ref{fig:fig1} , the intuitive best tournament,
-round robin, does show to be the best. It is important to note that, due
-to the weighting structure, the worst possible score approaches 0 as the
-$i$ number of teams increases, but never reaches 0. So, the plot is
-normalized so that the worst possible is 0 and the best possible is 1.
-This explains the increase for a few of the lines at the end of the
-plot. If there is a poor seeding structure, as seen in the graph, it can
-drastically impact the effectiveness of the tournament. In the extreme
-case seen, the tournament can actually become worse than deciding games
-by random chance (like flipping a coin). Another important discovery is
-that the single elimination structure with equal strengths is better
-than every possible permutation. This is likely because, for a single
-elimination structure, teams that play in the first round cannot both
-advance to the next round in each simulation, leading to slightly more
-information. Additionally, the bad seeding structure overlaps with the
-equal strengths single elimination. This shows that, given that the best
-team is the 1-seed, even a poorly structured single elimination
-structure still results in the best team winning more than by random
-chance. However, because the 2-seed plays the 1-seed in the first round,
-the poor structure results in a less effective result because the top 2
-can never be truly accurate according to the known strengths.
+Figure \ref{fig:fig1} shows the results of the estimated values of $wI_m(r,\hat{r})$ on the y-axis (note the y-axis is on a $log_{10}$ scale) while the x-axis represents the number of salient weights that were considered.  Intuitively, of the competition structures considered here, the round robin (shown in orange) should be the best as it consists of the most match-ups by far of any structure considered here.  Note that it dominates all of the bracket structures regardless of the choice of the number of salient ranks. 
 
-![Plot to further explore the difference between single elimination and
-double elimination competition structures
+The single and double elimination bracket structures with traditional seeding (red and light blue, respectively) are nearly identical and both drastically better than the single elimination tournament with a bad seeding structure (shown in black).  The green curve preserves the structure of a single elimination bracket and has the correct seeding, but picks the winner based on a coin flip rather than weighting simulated outcomes based on the strength of the competitors, whereas the yellow curves shows results where every possible permutation of rankings are equally likely.  The green curve dominates the yellow curve here because there are certain final rank orderings that are not possible in bracket determined by coin flips because of the structure.  So the information that is generated from the tournament is based solely on the seeding structure of the tournament.  Whereas the yellow curve is based on ranks generated from a tournament with essentially no structure at all that happens to generate reasonable rankings occasionally. 
+
+Probably most notable in this figure is the black curve briefly dipping below the yellow and green curves.  What is happening here is that the single elimination tournament with bad seeding (in black) is better when the there is only a single salient rank.  However, when the number of salient ranks is 2, this drops *below* the two curves that are generates based on coin flip outcomes and completely random outcomes.  This is because in this structure the 1 and 2 seed both play each other in the first round meaning that one of them will be eliminated immediately.  Thus under this seeding mechanism, the competition structure simply cannot generate a correct result when the number of salient ranks is 2.  This structure is still below both green and yellow curves when the number of salient ranks is 3, then recovers and climbs above those curves when the number of salient ranks is 4 and continues for the values of salient ranks 5 through 8. 
+
+<!-- , the intuitive best tournament, -->
+<!-- round robin, does show to be the best. It is important to note that, due -->
+<!-- to the weighting structure, the worst possible score approaches 0 as the -->
+<!-- $i$ number of teams increases, but never reaches 0. So, the plot is -->
+<!-- normalized so that the worst possible is 0 and the best possible is 1. -->
+<!-- This explains the increase for a few of the lines at the end of the -->
+<!-- plot. If there is a poor seeding structure, as seen in the graph, it can -->
+<!-- drastically impact the effectiveness of the tournament. In the extreme -->
+<!-- case seen, the tournament can actually become worse than deciding games -->
+<!-- by random chance (like flipping a coin). Another important discovery is -->
+<!-- that the single elimination structure with equal strengths is better -->
+<!-- than every possible permutation. This is likely because, for a single -->
+<!-- elimination structure, teams that play in the first round cannot both -->
+<!-- advance to the next round in each simulation, leading to slightly more -->
+<!-- information. Additionally, the bad seeding structure overlaps with the -->
+<!-- equal strengths single elimination. This shows that, given that the best -->
+<!-- team is the 1-seed, even a poorly structured single elimination -->
+<!-- structure still results in the best team winning more than by random -->
+<!-- chance. However, because the 2-seed plays the 1-seed in the first round, -->
+<!-- the poor structure results in a less effective result because the top 2 -->
+<!-- can never be truly accurate according to the known strengths. -->
+
+![This figure focuses on the difference between single elimination and double elimination competition structures
 \label{fig:fig2}](images/tournament_comparison_plot_se_de.png){width="409"}
 
-Double elimination is slightly better than single elimination, with the
-gap growing wider as the top number of teams looked at increases.
-However, those are under the assumption that the true strengths were
-ordered correctly in the seeding. While double elimination was expected
-to be slightly better than single elimination, the increase in the gap
-is likely due to noise that comes with how ties are handled. Ties led to
-randomly assigning teams to a ranking, but with double elimination,
-there were less ties that had to be dealt with, leading to more accurate
-rankings.
+Figure \ref{fig:fig2} shows the same red and light blue curves representing single and double elimination, respectively, in more detail as show in figure \ref{fig:fig1}. Note that in terms of declaring a champion (i.e. when the number of salient ranks is 1), single and double elimination brackets are nearly identical is their ability to accomplish this. However, double elimination is slightly better than single elimination, with the
+gap growing wider as the number of salient ranks increases.  One clear reason for this is that with double elimination the ranking of teams is "clearer".  That is, in a single elimination tournament the two teams that lose in the semi-finals can equally make a claim as the third best team and in our schema they are randomly assigned to a rank fo 3 or 4.  However, in a double elimination tournament, teams are definitively ranked 3 and 4 leading to beter outcomes when the number of salient ranks is in the range of 3 to 4 (or more).  
+
+<!-- While double elimination was expected -->
+<!-- to be slightly better than single elimination, the increase in the gap is likely due to noise that comes with how ties are handled. Ties led to -->
+<!-- randomly assigning teams to a ranking, but with double elimination, -->
+<!-- there were less ties that had to be dealt with, leading to more accurate -->
+<!-- rankings. -->
 
 # Conclusion {#sec:conclusion}
 
-This study introduced a weighted mutual information framework to
-evaluate the effectiveness of different tournament formats in preserving
-the true underlying rankings of teams. By simulating tournaments with
-varying seeding structures and applying an information-theoretic
-approach, we quantified how accurately each format conveys ranking
-information. Our findings confirm the intuitive advantage of round robin
-tournaments, which consistently outperformed single and double
-elimination formats in ranking accuracy. Additionally, we observed that
-seeding plays a critical role: poor seeding structures can significantly
-degrade performance, in some cases making outcomes less informative than
-random chance.
+This study introduced a weighted mutual information framework to evaluate the effectiveness of different competition formats in preserving the true underlying rankings of teams. We also introduce the concept of salient ranks, thereby extending and generalizing the concepts of efficacy and effectivity.  By simulating outcomes of competition strucutres with varying seeding methods and applying an information-theoretic approach, we quantified how accurately each format conveys ranking information. Our findings confirm the intuitive advantage of round robin tournaments, which consistently outperformed single and double elimination formats in ranking accuracy, but also quantify the difference between these structures. Additionally, we demonstrated the degree to which poor seeding structures can significantly degrade performance of a competition structure, in some cases making competition outcomes even worse than simply randomly generating a set of ranks.  
 
-These results underscore the trade-off between tournament accuracy and
-practical constraints such as time, cost, and entertainment value. While
-round robin offers the highest fidelity to true rankings, it is often
-impractical for large tournaments, highlighting the need for hybrid or
-adaptive structures that balance accuracy with logistical feasibility.
+These results underscore the trade-off between tournament accuracy and practical constraints such as time, cost, and entertainment value. While round robin offers the highest fidelity to true rankings, it is often impractical for large tournaments, highlighting the need for hybrid or adaptive structures that balance accuracy with logistical feasibility.
 
-Future work should extend this analysis to scenarios with more
-tournament structures, more teams, incorporate probabilistic strength
-models reflecting real-world uncertainty, and explore alternative
-weighting schemes for different competitive priorities (e.g., top-4
-accuracy versus full ranking). Applying these methods to actual
-tournament data could further validate their usefulness for organizers
-aiming to design fair and informative competitions.
+Future work should extend this analysis to scenarios with more tournament structures, varying numbers of competitors, incorporate probabilistic strength
+models reflecting real-world uncertainty, and explore alternative weighting schemes for different competitive priorities (e.g., 4 salient ranks versus 8 salient ranking). Applying these methods to actual tournament data could further validate their usefulness for organizers aiming to design fair and informative competitions.
 
 # Acknowledgements {.unnumbered}
 
-We thank the Department of Mathematics and Statistics at Loyola
-University Chicago for their support and resources in conducting this
-study. We thank Kailey Marie Lum for the suggestion of the term "salient
-ranks". No external funding was received for this research.
+We thank the Department of Mathematics and Statistics at Loyola University Chicago for their support and resources in conducting this study. We thank Kailey Marie Lum for the suggestion of the term "salient ranks". No external funding was received for this research.
 
 # Supplementary Material {.unnumbered}
 
@@ -543,3 +518,32 @@ All supplementary material available at
 <https://github.com/gjm112/tournaments>.
 
 # References
+
+
+
+<!-- author: |  -->
+<!--   | \large Zach Culp \vspace{-1.1mm} -->
+<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
+<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
+<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
+<!--   | -->
+<!--   | \large Josie Peterburs \vspace{-1.1mm} -->
+<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
+<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
+<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
+<!--   | -->
+<!--   | \large Ryan McShane \vspace{-1.1mm} -->
+<!--   | \normalsize University of Chicago \vspace{-1mm} -->
+<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
+<!--   | -->
+<!--   | \large Gregory J. Matthews \vspace{-1.1mm} -->
+<!--   |	\normalsize  \vspace{-1mm} -->
+<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
+<!--   | \normalsize Center for Data Science and Consulting \vspace{-1mm} -->
+<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
+<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
+<!--   | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm} -->
+<!--   | \normalsize [`zculp@luc.edu`](mailto:zculp@luc.edu) \vspace{-1mm} -->
+<!--   | \normalsize [`jpeterburs@luc.edu`](mailto:jpeterburs@luc.edu) \vspace{-1mm} -->
+<!--   | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm} -->
+<!--   | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm} -->
