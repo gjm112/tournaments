@@ -8,46 +8,40 @@ editor: visual
 
 ### Csato 2021 - The incentive (in)compatability of group-based qualification systems
 
-- A mechanism is called incentive-compatible if every participant can achieve their own best outcome by reporting their true preferences.
+-   A mechanism is called incentive-compatible if every participant can achieve their own best outcome by reporting their true preferences.
 
-- All sporting contests should provide players with appropriate incentives to perform.
+-   All sporting contests should provide players with appropriate incentives to perform.
 
-- In sports, incentive INcompatibility can come from the fact that being ranked lower in a group stage leads to facing a preferred competitor in the subsequent stage, giving an advantage.
+-   In sports, incentive INcompatibility can come from the fact that being ranked lower in a group stage leads to facing a preferred competitor in the subsequent stage, giving an advantage.
 
-- Motivating real-world example is the European qualification tournament for the 2018 FIFA World Cup.
-
+-   Motivating real-world example is the European qualification tournament for the 2018 FIFA World Cup.
 
 ### Elo 1978 - The Rating of Chess Players, Past and Present
 
-- Explains the Elo system and includes calculated ratings of many players in the past.
-
+-   Explains the Elo system and includes calculated ratings of many players in the past.
 
 ### Aziz and Others 2018 - Fixing Balanced Knockout and Double Elimination Tournaments
 
-- Balanced knockout tournaments are one of the most widely-used formats for sports competitions. They are considered to be fair and allow a large number of matches to be played in parallel.
+-   Balanced knockout tournaments are one of the most widely-used formats for sports competitions. They are considered to be fair and allow a large number of matches to be played in parallel.
 
-- Consider the computational problem of finding the optimal draw for a particular player in this kind of tournament.
+-   Consider the computational problem of finding the optimal draw for a particular player in this kind of tournament.
 
-- Proved that checking whether there exists a draw in which a player wins is NP-complete, which settles an outstanding open problem. The NP-completeness result also extends to double-elimination tournaments.
-
+-   Proved that checking whether there exists a draw in which a player wins is NP-complete, which settles an outstanding open problem. The NP-completeness result also extends to double-elimination tournaments.
 
 ### Coates, Parshakov 2016 - Team vs Individual Tournaments: Evidence from Prize Structure in eSports
 
-- There is literature saying that rank order tournaments (and elimination tournaments) are optimal labor contracts; and large salary dispersion can lead to greater effort and higher productivity.
+-   There is literature saying that rank order tournaments (and elimination tournaments) are optimal labor contracts; and large salary dispersion can lead to greater effort and higher productivity.
 
-- Also literature on examining production in teams: need to get incentives right such that team members do not shrink their responsibilities or sabotage the efforts of the team.
+-   Also literature on examining production in teams: need to get incentives right such that team members do not shrink their responsibilities or sabotage the efforts of the team.
 
-- This paper incorporates team production with the theory of rank order elimination tournaments. Existing literature focuses on individual sports or on team sports which are not elimination tournaments. In this analysis, competitors in an elimination tournament are groups rather than individuals (competition studied is video games).
-
+-   This paper incorporates team production with the theory of rank order elimination tournaments. Existing literature focuses on individual sports or on team sports which are not elimination tournaments. In this analysis, competitors in an elimination tournament are groups rather than individuals (competition studied is video games).
 
 ### Devriesere, Csato, Goossens 2024 - Tournament Design: A Review from an Operational Research Perspective
 
-- Tournament design refers to the rules that determine how a tournament (a series of games between a number of competitors) is organized.
+-   Tournament design refers to the rules that determine how a tournament (a series of games between a number of competitors) is organized.
 
-- Provides an overview of the tournament design literature from the perspective of operational research. Discusses three important design criteria: efficacy and effectivity, fairness, and attractiveness.
+-   Provides an overview of the tournament design literature from the perspective of operational research. Discusses three important design criteria: efficacy and effectivity, fairness, and attractiveness.
 
-- Survey classifies the papers discussing these properties according to the main components of tournament design: format, seeding, draw, scheduling, and ranking.
-
+-   Survey classifies the papers discussing these properties according to the main components of tournament design: format, seeding, draw, scheduling, and ranking.
 
 ### Glickman, Jensen 2003 - Adaptive Paired Comparative Design
-

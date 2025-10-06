@@ -27,7 +27,16 @@ partial_kendall <- function(vec, k){
 (cor(c(1,2,3), c(1,2,3), method = "spearman") + 1)/2
 (cor(c(1,2), c(1,2), method = "spearman") + 1)/2
 
-(cor(c(1,2,3), c(20,40,60), method = "spearman") + 1)/2
+(cor(c(1,2,3,4,5,6), c(1,2,3,4,6,5), method = "spearman") + 1)/2
+(cor(c(1,2,3,4,5,6), c(2,1,3,4,5,6), method = "spearman") + 1)/2
+(cor(c(1,2,3,4,5,6), c(1,2,4,3,5,6), method = "spearman") + 1)/2
+(cor(c(1,2,3,4,5,6), c(1,2,4,5,3,6), method = "spearman") + 1)/2
+
+rhat <- c(1,2,3,4,6,5,7)
+n <- length(c(1,2,4,5,3,6,7))
+1 - (6*sum((c(1,2,3,4,5,6,7) -  rhat)^2))/(n*(n^2-1))
+
+cor(c(1,2,3,4,5,6,7), rhat, method = "spearman")
 
 
 
