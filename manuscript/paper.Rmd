@@ -292,8 +292,7 @@ simulation.
 However, using mutual information in this form does not suit our needs
 in this setting. The problem is that mutual information in this form
 will yield high values of mutual information when the output from the
-tournament $\hat{r}$ is highly consistent *even if the ranking from the
-tournament is incorrect*. As an example, if $n=4$ and the true order of
+tournament $\hat{r}$ is highly consistent *even if the ranking from the tournament is incorrect* (*i.e.* the rankings produced by the tournament are very different from the true rankings). As an example, if $n=4$ and the true order of
 $\boldsymbol{\theta}$ is $r = \{1, 2, 3, 4\}$ and
 $p(\hat{r} = \{4, 3, 2, 1\}) = 1$ will be the same mutual information as
 when $r = \{1, 2, 3, 4\}$ and $p(\hat{r} = \{1, 2, 3, 4\}) = 1$ and in
@@ -304,6 +303,7 @@ I(r,\hat{r})= n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{\left(\frac{
 $$ and for the specific case when $n=4$ would be: $$
 4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
 $$
+# Weighted Mutual Information
 
 In order to alleviate this problem, we instead consider *weighted* mutual information (@Guiasu1977-nu). We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$.  Essentially, this problem comes down to choosing a metric that measures the distance between the vectors $\hat{r}$ and $r$. One then gives more weight to combinations of $\hat{r}$ and $r$ that are closer and less weight to combinations that are far apart.  A natural choice for distance between vectors the sum of squared deviations between the two vectors.  Specifically, we define the loss function between $\hat{r}$ and $r$ to be $l(r, \hat{r}) = \sum_{i=1}^n (\hat{r}_i - r_i)^2$.  Then, since small losses should be associated with large weights, we focus on the recipricol of this loss function. 
 
@@ -344,16 +344,16 @@ which means that Spearman correlation is simply (one minus) a scaling of squared
 While squared error loss and Spearman/Pearson correlation work well, in this setting we argue that Kendall's $\tau$ correlation is the most appropriate for weighting due to its interpretation and how this related to competitions.  One way of interpreting Kendall's $\tau$ is that it's a scaling of the number of adjacent swaps required to go from one permutation of ranks to another. 
 Recall that Kendall's $\tau$ is defined as: 
 $$
-\rho_\tau = 1 - \frac{2 \times \text{# discordant pairs}}{n \choose 2 }
+\rho_\tau = 1 - \frac{2 \times \# \text{ discordant pairs}}{{n \choose 2}}
 $$.
 To convert $\rho_\tau$ back to the range between $[0,1]$, which we want for weighting purposes, we subtract 1 and divide by 2 giving us $\frac{\rho_\tau + 1}{2}$.  This then becomes: 
 
 $$
-w(\hat{r},r) = \frac{\rho_\tau + 1}{2} = 1 - \frac{\text{# discordant pairs}}{n \choose 2}
+w(\hat{r},r) = \frac{\rho_\tau + 1}{2} = 1 - \frac{\# \text{ discordant pairs}}{{n \choose 2}}
 $$ 
 and the number of discordant pairs is equivalent to the number of adjacent swaps needed to get the order of $\hat{r}$ correct.  
 
-As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This requires two adjacent swaps to get $\hat{r}$ to equal $r$ (i.e swap 4 with 2 and then 3 with 2). The Kendall's $\tau$ value between these two vectors is `r cor(c(1,2,3,4),c(1,3,4,2), method = "kendall")`.  We would then define the weight between the two vectors to be $(\rho_{\tau} + 1)/2 =$ `r (cor(c(1,2,3,4),c(1,3,4,2), method = "kendall") + 1)/2`.  This is exactly equivalent to $1 - \frac{\text{# adj swaps}}{n \choose 2}$.  
+As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This requires two adjacent swaps to get $\hat{r}$ to equal $r$ (i.e swap 4 with 2 and then 3 with 2). The Kendall's $\tau$ value between these two vectors is `r cor(c(1,2,3,4),c(1,3,4,2), method = "kendall")`.  We would then define the weight between the two vectors to be $(\rho_{\tau} + 1)/2 =$ `r (cor(c(1,2,3,4),c(1,3,4,2), method = "kendall") + 1)/2`.  This is exactly equivalent to $1 - \frac{\#\text{ adj swaps}}{{n \choose 2}}$.  
 
 
 
@@ -370,18 +370,26 @@ As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This require
 <!-- ``` -->
 
 
-@shieh1998weighted
-Now, regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second set of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$. As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity).  One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere.  
+# Salient Weights (and ranks)
 
-In addition, you could go beyond 0's and 1's.  
-While here we only consider indicators (i.e. 0's or 1's) in the salient weights vector, there is no reason why you couldn't weight the ranks by relative levels of importance. For instance, letting $m = \{3,1,0,0\}$ indicates that the salient ranks are 1 and 2, but getting the true best competitor as the winner is more important than ranking the true second best competitor
-second.
+@shieh1998weighted: Weighted Kendall's Tau
 
-With the addition of the weighting functions, the formula for mutual
-information becomes:
+Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second set of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$. As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].  
+
+
+^[7]: One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere.  
+
+In addition, one can also weight the salient ranks.  For example, in the Olmypics where getting the top three correct is the main objective, one could argue that it is more important to get the first place correct than the third place. This could lead to, for instance, a salient weight vector of $m = \{5,3,1,0, \cdots, 0\}$ giving 5 times the weight to getting the first place team correct as getting the third team correct.  
+
+With the addition of the salient weighting function, $m$, the formula for weighted mutual information becomes:
 
 $$
-wI_m(r, \hat{r})=\sum_{r}\sum_{\hat{r}} w(r,\hat{r}) * m * p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+w(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}}) = \sum_{i = 1}^n m_i \times d(\hat{r}_i, r_i)
+
+\\
+
+wI_m(r_{\{{i|m_i >0}\}}, \hat{r_{\{{i|m_i >0}\}}})=\sum_{r_{\{{i|m_i >0}\}}}\sum_{\hat{r}_{\{{i|m_i >0}\}}} w(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}}) \times \\
+p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})\times \\ \log \frac {p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})}{p(r_{\{{i  \mid m_i >0}\}})p(\hat{r}_{\{{i \mid m_i >0}\}})}
 $$
 
 Because this mutual information is unitless, the formula can be
