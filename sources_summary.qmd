@@ -22,7 +22,7 @@ editor: visual
 
 ### Aziz and Others 2018 - Fixing Balanced Knockout and Double Elimination Tournaments
 
--   Balanced knockout tournaments are one of the most widely-used formats for sports competitions. They are considered to be fair and allow a large number of matches to be played in parallel.
+-   Balanced knockout tournaments (knockout tournaments where each player has to play the same number of matches to win the tournament) are one of the most widely-used formats for sports competitions. They are considered to be fair and allow a large number of matches to be played in parallel.
 
 -   Consider the computational problem of finding the optimal draw for a particular player in this kind of tournament.
 
@@ -45,3 +45,160 @@ editor: visual
 -   Survey classifies the papers discussing these properties according to the main components of tournament design: format, seeding, draw, scheduling, and ranking.
 
 ### Glickman, Jensen 2003 - Adaptive Paired Comparative Design
+
+- An important part of paired comparison experiments is deciding how the pairs are formed. It is usually difficult to incorporate prior information in typical paired comparison experimental design (prior information is relevant for the design of tournament schedules for players of games and sports).
+
+- The problem of pairing objects can be formalized as a Bayesian optimal design. The performance of this method is tested on simulated data and is compared to random pairings and to a system used in tournament chess.
+
+### Groeneveld, Siu 2017 - Comparing different tournament systems in their probability that the best player wins.
+
+- Paper that compares the performance of different tournament systems. The performance is measured by looking at the probability that the best player wins and the average rank of the winning player. Results are determined by computer simulations.
+
+- Many variables that contribute to the result of a tournament. Two major categories are tournament setup and player skill. There are also some uncontrollable variables that some would contribute to luck, such as fatigue.
+
+- The variable of tournament setup is measured in the paper. For the player skill, they emulate that through Elo rankings as used for chess.
+
+- Compare single elimination, double elimination, single round-robin, double round-robin, Swiss-system, and the multistage system. 
+
+- Each tournament is simulated 100,000 times with the same players and same rankings. Each tournament simulation outputs the ranking of the winner, which are counted for each player. At the end of the simulation, the result will be the number of wins per player sorted on their Elo rank. They divide this by the total number of simulations to get a win probability.
+
+- Results show a convergence to 0 for the lowest ranked players. As they focus on the probability that the best player wins, the lower end of the rankings are less significant. They put the full results in a logarithmic scale.
+
+- **Graphs are similar in concept to ours**
+
+### Hartiagn 1968 - Inference from a Knockout Tournament
+
+- Develop a parametric probability model for order data on a set of objects, which is appropriate for analysis of data with tree structure (ex. results of knockout tournaments). 
+
+- The parameters of the model are the probabilities that the various objects will be ranked highest.
+
+### Ikhwani, et al. 2023 - Single Elimination Tournament Design Using Dynamic Programming Algorithm
+
+- Aims to create an optimal single-elimination tournament design using binary tree modeling with dummy techniques. 
+
+- Uses various methods of sub-optimal algorithms and then compares their performance in terms of runtime and optimality as a solution to measure the comparison of sub-algorithms.
+
+### Kendall, Smith 1940 - On the Method of Paired Comparisons
+
+- One method of comparison that is widely used is ranking. Ranking method suffers from a serious drawback when the quality considered is not known with certainty to be representable by a linear variable.
+
+- Consider a more general method of investigating preferences. With n objects, we suppose that each of the (n choose 2) pairs are presented to an observer and their preference noted. With m observers, there are m * (n choose 2) preferences.
+
+### Khalid, et al. 2023 - A Decision Support System for Simulating and Predicting the Impacts of Various Tournament Structures on Tournament Outcomes
+
+- Tournament outcomes can be influenced by several factors, such as attack, defensse, and home advantage strength values, as well as tournament structures. 
+- However, the claim that different structures have their own time restraints and requirements has limited the evaluation of the best structure for a particular type of sports tournament using quantitative approaches.
+
+- This study develops a decision support system (DSS) using Microsoft Virtual Basic to simulate and forecast the impact of the various tournament structures on soccer tournament outcomes. 
+
+- The DSS utilized the attack, defense, and home advantage values of the teams involved in the Malaysia Super League 2018 to make better prediction. The rankings produced by the DSS were then compared to the actual rankings using Spearman correlation to reveal the simulated accuracy level.
+
+### Krautmann, et al. 2011 - Playoff Uncertainty and Pennant Races
+
+- Outcome uncertainty is a fundamental principle associated with Rottenburg. It has many meanings in sports literature. 
+
+- In this article, the authors consider a type of within-season uncertainty termed "playoff uncertainty" (PLU). This concept looks at how demanders respond to the probability that their team has a chance of winning over the course of the season.
+
+- More specifically, PLU focuses on whether attendance is affected by a team's chance of making the playoffs. Looking at the attendance data on a monthly basis, the authors find that a tighter pennant race does enhance league-wide attendance, but only for the months toward the end of the season when the pennant race is heating up.
+
+### Lee, Fort 2023 - Division Play and Outcome Uncertainty in Sports Leagues
+
+- The analysis of outcome uncertainty (OU) and competitive balance (CB) has been important in sports economics. Surprisingly, there is little work on the impact of the structure of play on either OU or CB.
+
+- The impact of the introduction of both unbalanced schedules and division play on OU has not been analyzed. 
+
+- In this paper, they assess the impacts on OU, for given choices of CB (OU/CB) of moving to division play. This includes the impact of schedule imbalance, division strength, the number of teams, and the number of divisions. Also obtain estimates of their marginal impacts on OU/CB via numerical analysis and regression.
+
+### Manurangsi, Suksompong 2022 - Fixing Knockout Tournaments with Seeds
+
+- Prior results have shown that it is often possible to manipulate a knockout tournament by fixing the bracket, these results ignore the prevalent aspect of player seeds, which can significantly constrain the chosen bracket.
+
+- They show that certain structural conditions that guarantee that a player can win a knockout tournament without seeds are no longer sufficient in light of seed constraints.
+
+- Also prove that when the pairwise match outcomes are generated randomly, all players are still likely to be knockout winners under the same probability threshold with seeds as without seeds.
+
+- In addition, investigate the complexity of deciding whether a manipulation is possible when seeds are present.
+
+### Monsuur, Storcken 1997 - Measuring intransitivity
+
+- transitivity definition: In graph theory, a tournament is a directed graph where every pair of vertices has a single directed edge between them, representing a competition or comparison. Transitivity in a tournament means that if vertex A beats B, and B beats C, then A must beat C.
+
+- Present a framework for measures of non-transitivity in finite tournaments. Axiomatic characterizations for five well-known intransitivity measures are derived. 
+
+- An intransitivity measure expresses the 'amount' of intransitivity in a preference relation in a non-negative number. There are various ways to measure intransitivity.
+
+### Mosteller 1952 - The World Series Competition
+
+- Suppose a number of pairs of teams are compared on the basis of n binomial trials. Although we cannot know from the outcomes which teams were actually better, we wish to estimate the average probability that the better team wins a given trial, and thus to measure the discrimination provided by the test.
+
+- Estimate the overall effectiveness of the decision technique. Answer the question: Will the Series be very effective in identifying the better team?
+
+### Daniels 1969 - Round-robin tournament scores
+
+- In a paired comparisons experiment, preferences are expressed between all possible pairs of a set of objects. The problem of analyzing such an experiment is basically to assign optimum scores to the objects, often with the more limited aim of ranking them in order of preference.
+
+- Round-robin tournament is another example of this situation. The paper proposes some methods of scoring players, based on a concept of fair allocation of rewards to each player.
+
+### Scarf, Yusof 2010 - A numerical study of the tournament structure and seeding policy for the soccer World Cup Finals
+
+- Tournament outcome uncertainty depends on the design of the tournament and the relative strengths of the competitors--the competitive balance.
+
+- A tournament design comprises the arrangement of the individual matches, which we call the tournament structure, the seeding policy, and the progression rules.
+
+- In this paper, they investigate the effect of seeding policies for various tournament structures, while taking account of competitive balance. The methodology uses tournament outcome uncertainty to consider the effect of seeding policy and other design changes.
+
+### Shader 1992 - On Tournament Matrices
+
+- Let T be a tournament of order n with adjacency matrix M. We find several conditions that are equivalent to M being singular. A correlation between the number of 3-cycles in T and the rank of M is established. 
+
+- It is shown that asymptotically at least half of the tournament matrices are nonsingular. Also derive bounds on the spectral radius of tournament matrices with a given row-sum vector.
+
+### Lambers, Pendavingh, Spieksma 2022 - How to Design a Stable Serial Knockout Competition
+
+- Investigate a new tournament format that consists of a series of individual knockout tournaments; call this new format a Serial Knockout Competition (SKC). This format was recently adopted by the Professional Darts Corporation.
+
+- Depending on the seedings of the players used for each of the knockout tournaments, players can meet in various rounds of the tournaments. 
+
+- Following a fairness principle of treating all players equal, they identify an attractive property of an SKC: each pair of players should potentially meet equally often in each of the rounds of the SKC. 
+
+- If the seedings are such that this property is present, they call the resulting SKC stable. Then address the question: do there exist seedings for each of the knockout tournaments such that the resulting SKC is stable?
+
+### Sukompong 2015 - Scheduling asynchronous round-robin tournaments
+
+- Study the problem of scheduling asynchronous round-robin tournaments, i.e. round-robin tournaments in which no two games take place at the same time.
+
+- Consider three measures of a schedule that concern the quality and fairness of a tournament: the guaranteed rest time, the games-played difference index, and the rest difference index.
+
+- Show that the well-known 'circle-design' performs well with respect to all three measures when the number of teams is even, but not when the number of teams is odd. They propose a difference schedule that performs optimally when the number of teams is odd.
+
+### Sziklai, Biro, Csato 2022 - The efficacy of tournament designs
+
+- Efficacy can be defined as the capability of a tournament to reproduce the ranking of the players according to their strength.
+
+- Investigates a fundamental issue of economics in tournament design: what is the best usage of limited resources--that is, how should the alternatives be compared pairwise to best approximate their true but latent ranking.
+
+- Consider formats including knockout tournaments, multistage championships consisting of round-robin groups followed by single elimination, and the Swiss-system. They are evaluated via Monte-Carlo simulation under six different assumptions on winning probabilities.
+
+- Comparing the same pair of alternatives multiple times turns out to be an inefficacious policy. 
+
+- While seeding can increase the efficacy of the knockout and group-based designs, its influence remains marginal unless one has an unrealistically good estimation on the true ranking of the players. 
+
+- The Swiss-system was found to be the most accurate among these formats, especially in its ability to rank all participants.
+
+### Vu, Shoham 2011 - Fair Seeding in Knockout Tournaments
+
+- Seeding can significantly influence the results of a tournament. Most papers focus on how to find a seeding that maximizes the winning probability of the strongest player (so-called predictive power). This usually means giving the strongest player the easiest schedule. 
+
+- Popular 1-8, 4-5, 2-7, 3-6 seeding seems fair because confrontations between stronger competitors are delayed to later rounds, which increases the chance that one of these strong players will win the tournament.
+
+- Raises several questions: How do we capture this intuition about fairness? Is there any other seeding that is also fair? Can we always find such a fair seeding?
+
+- To answer these questions, the authors consider two alternative fairness criteria adapted from the literature: envy-freeness and order preservation. They analyze these criterion separately across different tournament settings, providing both possibility and impossibility results.
+
+### Wright 2013 - OR analysis of sporting rules - A survey
+
+- This paper surveys the academic OR (Operational Research)/analytics literature describing research into the laws and rules of sports and sporting competitions.
+
+- Outline a large number of studies covering 21 sports in many parts of the world.
+
+- The analytical approaches most commonly used are found to be various forms of regression analysis and simulation. Issues highlighted by this survey include the different views of what constitutes fairness and the frequency with which changes produce unintended consequences.
