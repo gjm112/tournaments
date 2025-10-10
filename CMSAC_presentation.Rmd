@@ -1,6 +1,6 @@
 ---
 title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information"
-author: "Zach Culp, Josie Peterburs, Dr. Gregory Matthews, Dr. Ryan McShane"
+author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan McShane"
 date: "`r Sys.Date()`"
 bibliography: references.bib
 fontsize: 12pt
@@ -44,7 +44,7 @@ with the usage of theta or calling it true rank/true strength. -->
   
 ## New
 
-- Comparing different competition structures, which competition structure is best?
+- Comparing different structures like round robin and single eliminations, which is best?
 
 - Efficacy: Final rankings should match the true rankings of the strength of the competitors
 
