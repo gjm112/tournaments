@@ -1,6 +1,6 @@
 ---
 title: "CMSAC_reveal_js"
-author: "Zach Culp, Josie Peterburs, Dr. Gregory J Matthews, Dr. Ryan P.A. McShane"
+author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan P.A. McShane"
 format: revealjs
 editor: visual
 ---
@@ -146,7 +146,9 @@ $$\sum_{i,j} W_{ij} = 29; \sum_{i} W_{ii} = 5; \sum_{i\neq j} W_{ij} \times \tex
 
 -   $H(r)$ and $H(\hat{r})$ are theoretically equivalent, leaving $H(r,\hat{r}) = -2\sum_{r} p(r)\log(p(r)) = -2(n!) \times (1/n!) \times\log_2(1/n!) = \log_2((n!)^2)$ <!-- Is this true?? I can't remember if they are equivalent or their maximums were equivalent -->
 
--   So, the final formula for the metric is: $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$ \## Results
+-   So, the final formula for the metric is: $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$ 
+
+## Results
 
 <!-- Should these plots be on separate slides? -->
 
