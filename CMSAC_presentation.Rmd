@@ -34,6 +34,35 @@ with the usage of theta or calling it true rank/true strength. -->
 -   The "best" competition structure depends on how well it reflects the competitors' true strengths
 -   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors' true strengths
 
+## New Slide - Extreme Tournament
+
+- 4 team single elimination tournament:
+  - Dream Team vs Work Group vs Middle School Girls Team vs Babies
+- If we only care about the top team winning, seeding structure does not matter
+- If we care about who gets second and third, seeding becomes important
+  - Would not pair up Work Group and Dream Team in the first round
+  
+## New
+
+- Comparing different competition structures, which competition structure is best?
+
+- Efficacy: Final rankings should match the true rankings of the strength of the competitors
+
+- Effectivity: Interested in correctly ranking the best competitor as first
+
+CITEE
+
+## New
+
+- Other competitions where the correct ranking of some, but not all, of the competitors is of import
+  - Olympic competition ranks the top 3 competitors
+  
+- "Salient ranks": the ranks of a competition structure that matter
+  - Efficacy: 1 through $n$ matter
+  - Effectivity: 1 is only salient rank
+  
+- We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
+
 <!-- Should we talk about Efficacy vs Effectivity here -->
 
 ## Game Simulation
@@ -128,7 +157,7 @@ $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\
 <!-- Should these plots be on separate slides? -->
 ```{r out.width="49%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
-knitr::include_graphics("tournament_comparison_plot_close.png")
+#knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
 
 
