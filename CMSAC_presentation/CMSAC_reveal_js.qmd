@@ -190,15 +190,25 @@ head(renamed_df,8)
 
 ## Results
 
-```{r out.width="49%", fig.show='hold', fig.align='center'}
+::: {style="position: relative;"}
+::: {.fade-out fragment-index="1"}
+```{r out.width="60%", fig.show='hold', fig.align='center'}
+knitr::include_graphics("boxed_tournament_comparison_plot.png")
+```
+:::
+
+::: {.fragment .fade-in fragment-index="1" .fade-out fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
+```{r out.width="60%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
 ```
+:::
 
-## Close-Up Results
-
-```{r out.width="49%", fig.show='hold', fig.align='center'}
+::: {.fragment .fade-in fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
+```{r out.width="60%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
+:::
+:::
 
 ## Limitations
 
