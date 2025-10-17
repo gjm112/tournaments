@@ -107,13 +107,15 @@ with the usage of theta or calling it true rank/true strength. -->
 
 ## Comparing Structures
 
--   Comparing different structures like round robin and single eliminations, which is best?
+-   Which competition structure is best at reflecting the true strengths of competitors?
 
--   Efficacy: Final rankings should match the true rankings of the strength of the competitors
+-   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
 
--   Effectivity: Interested in correctly ranking the best competitor as first
+-   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
 
-CITEE
+[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
+
+[^2]: Glenn (1960)
 
 ## Efficacy and Effectivity
 
