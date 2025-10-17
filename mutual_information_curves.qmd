@@ -129,7 +129,7 @@ weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weig
     for (j in 1:n) {
       if (i != j) {
         summ <- summ + w[i, j] * sign(i - j) * sign(rhat[i] - rhat[j])
-        print(summ)
+        #print(summ)
       }
       
     }
@@ -137,8 +137,8 @@ weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weig
   
   out <- summ / (sum(w) - sum(diag(w)))
   weight <- (out + 1) / 2
-  print(sum(w))
-  print(sum(diag(w)))
+  #print(sum(w))
+  #print(sum(diag(w)))
   return(weight)
   
 }
@@ -154,13 +154,15 @@ make_weights <- function(k) {
 # Store all results
 all_results <- list()
 
+perms_list <- permn(1:4)
+
 # Loop over k = 1 to 4
 for (k in 1:4) {
   weights <- make_weights(k)
   
   # Weighted Kendall (using provided function)
   kendall_results <- sapply(perms_list, function(p) {
-    weighted_kendall(rhat = p, k = 4, wtype = "symmetric_salience")
+    weighted_kendall(rhat = p, k = k, wtype = "symmetric_salience")
   })
   
   # Squared error using current weights
