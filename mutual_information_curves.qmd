@@ -23,6 +23,36 @@ Every permutation is not possible to elimination tournaments, so should we divid
 ```{r}
 library(gtools)
 library(tidyverse)
+library(combinat)
+
+squared_error <- function(vec, weights = NULL) {
+  n <- length(vec)
+  ref <- 1:n
+  
+  # Default weights = 1 for each element
+  if (is.null(weights)) {
+    weights <- rep(1, n)
+  }
+  
+  # Initialize sum
+  summ <- 0
+  
+  # Accumulate weighted squared error
+  for (i in 1:n) {
+    summ <- summ + (weights[i] * (vec[i] - ref[i]))^2
+  }
+  
+  # Handle near-zero sum safely
+  if (abs(summ) < 1e-10) {
+    out <- 1
+  } else {
+    out <- 1 / summ
+  }
+  
+  return(out)
+}
+
+
 partial_kendall <- function(vec, k, weights = NULL){
   n <- length(vec) 
   if (k == n){k <- n-1} 
@@ -115,23 +145,42 @@ weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weig
 weighted_kendall(c(2,1,3,4), k=4, salient_weights = c(3,1,1,0))
 weighted_kendall(c(2,1,3,4), k=2)
 
-perms_list <- permn(1:5)
+make_weights <- function(k) {
+  w <- rep(0, 4)
+  w[1:k] <- 1
+  return(w)
+}
 
-# Apply weighted_kendall to each permutation
-results <- sapply(perms_list, function(p) {
-  weighted_kendall(rhat = p, k = 5, wtype = "symmetric_salience")
-})
+# Store all results
+all_results <- list()
 
-# Put into a dataframe
-kendall_df <- data.frame(
-  permutation = sapply(perms_list, paste, collapse = ""),
-  weighted_kendall = results
-)
+# Loop over k = 1 to 4
+for (k in 1:4) {
+  weights <- make_weights(k)
+  
+  # Weighted Kendall (using provided function)
+  kendall_results <- sapply(perms_list, function(p) {
+    weighted_kendall(rhat = p, k = 4, wtype = "symmetric_salience")
+  })
+  
+  # Squared error using current weights
+  sq_results <- sapply(perms_list, function(p) {
+    squared_error(vec = p, weights = weights)
+  })
+  
+  # Combine into one dataframe for this k
+  rhat_df <- data.frame(
+    k = k,
+    permutation = sapply(perms_list, paste, collapse = ""),
+    weighted_kendall = kendall_results,
+    squared_error = sq_results
+  )
+  
+  all_results[[k]] <- rhat_df
+}
 
-kendall_df
-
-sum(kendall_df$weighted_kendall)
-mean(kendall_df$weighted_kendall)
+# Combine across all k
+rhat_df <- bind_rows(all_results)
 ```
 
 ```{r}
