@@ -9,10 +9,76 @@ editor: visual
 knitr::opts_chunk$set(echo = FALSE)
 library(tinytex)
 library(tidyverse)
+library(combinat)
 load("curves_data.RData")
 #load("tournament_comparison_plot.png")
 #load("tournament_comparison_plot_close.png")
 ```
+
+
+##
+
+::::: columns
+::: {.column width="50%"}
+```{r}
+knitr::include_graphics("4 bracket good.png")
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment}
+```{r}
+knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
+```
+
+:::
+
+::: {.fragment}
+
+
+```{r}
+knitr::include_graphics("five_rec_league_men_playing_basketball.png")
+```
+
+
+:::
+
+::: {.fragment}
+
+```{r}
+knitr::include_graphics("jv_girls_basketball.png")
+```
+
+:::
+
+::: {.fragment}
+
+```{r}
+knitr::include_graphics("five_babies_playing_basketball.png")
+
+```
+:::
+
+:::
+:::::
+
+
+## 
+
+::::: columns
+::: {.column width="50%"}
+Good
+:::
+
+::: {.column width="50%"}
+Bad
+:::
+:::::
+
+```{r}
+knitr::include_graphics("4 seeded tourn w arrow.png")
+```
+
 
 ## Introduction
 
