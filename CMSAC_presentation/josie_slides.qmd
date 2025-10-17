@@ -17,7 +17,7 @@ library(combinat)
 #load("tournament_comparison_plot_close.png")
 ```
 
-## 
+##
 
 ::::: columns
 ::: {.column width="50%"}
@@ -26,7 +26,6 @@ knitr::include_graphics("4 bracket good.png")
 ```
 :::
 
-::::: columns
 ::: {.column width="50%"}
 ```{r}
 knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
@@ -54,7 +53,9 @@ Bad
 knitr::include_graphics("4 seeded tourn w arrow.png")
 ```
 
-::: {.notes}
+
+
+::: notes
 -   4 team single elimination tournament:
     -   Dream Team vs Work Group vs Middle School Girls Team vs Babies
 -   If we only care about the top team winning, seeding structure does not matter
@@ -69,10 +70,6 @@ knitr::include_graphics("4 seeded tourn w arrow.png")
 -   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
 
 -   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
-
-[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
-
-[^2]: Glenn (1960)
 
 ## Efficacy and Effectivity
 
@@ -95,3 +92,8 @@ ranks <- seq(1:3)
 permn(ranks) %>% unlist() %>% matrix(ncol = 3, byrow = TRUE)
 
 ```
+::::::::::
+
+[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
+
+[^2]: Glenn (1960)
