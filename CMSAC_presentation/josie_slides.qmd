@@ -71,6 +71,10 @@ knitr::include_graphics("4 seeded tourn w arrow.png")
 
 -   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
 
+[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
+
+[^2]: Glenn (1960)
+
 ## Efficacy and Effectivity
 
 -   Decide how many rankings are important
@@ -92,8 +96,4 @@ ranks <- seq(1:3)
 permn(ranks) %>% unlist() %>% matrix(ncol = 3, byrow = TRUE)
 
 ```
-::::::::::
 
-[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
-
-[^2]: Glenn (1960)
