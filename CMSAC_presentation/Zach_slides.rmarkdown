@@ -9,104 +9,9 @@ editor: visual
 knitr::opts_chunk$set(echo = FALSE)
 library(tinytex)
 library(tidyverse)
-library(combinat)
 load("curves_data.RData")
 #load("tournament_comparison_plot.png")
 #load("tournament_comparison_plot_close.png")
-```
-
-## 
-
-:::::::::: columns
-::::::: {.column width="40%"}
-::: fragment
-```{r}
-knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
-```
-:::
-
-::: fragment
-```{r}
-knitr::include_graphics("five_babies_playing_basketball.png")
-```
-:::
-
-::: fragment
-```{r}
-knitr::include_graphics("jv_girls_basketball.png")
-```
-:::
-
-::: fragment
-```{r}
-knitr::include_graphics("five_rec_league_men_playing_basketball.png")
-```
-:::
-:::::::
-
-:::: {.column width="60%"}
-::: fragment
-```{r, out.width="80%"}
-knitr::include_graphics("4 bracket good.png")
-```
-:::
-::::
-::::::::::
-
-## 
-
-::::: columns
-::: {.column width="50%"}
-Good
-:::
-
-::: {.column width="50%"}
-Bad
-:::
-:::::
-
-```{r}
-knitr::include_graphics("4 seeded tourn w arrow.png")
-```
-
-::: notes
--   4 team single elimination tournament:
-    -   Dream Team vs Work Group vs Middle School Girls Team vs Babies
--   If we only care about the top team winning, seeding structure does not matter
--   If we care about who gets second and third, seeding becomes important
-    -   Would not pair up Work Group and Dream Team in the first round
-:::
-
-## Comparing Structures
-
--   Which competition structure is best at reflecting the true strengths of competitors?
-
--   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
-
--   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
-
-[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
-
-[^2]: Glenn (1960)
-
-## Efficacy and Effectivity
-
--   Decide how many rankings are important
-    -   Olympic competition ranks the top 3 competitors
-    -   Premier League: top 4 (Champions League) and bottom 3 (Relegation)
--   **Salient ranks**: the ranks that matter
-    -   Efficacy: 1 through $n$ matter
-    -   Effectivity: 1 is only salient rank
-
-## Goal
-
--   Want to quantify how well a structure can accurately order the competitors
--   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
-
-## Distribution of $\hat{r}$
-
-```{r}
-knitr::include_graphics("r_dist.png")
 ```
 
 ## Mutual Information
@@ -190,25 +95,15 @@ head(renamed_df,8)
 
 ## Results
 
-::: {style="position: relative;"}
-::: {.fade-out fragment-index="1"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
-knitr::include_graphics("boxed_tournament_comparison_plot.png")
-```
-:::
-
-::: {.fragment .fade-in fragment-index="1" .fade-out fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
+```{r out.width="49%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
 ```
-:::
 
-::: {.fragment .fade-in fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
+## Close-Up Results
+
+```{r out.width="49%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
-:::
-:::
 
 ## Limitations
 
@@ -223,6 +118,8 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 
 ## References
 
+<!-- I don't know if the references.bib would work here or not -->
+
 -   Appleton, David R. 1995. “May the Best Man Win?” Statistician 44 (4): 529.
 -   Csato, L. 2021. Tournament Design: How Operations Research Can Improve Sports Rules. 1st Ed. Cham, Switzerland: Palgrave Macmillan.
 -   Devriesere, Csató, K., and D. Goossens. 2025. “Tournament Design: A Review from an Operational Research Perspective.” European Journal of Operational Research 324 (1): 1–21.
@@ -234,3 +131,4 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 -   Johnson, Sidney, and Rodney Fort. 2022. “Match Outcome Uncertainty and Sports Fan Demand: An Agnostic Review and the Standard Economic Theory of Ports Leagues.” Int. J. Emp. Econ. 01 (02).
 -   Lasek, Jan, and Marek Gagolewski. 2018. “The Efficacy of League Formats in Ranking Teams.” Stat. Modelling 18 (5-6): 411–35.
 -   Sziklai, Balázs R, Péter Biró, and László Csató. 2022. “The Efficacy of Tournament Designs.” Comput. Oper. Res. 144 (105821): 105821.
+
