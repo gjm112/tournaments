@@ -16,7 +16,6 @@ load("curves_data.RData")
 
 ## Introduction
 
-```{=html}
 <!-- Overall comments 
 I think the presentation is too long for 12 minutes (+ questions), but
 I feel like I didn't cover everything we want. What is plausable to cover
@@ -24,7 +23,6 @@ in a 12-minute period?
 Also, we need to figure out the notation for the final metric because I think
 the weight should have the subscript m, not I. And I probably was not consistent
 with the usage of theta or calling it true rank/true strength. -->
-```
 
 -   There exists numerous competition formats across all professional sports
 -   Which competition structure is best?
@@ -35,32 +33,30 @@ with the usage of theta or calling it true rank/true strength. -->
 
 ## Extreme Tournament
 
-- 4 team single elimination tournament:
-  - Dream Team vs Work Group vs Middle School Girls Team vs Babies
-- If we only care about the top team winning, seeding structure does not matter
-- If we care about who gets second and third, seeding becomes important
-  - Would not pair up Work Group and Dream Team in the first round
-  
+-   4 team single elimination tournament:
+    -   Dream Team vs Work Group vs Middle School Girls Team vs Babies
+-   If we only care about the top team winning, seeding structure does not matter
+-   If we care about who gets second and third, seeding becomes important
+    -   Would not pair up Work Group and Dream Team in the first round
+
 ## Comparing Structures
 
-- Comparing different structures like round robin and single eliminations, which is best?
+-   Comparing different structures like round robin and single eliminations, which is best?
 
-- Efficacy: Final rankings should match the true rankings of the strength of the competitors
+-   Efficacy: Final rankings should match the true rankings of the strength of the competitors
 
-- Effectivity: Interested in correctly ranking the best competitor as first
+-   Effectivity: Interested in correctly ranking the best competitor as first
 
 CITEE
 
 ## Efficacy and Effectivity
 
-- Other competitions where the correct ranking of some, but not all, of the competitors is of import
-  - Olympic competition ranks the top 3 competitors
-  
-- "Salient ranks": the ranks of a competition structure that matter
-  - Efficacy: 1 through $n$ matter
-  - Effectivity: 1 is only salient rank
-  
-- We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
+-   Other competitions where the correct ranking of some, but not all, of the competitors is of import
+    -   Olympic competition ranks the top 3 competitors
+-   "Salient ranks": the ranks of a competition structure that matter
+    -   Efficacy: 1 through $n$ matter
+    -   Effectivity: 1 is only salient rank
+-   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
 
 ## Game Simulation
 
@@ -146,7 +142,7 @@ $$\sum_{i,j} W_{ij} = 29; \sum_{i} W_{ii} = 5; \sum_{i\neq j} W_{ij} \times \tex
 
 -   $H(r)$ and $H(\hat{r})$ are theoretically equivalent, leaving $H(r,\hat{r}) = -2\sum_{r} p(r)\log(p(r)) = -2(n!) \times (1/n!) \times\log_2(1/n!) = \log_2((n!)^2)$ <!-- Is this true?? I can't remember if they are equivalent or their maximums were equivalent -->
 
--   So, the final formula for the metric is: $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$ 
+-   So, the final formula for the metric is: $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$
 
 ## Results
 
