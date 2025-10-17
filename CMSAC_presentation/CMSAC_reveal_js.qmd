@@ -1,8 +1,11 @@
 ---
 title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information"
 author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan P.A. McShane"
-format: revealjs
+format: 
+  revealjs: 
+    df-print: paged
 editor: visual
+
 ---
 
 ```{r setup, include=FALSE}
@@ -10,6 +13,8 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tinytex)
 library(tidyverse)
 library(combinat)
+library(knitr)
+library(kableExtra)
 load("curves_data.RData")
 #load("tournament_comparison_plot.png")
 #load("tournament_comparison_plot_close.png")
@@ -146,24 +151,83 @@ $$\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j) = 10$$
 ## Top K-teams Weighted Kendall
 
 ```{r}
-rhat_df %>% 
+# Get the filtered data
+table_data <- rhat_df %>% 
   select(-squared_error) %>%   
   filter(permutation %in% c("1234", "4321", "1324", "2143")) %>%   
-  arrange(permutation,k) %>%   
+  arrange(permutation, k) %>%   
   rename("Weighted Kendall" = weighted_kendall)
+
+# Split into two halves
+n <- nrow(table_data)
+left_table <- table_data %>% head(ceiling(n/2))
+right_table <- table_data %>% tail(floor(n/2))
+
+# Create side-by-side tables
+left_html <- left_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 24)
+
+right_html <- right_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 24)
 ```
+::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| echo: false
+left_html
+```
+:::
+::: {.column width="%48%"}
+```{r}
+#| echo: false
+right_html
+```
+:::
+:::
 
 $$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
 
 ## Comparing Weighted Kendall's Tau to Squared Error
 
 ```{r}
-rhat_df %>%    
-  filter (k==4) %>%   
+# Get the filtered data
+table_data <- rhat_df %>%    
+  filter(k == 4) %>%   
   select(-k) %>%   
   arrange(desc(weighted_kendall)) %>%    
-  rename("Weighted Kendall"= weighted_kendall, "Squared Error" = squared_error)
+  rename("Weighted Kendall" = weighted_kendall, "Squared Error" = squared_error)
+
+# Split into two halves
+n <- nrow(table_data)
+left_table <- table_data %>% head(ceiling(n/2))
+right_table <- table_data %>% tail(floor(n/2))
+
+# Create side-by-side tables
+left_html <- left_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 20)
+right_html <- right_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 20)
+
 ```
+
+::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| echo: false
+left_html
+```
+:::
+::: {.column width="%48%"}
+```{r}
+#| echo: false
+right_html
+```
+:::
+:::
 
 ## Normalizing Mutual Information
 
@@ -178,15 +242,44 @@ $$\frac{wI_m(r,\hat{r})}{H(r,\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}
 ## Tournament Simulations
 
 -   Given the assigned "known strength", $\theta$, we simulate a game using the Bradley-Terry Model: $\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$
--   Below is output from one simulation of a single elimination tournament structure
+- Below is an example of the output of a single tournament simulation:
 
 ```{r}
 renamed_df <- all_results_norm %>%    
   select(-c(simulation, distribution, seed, teams)) %>%   
-  rename(theta = true_strength, r = true_rank, r_hat = rank_hat) %>%   
-  mutate(theta = round(theta,3))  
-head(renamed_df,8)
+  rename(theta = true_strength, r = true_rank, r_hat = rank_hat, "Wins" = game_wins, "Losses" = game_losses) %>%   
+  mutate(theta = round(theta,3)) %>%
+  head(8)
+
+# Split into two halves
+n <- nrow(renamed_df)
+left_table <- renamed_df %>% head(ceiling(n/2))
+right_table <- renamed_df %>% tail(floor(n/2))
+
+# Create side-by-side tables
+left_html <- left_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 24)
+right_html <- right_table %>% 
+  kable(format = "html", row.names = FALSE) %>% 
+  kableExtra::kable_styling(font_size = 24)
+
 ```
+
+::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| echo: false
+left_html
+```
+:::
+::: {.column width="%48%"}
+```{r}
+#| echo: false
+right_html
+```
+:::
+:::
 
 ## Results
 
@@ -210,16 +303,11 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 :::
 :::
 
-## Limitations
+## Conclusion
 
--   The "known" strengths are assumptions that can be estimated but never truly known
--   Ties are not addressed in any of the games
--   Ties in the $\hat{r}$ are randomly assigned
-
-## Future Work
-
--   Evaluate structures using various distributions and "known" weights
--   Estimate the $\theta$s in a real-world example and compare recent changes to the old format
+-   These results underscore the trade-off between tournament accuracy and practical constraints such as time, cost, and entertainment value.
+-   Limitations: The "known" strengths are assumptions that can be estimated but never truly known
+-   Future Work: Estimate the $\theta$s in a real-world example and compare recent changes to the old format
 
 ## References
 
