@@ -1,5 +1,5 @@
 ---
-title: "CMSAC_reveal_js"
+title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information"
 author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan P.A. McShane"
 format: revealjs
 editor: visual
@@ -15,53 +15,45 @@ load("curves_data.RData")
 #load("tournament_comparison_plot_close.png")
 ```
 
+## 
 
-##
+::::::::: columns
 
-::::: columns
-::: {.column width="50%"}
-```{r}
-knitr::include_graphics("4 bracket good.png")
-```
-:::
-
-::: {.column width="50%"}
+::::::: {.column width="40%"}
 ::: {.fragment}
 ```{r}
 knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
 ```
-
 :::
 
 ::: {.fragment}
-
-
 ```{r}
 knitr::include_graphics("five_rec_league_men_playing_basketball.png")
 ```
-
-
 :::
 
 ::: {.fragment}
-
 ```{r}
 knitr::include_graphics("jv_girls_basketball.png")
 ```
-
 :::
 
 ::: {.fragment}
-
 ```{r}
 knitr::include_graphics("five_babies_playing_basketball.png")
 
 ```
 :::
+:::::::
 
+::::::: {.column width="60%"}
+::: {.fragment}
+```{r, out.width="80%"}
+knitr::include_graphics("4 bracket good.png")
+```
 :::
-:::::
-
+:::::::
+:::::::::
 
 ## 
 
@@ -79,31 +71,13 @@ Bad
 knitr::include_graphics("4 seeded tourn w arrow.png")
 ```
 
-
-## Introduction
-
-<!-- Overall comments 
-I think the presentation is too long for 12 minutes (+ questions), but
-I feel like I didn't cover everything we want. What is plausable to cover
-in a 12-minute period? 
-Also, we need to figure out the notation for the final metric because I think
-the weight should have the subscript m, not I. And I probably was not consistent
-with the usage of theta or calling it true rank/true strength. -->
-
--   There exists numerous competition formats across all professional sports
--   Which competition structure is best?
--   The "best" competition structure depends on how well it reflects the competitors' true strengths
--   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors' true strengths
-
-<!-- Should we talk about Efficacy vs Effectivity here -->
-
-## Extreme Tournament
-
+::: notes
 -   4 team single elimination tournament:
     -   Dream Team vs Work Group vs Middle School Girls Team vs Babies
 -   If we only care about the top team winning, seeding structure does not matter
 -   If we care about who gets second and third, seeding becomes important
     -   Would not pair up Work Group and Dream Team in the first round
+:::
 
 ## Comparing Structures
 
@@ -119,12 +93,25 @@ with the usage of theta or calling it true rank/true strength. -->
 
 ## Efficacy and Effectivity
 
--   Other competitions where the correct ranking of some, but not all, of the competitors is of import
+-   Decide how many rankings are important
     -   Olympic competition ranks the top 3 competitors
--   "Salient ranks": the ranks of a competition structure that matter
+    -   Premier League: top 4 (Champions League) and bottom 3 (Relegation)
+-   **Salient ranks**: the ranks that matter
     -   Efficacy: 1 through $n$ matter
     -   Effectivity: 1 is only salient rank
+
+## Goal
+
+-   Want to quantify how well a structure can accurately order the competitors
 -   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
+
+## Distribution of $\hat{r}$
+
+```{r}
+knitr::include_graphics("r_dist.png")
+```
+
+
 
 ## Game Simulation
 
