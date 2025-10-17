@@ -17,28 +17,27 @@ load("curves_data.RData")
 
 ## 
 
-::::::::: columns
-
+:::::::::: columns
 ::::::: {.column width="40%"}
-::: {.fragment}
+::: fragment
 ```{r}
 knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
 ```
 :::
 
-::: {.fragment}
+::: fragment
 ```{r}
 knitr::include_graphics("five_rec_league_men_playing_basketball.png")
 ```
 :::
 
-::: {.fragment}
+::: fragment
 ```{r}
 knitr::include_graphics("jv_girls_basketball.png")
 ```
 :::
 
-::: {.fragment}
+::: fragment
 ```{r}
 knitr::include_graphics("five_babies_playing_basketball.png")
 
@@ -46,14 +45,14 @@ knitr::include_graphics("five_babies_playing_basketball.png")
 :::
 :::::::
 
-::::::: {.column width="60%"}
-::: {.fragment}
+:::: {.column width="60%"}
+::: fragment
 ```{r, out.width="80%"}
 knitr::include_graphics("4 bracket good.png")
 ```
 :::
-:::::::
-:::::::::
+::::
+::::::::::
 
 ## 
 
@@ -111,35 +110,13 @@ knitr::include_graphics("4 seeded tourn w arrow.png")
 knitr::include_graphics("r_dist.png")
 ```
 
-
-
-## Game Simulation
-
--   Given the assigned "known strength", $\theta$, we simulate a game using the Bradley-Terry Model
-
-$$\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$$
-
-## Tournament Simulations
-
--   Each competition structure is simulated given the number of teams, $n$, and $\theta$
--   Below is an example of the output from one simulation of a single elimination tournament structure
-
-```{r}
-renamed_df <- all_results_norm %>% 
-  select(-c(simulation, distribution, seed, teams)) %>%
-  rename(theta = true_strength, r = true_rank, r_hat = rank_hat) %>%
-  mutate(theta = round(theta,3))
-
-head(renamed_df,8)
-```
-
 ## Mutual Information
 
--   If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the “goodness” of a tournament in terms of its ability to accurately transmit the true ranking.
+::: notes
+If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the "goodness" of a tournament in terms of its ability to accurately transmit the true ranking.
+:::
 
 -   The notation for mutual information is: $$ I(X;Y) = \sum_{y \in Y}\sum_{x \in X} p(x,y) \log{\frac{p(x,y)}{p(x)p(y)}} $$
-
-<!-- -->
 
 -   In our case, it can be simplified to:
 
@@ -148,63 +125,79 @@ head(renamed_df,8)
 ## Weighted Mutual Information
 
 -   A limitation of mutual information is that it does not distinguish between the direction of information
--   In other words, a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
--   Because of this, we proposed a weighting function $w(r, \hat{r})$
--   So, the new formula is: $$ wI_m(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
+-   In other words, given equal probabilities, a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
+-   Because of this, we proposed a new weighting function $w(r, \hat{r})$\
+    $$ wI_m(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
 
 ## Weighting Function
 
--   In our original paper submission, we used squared error loss as the weighting function: $$ w(r, \hat{r}) =
-    \begin{cases}
-    \frac{1}{(r-\hat{r})^2}, & r \neq \hat{r} \\
-    1, & r = \hat{r}
-    \end{cases} $$
-
+-   In our original paper submission, we used squared error loss as the weighting function: $w(r, \hat{r}) = \begin{cases} \frac{1}{(r-\hat{r})^2}, & r \neq \hat{r} \\ 1, & r = \hat{r} \end{cases}$
 -   However, after comments and reviews from people at CSAS and CMSAC, we have decided to use a weighted Kendall's Tau
 
 ## Weighted Kendall
 
-$$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \times \text{sgn}(i-j)\times \text{sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
+$$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
 
--   $W$ is a $n\times n$ lower-triangular matrix, where
+-   If $\hat{r} = (2,1,3,4)$, then:
 
-<!-- Should this be capital W??? -->
+$$\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j) = 10$$
 
-$$W_{ij} = w_{\min(i,j)}, \text{ for } i,j = m,2m, \dots, n\times m$$ - $m$: vector of length $n$ representing the "salient weights", or the importance of correctly getting each ranking
+-   So, $\tau_w$ for this example would be $\frac{10}{15-3} = 0.833$
 
--   If $\tau_w = 1$, then the ranking is identical to the true ranking; if $\tau_w = 0$, then the order of teams is perfectly inversely proportional to the true rankings
+## Top K-teams Weighted Kendall
 
-## Weighted Kendall Example
+```{r}
+rhat_df %>% 
+  select(-squared_error) %>%   
+  filter(permutation %in% c("1234", "4321", "1324", "2143")) %>%   
+  arrange(permutation,k) %>%   
+  rename("Weighted Kendall" = weighted_kendall)
+```
 
--   If $\hat{r} = (2,1,3,4)$ and m = $(3,1,1,0)$, then: $$ W = \begin{pmatrix}
-    3 & 3 & 3 & 3 \\
-    3 & 1 & 1 & 1 \\
-    3 & 1 & 1 & 1 \\
-    3 & 1 & 1 & 0
-    \end{pmatrix} $$
+$$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
 
-$$\sum_{i,j} W_{ij} = 29; \sum_{i} W_{ii} = 5; \sum_{i\neq j} W_{ij} \times \text{sgn}(i-j)\times \text{sgn}(R_i - R_j) = 18 $$
+## Comparing Weighted Kendall's Tau to Squared Error
 
--   So, $\tau_w$ for this example would be $\frac{18}{29-5} = 0.75$
+```{r}
+rhat_df %>%    
+  filter (k==4) %>%   
+  select(-k) %>%   
+  arrange(desc(weighted_kendall)) %>%    
+  rename("Weighted Kendall"= weighted_kendall, "Squared Error" = squared_error)
+```
 
 ## Normalizing Mutual Information
 
--   Mutual Information can be normalized by dividing by the joint entropy
+-   To make comparisons across different values of $n$, we normalize by the joint entropy
 
--   Entropy: $-p(x)\log{p(x)}$
+-   So, the final formula for the metric is:
+
+$$\frac{wI_m(r,\hat{r})}{H(r,\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$
 
 -   Assuming $r$ and $\hat{r}$ are independent, joint entropy can be written as $H(r, \hat{r}) = H(r) + H(\hat{r})$
 
--   $H(r)$ and $H(\hat{r})$ are theoretically equivalent, leaving $H(r,\hat{r}) = -2\sum_{r} p(r)\log(p(r)) = -2(n!) \times (1/n!) \times\log_2(1/n!) = \log_2((n!)^2)$ <!-- Is this true?? I can't remember if they are equivalent or their maximums were equivalent -->
+## Tournament Simulations
 
--   So, the final formula for the metric is: $$ \frac{wI_m(r,\hat{r})}{H(r) + H(\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$
+-   Given the assigned "known strength", $\theta$, we simulate a game using the Bradley-Terry Model: $\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$
+-   Below is output from one simulation of a single elimination tournament structure
+
+```{r}
+renamed_df <- all_results_norm %>%    
+  select(-c(simulation, distribution, seed, teams)) %>%   
+  rename(theta = true_strength, r = true_rank, r_hat = rank_hat) %>%   
+  mutate(theta = round(theta,3))  
+head(renamed_df,8)
+```
 
 ## Results
 
-<!-- Should these plots be on separate slides? -->
-
 ```{r out.width="49%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
+```
+
+## Close-Up Results
+
+```{r out.width="49%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
 
@@ -220,8 +213,6 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 -   Estimate the $\theta$s in a real-world example and compare recent changes to the old format
 
 ## References
-
-<!-- I don't know if the references.bib would work here or not -->
 
 -   Appleton, David R. 1995. “May the Best Man Win?” Statistician 44 (4): 529.
 -   Csato, L. 2021. Tournament Design: How Operations Research Can Improve Sports Rules. 1st Ed. Cham, Switzerland: Palgrave Macmillan.
