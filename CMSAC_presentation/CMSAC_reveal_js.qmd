@@ -27,7 +27,7 @@ knitr::include_graphics("Mens-Basketball-Olympics-Getty-H-2024.jpeg")
 
 ::: fragment
 ```{r}
-knitr::include_graphics("five_rec_league_men_playing_basketball.png")
+knitr::include_graphics("five_babies_playing_basketball.png")
 ```
 :::
 
@@ -39,8 +39,7 @@ knitr::include_graphics("jv_girls_basketball.png")
 
 ::: fragment
 ```{r}
-knitr::include_graphics("five_babies_playing_basketball.png")
-
+knitr::include_graphics("five_rec_league_men_playing_basketball.png")
 ```
 :::
 :::::::
