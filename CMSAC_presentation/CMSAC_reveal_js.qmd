@@ -5,7 +5,6 @@ format:
   revealjs: 
     df-print: paged
 editor: visual
-
 ---
 
 ```{r setup, include=FALSE}
@@ -82,37 +81,50 @@ knitr::include_graphics("4 seeded tourn w arrow.png")
     -   Would not pair up Work Group and Dream Team in the first round
 :::
 
-## Comparing Structures
+## Distribution of $\hat{r}$
 
--   Which competition structure is best at reflecting the true strengths of competitors?
+
+```{r}
+knitr::include_graphics("rhat_dist.png")
+```
+
+## Comparing Structures
+::: {.incremental}
+-   Which competition structure is best?
+
+    -   What is considered "best"?
 
 -   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
 
 -   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
+:::
+
+::: {.fragment}
+```{r}
+knitr::include_graphics("salient bar.png")
+```
+
 
 [^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
 
 [^2]: Glenn (1960)
 
+:::
+
 ## Efficacy and Effectivity
 
--   Decide how many rankings are important
-    -   Olympic competition ranks the top 3 competitors
-    -   Premier League: top 4 (Champions League) and bottom 3 (Relegation)
--   **Salient ranks**: the ranks that matter
+```{r}
+knitr::include_graphics("salient examples.png")
+```
+
+-   **Salient ranks**: output ranks of the tournament you want to get correct
     -   Efficacy: 1 through $n$ matter
     -   Effectivity: 1 is only salient rank
 
 ## Goal
 
 -   Want to quantify how well a structure can accurately order the competitors
--   We will propose a metric that quantifies how effectively different tournament structures convey information about competitors’ true strengths
-
-## Distribution of $\hat{r}$
-
-```{r}
-knitr::include_graphics("r_dist.png")
-```
+-   We propose a metric that quantifies how effectively different tournament structures recover the true ranking
 
 ## Mutual Information
 
@@ -172,20 +184,22 @@ right_html <- right_table %>%
   kable(format = "html", row.names = FALSE) %>% 
   kableExtra::kable_styling(font_size = 24)
 ```
-::: {.columns}
+
+::::: columns
 ::: {.column width="48%"}
 ```{r}
 #| echo: false
 left_html
 ```
 :::
+
 ::: {.column width="%48%"}
 ```{r}
 #| echo: false
 right_html
 ```
 :::
-:::
+:::::
 
 $$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
 
@@ -214,20 +228,21 @@ right_html <- right_table %>%
 
 ```
 
-::: {.columns}
+::::: columns
 ::: {.column width="48%"}
 ```{r}
 #| echo: false
 left_html
 ```
 :::
+
 ::: {.column width="%48%"}
 ```{r}
 #| echo: false
 right_html
 ```
 :::
-:::
+:::::
 
 ## Normalizing Mutual Information
 
@@ -242,7 +257,7 @@ $$\frac{wI_m(r,\hat{r})}{H(r,\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}
 ## Tournament Simulations
 
 -   Given the assigned "known strength", $\theta$, we simulate a game using the Bradley-Terry Model: $\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$
-- Below is an example of the output of a single tournament simulation:
+-   Below is an example of the output of a single tournament simulation:
 
 ```{r}
 renamed_df <- all_results_norm %>%    
@@ -266,31 +281,32 @@ right_html <- right_table %>%
 
 ```
 
-::: {.columns}
+::::: columns
 ::: {.column width="48%"}
 ```{r}
 #| echo: false
 left_html
 ```
 :::
+
 ::: {.column width="%48%"}
 ```{r}
 #| echo: false
 right_html
 ```
 :::
-:::
+:::::
 
 ## Results
 
-::: {style="position: relative;"}
+:::::: {style="position: relative;"}
 ::: {.fade-out fragment-index="1"}
 ```{r out.width="60%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("boxed_tournament_comparison_plot.png")
 ```
 :::
 
-::: {.fragment .fade-in fragment-index="1" .fade-out fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
+::: {.fragment .fade-in .fade-out fragment-index="1" fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
 ```{r out.width="60%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
 ```
@@ -301,7 +317,7 @@ knitr::include_graphics("tournament_comparison_plot.png")
 knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
 :::
-:::
+::::::
 
 ## Conclusion
 
