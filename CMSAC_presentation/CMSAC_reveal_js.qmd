@@ -166,23 +166,14 @@ If one views the true ranking of the teams in a tournament as a message to be se
 
 -   A limitation of mutual information is that it does not distinguish between the direction of information
 -   In other words, given equal probabilities, a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
--   Because of this, we proposed a new weighting function $w(r, \hat{r})$\
+-   Because of this, we proposed a new weighting function\
     $$ wI_m(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
+-   The final metric we used normalizes the results: $\frac{wI_m(r,\hat{r})}{H(r,\hat{r})}$
 
 ## Weighting Function
 
 -   In our original paper submission, we used squared error loss as the weighting function: $w(r, \hat{r}) = \begin{cases} \frac{1}{(r-\hat{r})^2}, & r \neq \hat{r} \\ 1, & r = \hat{r} \end{cases}$
 -   However, after comments and reviews from people at CSAS and CMSAC, we have decided to use a weighted Kendall's Tau
-
-## Weighted Kendall
-
-$$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
-
--   If $\hat{r} = (2,1,3,4)$, then:
-
-$$\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j) = 10$$
-
--   So, $\tau_w$ for this example would be $\frac{10}{15-3} = 0.833$
 
 ## Top K-teams Weighted Kendall
 
@@ -226,57 +217,6 @@ right_html
 :::::
 
 $$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
-
-## Comparing Weighted Kendall's Tau to Squared Error
-
-```{r}
-# Get the filtered data
-table_data <- rhat_df %>%    
-  filter(k == 4) %>%   
-  select(-k) %>%   
-  arrange(desc(weighted_kendall)) %>%    
-  rename("Weighted Kendall" = weighted_kendall, "Squared Error" = squared_error)
-
-# Split into two halves
-n <- nrow(table_data)
-left_table <- table_data %>% head(ceiling(n/2))
-right_table <- table_data %>% tail(floor(n/2))
-
-# Create side-by-side tables
-left_html <- left_table %>% 
-  kable(format = "html", row.names = FALSE) %>% 
-  kableExtra::kable_styling(font_size = 20)
-right_html <- right_table %>% 
-  kable(format = "html", row.names = FALSE) %>% 
-  kableExtra::kable_styling(font_size = 20)
-
-```
-
-::::: columns
-::: {.column width="48%"}
-```{r}
-#| echo: false
-left_html
-```
-:::
-
-::: {.column width="%48%"}
-```{r}
-#| echo: false
-right_html
-```
-:::
-:::::
-
-## Normalizing Mutual Information
-
--   To make comparisons across different values of $n$, we normalize by the joint entropy
-
--   So, the final formula for the metric is:
-
-$$\frac{wI_m(r,\hat{r})}{H(r,\hat{r})} = \frac{\sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}}}{\log_2((n!)^2)}$$
-
--   Assuming $r$ and $\hat{r}$ are independent, joint entropy can be written as $H(r, \hat{r}) = H(r) + H(\hat{r})$
 
 ## Tournament Simulations
 
