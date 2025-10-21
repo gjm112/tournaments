@@ -103,12 +103,6 @@ knitr::include_graphics("rhat_dist.png")
     
     :::
     
-::: {.incremental}
-
--   **Efficacy**: Final rankings should match the true rankings of the strength of the competitors
-
--   **Effectivity**: Interested in correctly ranking the best competitor as first
-:::
 
 
 ## Comparing Structures
