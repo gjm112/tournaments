@@ -3,8 +3,12 @@ title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual
 author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan P.A. McShane"
 format: 
   revealjs: 
+    html-math-method: 
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
     df-print: paged
 editor: visual
+
 ---
 
 ```{r setup, include=FALSE}
