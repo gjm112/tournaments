@@ -83,43 +83,63 @@ knitr::include_graphics("4 seeded tourn w arrow.png")
 
 ## Distribution of $\hat{r}$
 
-
 ```{r}
 knitr::include_graphics("rhat_dist.png")
 ```
 
 ## Comparing Structures
+
+-   Which competition structure is best?
+
+    ::: {.incremental}
+
+    -   What is considered "best"?
+    
+    - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
+    
+    :::
+    
 ::: {.incremental}
+
+-   **Efficacy**: Final rankings should match the true rankings of the strength of the competitors
+
+-   **Effectivity**: Interested in correctly ranking the best competitor as first
+:::
+
+
+## Comparing Structures
+
 -   Which competition structure is best?
 
     -   What is considered "best"?
+    
+    - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
 
 -   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
 
 -   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
-:::
-
-::: {.fragment}
-```{r}
-knitr::include_graphics("salient bar.png")
-```
-
 
 [^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
 
 [^2]: Glenn (1960)
 
-:::
-
-## Efficacy and Effectivity
+## Effectivity and Efficacy
 
 ```{r}
+knitr::include_graphics("salient bar.png")
+```
+
+## Effectivity and Efficacy
+
+```{r, out.width="100%"}
 knitr::include_graphics("salient examples.png")
 ```
 
+::: {.fragment}
 -   **Salient ranks**: output ranks of the tournament you want to get correct
     -   Efficacy: 1 through $n$ matter
     -   Effectivity: 1 is only salient rank
+:::
 
 ## Goal
 
