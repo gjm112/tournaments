@@ -141,8 +141,8 @@ knitr::include_graphics("salient examples.png")
 
 ::: {.fragment}
 -   **Salient ranks**: output ranks of the tournament you want to get correct
-    -   Efficacy: 1 through $n$ matter
     -   Effectivity: 1 is only salient rank
+    -   Efficacy: 1 through $n$ are salient ranks
 :::
 
 ## Goal
