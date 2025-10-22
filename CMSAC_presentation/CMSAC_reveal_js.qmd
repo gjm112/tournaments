@@ -113,7 +113,7 @@ knitr::include_graphics("rhat_dist.png")
     
     - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
 
--   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
+-   **Efficacy**[^1]: Final rankings should match the true rankings of all the competitors
 
 -   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
 
