@@ -142,7 +142,7 @@ knitr::include_graphics("salient examples.png")
 
 ## Goal
 
--   Quantify how well a structure can accurately order the competitors
+-   Quantify how well a structure can accurately order the competitors using weighted mutual information
 -   We propose a metric that quantifies how effectively different tournament structures recover the true ranking of the teams
 
 ## Mutual Information
