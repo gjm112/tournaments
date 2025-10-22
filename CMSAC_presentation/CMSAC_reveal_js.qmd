@@ -3,12 +3,14 @@ title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual
 author: "Zach Culp, Josie Peterburs, Dr. Gregory J. Matthews, Dr. Ryan P.A. McShane"
 format: 
   revealjs: 
+    embed-resources: true
+    theme: [default, styles.scss]
+    # theme: [serif, styles.scss]
     html-math-method: 
       method: mathjax
       url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
     df-print: paged
 editor: visual
-
 ---
 
 ```{r setup, include=FALSE}
@@ -95,23 +97,19 @@ knitr::include_graphics("rhat_dist.png")
 
 -   Which competition structure is best?
 
-    ::: {.incremental}
-
+    ::: incremental
     -   What is considered "best"?
-    
-    - A good tournament: top *k* teams produced by the tournament matches closely to the true top *k* 
-    
-    :::
-    
 
+    -   A good tournament: top *k* teams produced by the tournament matches closely to the true top *k*
+    :::
 
 ## Comparing Structures
 
 -   Which competition structure is best?
 
     -   What is considered "best"?
-    
-    - A good tournament: top *k* teams produced by the tournament matches closely to the true top *k* 
+
+    -   A good tournament: top *k* teams produced by the tournament matches closely to the true top *k*
 
 -   **Effectivity**[^1]: Interested in correctly ranking the best competitor as first
 
@@ -120,7 +118,6 @@ knitr::include_graphics("rhat_dist.png")
 [^1]: Glenn (1960)
 
 [^2]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
-
 
 ## Effectivity and Efficacy
 
@@ -134,7 +131,7 @@ knitr::include_graphics("salient bar.png")
 knitr::include_graphics("salient examples.png")
 ```
 
-::: {.fragment}
+::: fragment
 -   **Salient ranks**: output ranks of the tournament you want to get correct
     -   Effectivity: 1 is only salient rank (*k*=1)
     -   Efficacy: 1 through $n$ are salient ranks (*k*=n)
@@ -191,8 +188,6 @@ If one views the true ranking of the teams in a competition as a message to be s
 knitr::include_graphics("Top_k_Kendall.png")
 
 ```
-
-
 
 ## Tournament Simulations
 
@@ -257,7 +252,10 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 -   Limitations: The "known" ranks are assigned using $\theta$ and, for some structure, the order of the ranks matter in the formatting of the structure
 -   Future Work: Examine how the distribution of $\theta$s influence the score of each competition structure
 
+
 ## References
+
+<!-- ## References {.smaller} -->
 
 -   Appleton, David R. 1995. “May the Best Man Win?” Statistician 44 (4): 529.
 -   Csato, L. 2021. Tournament Design: How Operations Research Can Improve Sports Rules. 1st Ed. Cham, Switzerland: Palgrave Macmillan.
