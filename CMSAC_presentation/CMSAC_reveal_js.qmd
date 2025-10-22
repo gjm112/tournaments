@@ -135,19 +135,12 @@ knitr::include_graphics("salient examples.png")
 ```
 
 ::: {.fragment}
--   **Salient ranks**: output ranks of the competition you want to get correct
-    -   Effectivity: 1 is only salient rank
-    -   Efficacy: 1 through $n$ are salient ranks
-=======
 -   **Salient ranks**: output ranks of the tournament you want to get correct
     -   Effectivity: 1 is only salient rank (*k*=1)
     -   Efficacy: 1 through $n$ are salient ranks (*k*=n)
 :::
 
 ## Goal
-
--   Want to quantify how well a structure can accurately order the competitors
--   We propose a metric that quantifies how effectively different competition structures recover the true ranking
 
 -   Quantify how well a structure can accurately order the competitors using weighted mutual information
 -   We propose a metric that quantifies how effectively different tournament structures recover the true ranking of the teams
