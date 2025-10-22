@@ -121,7 +121,7 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     strengths <- sapply(num_teams, function(n) { qnorm(1:n/(n+1)) })
     normal_strengths <- data.frame(
       true_rank = as.numeric(teams),
-      theta = c(strengths, rep(NA, length(teams) - num_teams)),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA,length(teams)),
       game_wins = rep(0,length(teams)),
       game_losses = rep(0,length(teams))
@@ -132,7 +132,7 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     strengths <- sapply(num_teams, function(n) {rep(0,n)})
     normal_strengths <- data.frame(
       true_rank = as.numeric(teams),
-      theta = c(strengths, rep(NA, length(teams) - num_teams)),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA,length(teams)),
       game_wins = rep(0,length(teams)),
       game_losses = rep(0,length(teams))
@@ -143,7 +143,7 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     strengths <- sapply(num_teams, function(n) { qunif(1:n/(n+1) , 0 , sqrt(12)) })
     unif_strength <- data.frame(
       true_rank = as.numeric(teams),
-      theta = c(strengths, rep(NA, length(teams) - num_teams)),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       game_wins = rep(0,length(teams)),
       game_losses = rep(0,length(teams)),
       rank_hat = rep(NA,length(teams))
@@ -166,7 +166,7 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     }
     manual_strengths <- data.frame(
       true_rank = as.numeric(teams),
-      theta = c(strengths, rep(NA, length(teams) - num_teams)),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA, length(teams)),
       game_wins = rep(0, length(teams)),
       game_losses = rep(0, length(teams))
@@ -195,12 +195,12 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     permuted_df <- df
     permuted_df$true_rank <- df$true_rank[permutation]  # Update team order 
     teams <- permuted_df$true_rank
-    permuted_df$theta <- df$theta[permutation]
+    permuted_df$true_strength <- df$true_strength[permutation]
     permuted_df$rank_hat <- NA  # Initialize ranks column
     permuted_df$game_wins <- 0  # Initialize wins column
     permuted_df$game_losses <- 0
     
-    strengths <- permuted_df$theta
+    strengths <- permuted_df$true_strength
     round_number <- ceiling(log2(length(teams)))
     
     # Track the losers of the semifinals for the third-place match
@@ -317,22 +317,35 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     if (third_place == TRUE){
       team1 <- losers_semis[1]
       team2 <- losers_semis[2]
-      strength1 <- permuted_df$theta[permuted_df$true_rank == team1]
-      strength2 <- permuted_df$theta[permuted_df$true_rank == team2]
+      strength1 <- permuted_df$true_strength[permuted_df$true_rank == team1]
+      strength2 <- permuted_df$true_strength[permuted_df$true_rank == team2]
       wins_team1 <- 0
       wins_team2 <- 0
+      losses_team1 <- 0
+      losses_team2 <- 0
       for (game in 1:series) {
         match_winner <- simulate_match(team1, team2, strength1, strength2)
         if (match_winner == team1) {
           wins_team1 <- wins_team1 + 1
+          losses_team2 <- losses_team2 + 1
+          
         } else {
           wins_team2 <- wins_team2 + 1
+          losses_team1 <- losses_team1 + 1
         }
         # Determine the overall winner if a majority is reached
         if (wins_team1 > series / 2 || wins_team2 > series / 2) {
           break
         }
       }
+      
+      # Update game_wins / game_losses in permuted_df for both teams
+        permuted_df <- permuted_df %>%
+          mutate(game_wins = ifelse(true_rank == team1, game_wins + wins_team1, game_wins)) %>%
+          mutate(game_wins = ifelse(true_rank == team2, game_wins + wins_team2, game_wins)) %>%
+          mutate(game_losses = ifelse(true_rank == team1, game_losses + losses_team1, game_losses)) %>%
+          mutate(game_losses = ifelse(true_rank == team2, game_losses + losses_team2, game_losses))
+      
       # Assign third place and fourth place ranks
       if (wins_team1 > wins_team2) {
         #cat(sprintf("Third Place Matchup: %s vs %s | Winner: %s\n", team1, team2, team1))
@@ -386,8 +399,7 @@ for (teams in c(8)) {
   }
 }
 
-test <- simulate_single_elimination_tournament(num_teams = 8, distribution = "Same", ties=F, series=1, third_place=T, seeding_structure = c(1,2,3,4,5,6,7,8), reseeded = TRUE)
-test
+single_run_example <- simulate_single_elimination_tournament(num_teams = 8, distribution = "Normal", ties=F, series=1, third_place=T, reseeded=F)
 
 #manual_test <- simulate_single_elimination_tournament(num_teams = 4, distribution = "Manual", ties=T, series=1, third_place=T)
 #manual_test
@@ -403,7 +415,7 @@ for (teams in c(8)) {
       distribution = "Normal",
       ties = FALSE,
       series = 1,
-      third_place = FALSE
+      third_place = TRUE
     )
   }
 }
