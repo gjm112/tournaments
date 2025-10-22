@@ -207,17 +207,20 @@ html_df <- renamed_df %>%
 ```
 
 ::::: columns
-::: {.column width="48%"}
+::: {.column width="37%"}
 ```{r}
 #| echo: false
 html_df
 ```
 :::
 
-::: {.column width="%48%"}
+::: {.column width="63%"}
 ```{r}
 #| echo: false
-#| out.width: "100%"
+#| out-width: "125%"
+#| out-length: "150%"
+#| fig-width: 8
+#| fig-height: 16
 knitr::include_graphics("simulation_example.png")
 ```
 :::
@@ -251,7 +254,6 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 -   Using the method, we found that Round Robin is the best structure, followed by Reseeded Single Elimination, Double Elimination, and Group Stage.
 -   Limitations: The "known" ranks are assigned using $\theta$ and, for some structure, the order of the ranks matter in the formatting of the structure
 -   Future Work: Examine how the distribution of $\theta$s influence the score of each competition structure
-
 
 ## References
 
