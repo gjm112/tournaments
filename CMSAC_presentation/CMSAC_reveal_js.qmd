@@ -111,7 +111,7 @@ knitr::include_graphics("rhat_dist.png")
 
     -   What is considered "best"?
     
-    - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
+    - A good tournament: top *k* teams produced by the tournament matches closely to the true top *k* 
 
 -   **Efficacy**[^1]: Final rankings should match the true rankings of all the competitors
 
