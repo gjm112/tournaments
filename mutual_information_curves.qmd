@@ -439,6 +439,7 @@ check.names = FALSE
 
 # Reshape data into long format for ggplot
 df_long <- pivot_longer(mi_plots_df, cols = -indices, names_to = "Method", values_to = "MI")
+df_long <- df_long %>% mutate(Method = recode( Method, "Single.Elimination..Reseeded." = "Single Elimination (Reseeded)", "Group.Stage" = "Group Stage", "Double.Elimination" = "Double Elimination", "Single.Elimination..Set.Structure." = "Single Elimination (Set Structure)", "Coin.Flip.Single.Elimination" = "Coin Flip Single Elimination", "Bad.Seeding.Structure.Single.Elimination" = "Bad Seeding Structure Single Elimination", "Coin.Flip.Round.Robin" = "Coin Flip Round Robin", "Round.Robin" = "Round Robin", "Worst.Possible" = "Worst Possible", "Best.Possible" = "Best Possible" ))
 
 okabe_ito <- c(
   "#E69F00", # orange
@@ -452,18 +453,29 @@ okabe_ito <- c(
   "#8A2BE2", # violet (extra)
   "#20B2AA"  # teal (extra)
 )
-# Define consistent color mapping
-methods <- unique(df_long$Method)
-method_colors <- setNames(okabe_ito, methods)
+# Compute the ordering of methods by mean MI (descending) 
+method_order <- df_long %>% 
+  group_by(Method) %>% 
+  summarize(mean_MI = mean(MI, na.rm = TRUE)) %>% 
+  arrange(desc(mean_MI)) %>% 
+  pull(Method) 
+
+# Reorder Method factor levels by MI 
+df_long <- df_long %>% 
+  mutate(Method = factor(Method, levels = method_order)) 
+
+# Define color mapping in the new order 
+methods <- levels(df_long$Method) 
+method_colors <- setNames(okabe_ito[seq_along(methods)], methods)
 
 windowsFonts(Arial = windowsFont("Arial"))
-ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
+comparison_plot <- ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
 geom_line(linewidth = 2.5) +           # Add lines
 geom_point(size=3) +          # Add points
 labs(
 title = "Comparison of Tournament Structures with Normal Strengths",
 x = "Top i Number of Teams",
-y = "Normalized Mutual Information \\ Entropy (log10 scale)"
+y = "Normalized Mutual Information \\ Entropy"
 ) +
 theme_minimal() +       # Use a clean theme
 theme(text = element_text(family = "Arial", size = 32),
@@ -473,13 +485,10 @@ theme(text = element_text(family = "Arial", size = 32),
   axis.title = element_text(size = 30),
   axis.text = element_text(size=30)) +
   guides(color = guide_legend(nrow = 5)) +
-  scale_y_log10(
-    labels = scales::label_number() 
-  ) +
   scale_color_manual(values = method_colors)
 ggsave(
   filename = "tournament_comparison_plot.png",  # Change file type if needed
-  plot = last_plot(),  # Saves the last ggplot created
+  plot = comparison_plot,  # Saves the last ggplot created
   dpi = 600,        
   bg = "white",
   units = "in",
@@ -497,7 +506,7 @@ geom_point(size=3) +          # Add points
 labs(
 title = "Comparison of Tournament Structures with Normal Strengths",
 x = "Top i Number of Teams",
-y = "Normalized Mutual Information \\ Entropy (log10 scale)"
+y = "Normalized Mutual Information \\ Entropy"
 ) +
 theme_minimal() +       # Use a clean theme
 theme(text = element_text(family = "Arial", size = 32),
@@ -507,9 +516,6 @@ theme(text = element_text(family = "Arial", size = 32),
   axis.title = element_text(size = 30),
   axis.text = element_text(size=30)) +
   guides(color = guide_legend(nrow = 5)) +
-  scale_y_log10(
-    labels = scales::label_number() 
-  ) +
   scale_color_manual(values = method_colors)
 ggsave(
   filename = "tournament_comparison_plot_close.png",  # Change file type if needed

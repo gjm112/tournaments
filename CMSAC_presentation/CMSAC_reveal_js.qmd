@@ -140,7 +140,7 @@ knitr::include_graphics("salient examples.png")
 ```
 
 ::: {.fragment}
--   **Salient ranks**: output ranks of the tournament you want to get correct
+-   **Salient ranks**: output ranks of the competition you want to get correct
     -   Effectivity: 1 is only salient rank
     -   Efficacy: 1 through $n$ are salient ranks
 :::
@@ -148,98 +148,69 @@ knitr::include_graphics("salient examples.png")
 ## Goal
 
 -   Want to quantify how well a structure can accurately order the competitors
--   We propose a metric that quantifies how effectively different tournament structures recover the true ranking
+-   We propose a metric that quantifies how effectively different competition structures recover the true ranking
 
 ## Mutual Information
 
 ::: notes
-If one views the true ranking of the teams in a tournament as a message to be sent to a receiver and the outcome of the tournament as a message that is received, we can measure the "goodness" of a tournament in terms of its ability to accurately transmit the true ranking.
+If one views the true ranking of the teams in a competition as a message to be sent to a receiver and the outcome of the competition as a message that is received, we can measure the "goodness" of a competition in terms of its ability to accurately transmit the true ranking.
 :::
 
 -   The notation for mutual information is: $$ I(X;Y) = \sum_{y \in Y}\sum_{x \in X} p(x,y) \log{\frac{p(x,y)}{p(x)p(y)}} $$
 
 -   In our case, it can be simplified to:
 
-    $$ I(r, \hat{r}) = n! \sum_{\hat{r}} p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{(\frac{1}{n!})^2}} = n! \log{((n!)^2)} $$
+    $$ I(r, \hat{r}) = n! \sum_{\hat{r}} p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{(\frac{1}{n!})^2}} $$
 
 ## Weighted Mutual Information
 
 -   A limitation of mutual information is that it does not distinguish between the direction of information
--   In other words, given equal probabilities, a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
+-   Given equal probabilities, the information found from a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
 -   Because of this, we proposed a new weighting function\
-    $$ wI_m(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
--   The final metric we used normalizes the results: $\frac{wI_m(r,\hat{r})}{H(r,\hat{r})}$
-
-## Weighting Function
-
--   In our original paper submission, we used squared error loss as the weighting function: $w(r, \hat{r}) = \begin{cases} \frac{1}{(r-\hat{r})^2}, & r \neq \hat{r} \\ 1, & r = \hat{r} \end{cases}$
--   However, after comments and reviews from people at CSAS and CMSAC, we have decided to use a weighted Kendall's Tau
+    $$ I_w(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
+-   The final metric we used normalizes the results: $\frac{I_w(r,\hat{r})}{H(r,\hat{r})}$
 
 ## Top K-teams Weighted Kendall
 
 ```{r}
 # Get the filtered data
-table_data <- rhat_df %>% 
-  select(-squared_error) %>%   
-  filter(permutation %in% c("1234", "4321", "1324", "2143")) %>%   
-  arrange(permutation, k) %>%   
-  rename("Weighted Kendall" = weighted_kendall)
+#table_data <- rhat_df %>% 
+#  select(-squared_error) %>%   
+#  filter(permutation %in% c("1234", "4321", "1324", "2143")) %>%   
+#  arrange(permutation, k) %>%   
+#  rename("Weighted Kendall" = weighted_kendall)
 
 # Split into two halves
-n <- nrow(table_data)
-left_table <- table_data %>% head(ceiling(n/2))
-right_table <- table_data %>% tail(floor(n/2))
+#n <- nrow(table_data)
+#left_table <- table_data %>% head(ceiling(n/2))
+#right_table <- table_data %>% tail(floor(n/2))
 
 # Create side-by-side tables
-left_html <- left_table %>% 
-  kable(format = "html", row.names = FALSE) %>% 
-  kableExtra::kable_styling(font_size = 24)
+#left_html <- left_table %>% 
+#  kable(format = "html", row.names = FALSE) %>% 
+#  kableExtra::kable_styling(font_size = 24)
 
-right_html <- right_table %>% 
-  kable(format = "html", row.names = FALSE) %>% 
-  kableExtra::kable_styling(font_size = 24)
+#right_html <- right_table %>% 
+#  kable(format = "html", row.names = FALSE) %>% 
+#  kableExtra::kable_styling(font_size = 24)
+knitr::include_graphics("Top_k_Kendall.png")
+
 ```
 
-::::: columns
-::: {.column width="48%"}
-```{r}
-#| echo: false
-left_html
-```
-:::
 
-::: {.column width="%48%"}
-```{r}
-#| echo: false
-right_html
-```
-:::
-:::::
-
-$$ \tau_w = \frac{\sum_{i\neq j} W_{ij} \text{ sgn}(i-j) \text{ sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
 
 ## Tournament Simulations
 
--   Given the assigned "known strength", $\theta$, we simulate a game using the Bradley-Terry Model: $\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$
--   Below is an example of the output of a single tournament simulation:
+-   Given the assigned "known strength", $\theta$, we simulate a game using: $\Pr(i > j) = \frac{e^{\theta_i}}{e^{\theta_i} + e^{\theta_j}} = \frac{1}{1+e^{\theta_i - \theta_j}}$
 
 ```{r}
-renamed_df <- all_results_norm %>%    
-  select(-c(simulation, distribution, seed, teams)) %>%   
+renamed_df <- single_run_example %>%    
+  select(-c(distribution, seed)) %>%   
   rename(theta = true_strength, r = true_rank, r_hat = rank_hat, "Wins" = game_wins, "Losses" = game_losses) %>%   
-  mutate(theta = round(theta,3)) %>%
-  head(8)
-
-# Split into two halves
-n <- nrow(renamed_df)
-left_table <- renamed_df %>% head(ceiling(n/2))
-right_table <- renamed_df %>% tail(floor(n/2))
+  mutate(theta = round(theta,3))
 
 # Create side-by-side tables
-left_html <- left_table %>% 
-  kable(format = "html", row.names = FALSE) %>% 
-  kableExtra::kable_styling(font_size = 24)
-right_html <- right_table %>% 
+html_df <- renamed_df %>% 
   kable(format = "html", row.names = FALSE) %>% 
   kableExtra::kable_styling(font_size = 24)
 
@@ -249,14 +220,15 @@ right_html <- right_table %>%
 ::: {.column width="48%"}
 ```{r}
 #| echo: false
-left_html
+html_df
 ```
 :::
 
 ::: {.column width="%48%"}
 ```{r}
 #| echo: false
-right_html
+#| out.width: "100%"
+knitr::include_graphics("simulation_example.png")
 ```
 :::
 :::::
@@ -283,11 +255,12 @@ knitr::include_graphics("tournament_comparison_plot_close.png")
 :::
 ::::::
 
-## Conclusion
+## Discussion
 
--   These results underscore the trade-off between tournament accuracy and practical constraints such as time, cost, and entertainment value.
--   Limitations: The "known" strengths are assumptions that can be estimated but never truly known
--   Future Work: Estimate the $\theta$s in a real-world example and compare recent changes to the old format
+-   We used mutual information to analyze competition structures in a range from efficacy to effectivity.
+-   Using the method, we found that Round Robin is the best structure, followed by Reseeded Single Elimination, Double Elimination, and Group Stage.
+-   Limitations: The "known" ranks are assigned using $\theta$ and, for some structure, the order of the ranks matter in the formatting of the structure
+-   Future Work: Examine how the distribution of $\theta$s influence the score of each competition structure
 
 ## References
 
