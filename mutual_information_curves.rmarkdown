@@ -1,0 +1,733 @@
+---
+title: "Mutual Information Plots"
+format: html
+editor: visual
+---
+
+## Mutual Information Plots
+
+From Wikipedia, weighted mutual information formula:
+
+$I(X;Y)=\sum _{y\in Y}\sum _{x\in X}w(x,y)p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}$
+
+Rajski's distance: $1 - \frac{I(X,Y)}{H(X,Y)}$
+
+Interpretation: the fraction of uncertainty not explained by mutual information
+
+<https://en.wikipedia.org/wiki/Inverse_distance_weighting>
+
+Every permutation is not possible to elimination tournaments, so should we divide by every possible permutation for 8 teams, or just every possible permutation in the tournament structure?
+
+## Weight Structure (Partial Kendall or Weighted Kendall)
+
+```{r}
+library(gtools)
+library(tidyverse)
+library(combinat)
+
+squared_error <- function(vec, weights = NULL) {
+  n <- length(vec)
+  ref <- 1:n
+  
+  # Default weights = 1 for each element
+  if (is.null(weights)) {
+    weights <- rep(1, n)
+  }
+  
+  # Initialize sum
+  summ <- 0
+  
+  # Accumulate weighted squared error
+  for (i in 1:n) {
+    summ <- summ + (weights[i] * (vec[i] - ref[i]))^2
+  }
+  
+  # Handle near-zero sum safely
+  if (abs(summ) < 1e-10) {
+    out <- 1
+  } else {
+    out <- 1 / summ
+  }
+  
+  return(out)
+}
+
+
+partial_kendall <- function(vec, k, weights = NULL){
+  n <- length(vec) 
+  if (k == n){k <- n-1} 
+  ref <- c(1:n) 
+  
+  if(is.null(weights)){
+    weights <- rep(1,n)
+  }
+  
+  count <- 0 
+  #denom <- sum(n - (1:k))
+  
+  for (i in 1:k){ 
+    for (j in (i+1):n){
+      #pair_weight <- weights[i] + weights[j]
+      
+        add <- (((vec[i] < vec[j]) & (ref[i] < ref[j])) | 
+                  ((vec[i] > vec[j]) & (ref[i] > ref[j]))) + 0
+        #print(c(i, j, add, pair_weight)) 
+        #if (add == 1){
+          count <- count + add #+ pair_weight
+        #} 
+        denom <- denom + pair_weight
+    } 
+  } 
+  weight <- count / denom
+  
+  return(weight) 
+  }
+
+
+weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weights = NULL) {
+  n <- length(rhat)
+  #salient_weights needs to be a vector of length k
+  
+  if(is.null(salient_weights)){
+    salient_weights <- rep(1,k)
+  }
+  
+  if (is.null(wtype)) {
+    w <- matrix(0, ncol = n, nrow = n)
+    for (q in k:1){
+      w[q, ] <- salient_weights[q]
+      w[, q] <- salient_weights[q]
+    }
+    w <- w/2
+  }
+  
+  if (wtype == "symmetric_salience") {
+    w <- matrix(0, ncol = n, nrow = n)
+    for (q in k:1) {
+      w[q, ] <- salient_weights[q]
+      w[, q] <- salient_weights[q]
+    }
+    #w[upper.tri(w)] <- w[upper.tri(w)]/2
+    #w[lower.tri(w)] <- w[lower.tri(w)]/2
+  }
+  
+  #Ryan method
+  if (wtype == "rydog"){
+  w <- matrix(0, ncol = n, nrow = n)
+#  w[1:k, 1:k] <- 1
+  for (q in k:1) {
+    w[1:q, 1:q] <- salient_weights[q]
+    w[1:q, 1:q] <- salient_weights[q]
+  }
+  #w[upper.tri(w)] <- w[upper.tri(w)]/2
+  #w[lower.tri(w)] <- w[lower.tri(w)]/2
+  }
+  
+  
+  summ <- 0
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        summ <- summ + w[i, j] * sign(i - j) * sign(rhat[i] - rhat[j])
+        #print(summ)
+      }
+      
+    }
+  }
+  
+  out <- summ / (sum(w) - sum(diag(w)))
+  weight <- (out + 1) / 2
+  #print(sum(w))
+  #print(sum(diag(w)))
+  return(weight)
+  
+}
+weighted_kendall(c(2,1,3,4), k=4, salient_weights = c(3,1,1,0))
+weighted_kendall(c(2,1,3,4), k=2)
+
+make_weights <- function(k) {
+  w <- rep(0, 4)
+  w[1:k] <- 1
+  return(w)
+}
+
+# Store all results
+all_results <- list()
+
+perms_list <- permn(1:4)
+
+# Loop over k = 1 to 4
+for (k in 1:4) {
+  weights <- make_weights(k)
+  
+  # Weighted Kendall (using provided function)
+  kendall_results <- sapply(perms_list, function(p) {
+    weighted_kendall(rhat = p, k = k, wtype = "symmetric_salience")
+  })
+  
+  # Squared error using current weights
+  sq_results <- sapply(perms_list, function(p) {
+    squared_error(vec = p, weights = weights)
+  })
+  
+  # Combine into one dataframe for this k
+  rhat_df <- data.frame(
+    k = k,
+    permutation = sapply(perms_list, paste, collapse = ""),
+    weighted_kendall = kendall_results,
+    squared_error = sq_results
+  )
+  
+  all_results[[k]] <- rhat_df
+}
+
+# Combine across all k
+rhat_df <- bind_rows(all_results)
+```
+
+```{r}
+library(combinat)
+library(tidyverse)
+library(viridis)
+
+mut_info <- function(sims, num_teams, rank_weights = NULL, wtype = "symmetric_salience"){
+  # Handle missing weights (default to equal weights if not provided)
+  if (is.null(rank_weights)){
+    rank_weights <- rep(1,num_teams)
+  }
+  # Extract y values from sims, assuming `rank_hat` contains a list of rankings per simulation
+  y_df <- sims %>%
+    group_by(simulation) %>%
+    summarise(rank_hat = list(rank_hat)) %>%  # Ensure rank_hat is a list column
+    mutate(rank_hat = map(rank_hat, unlist)) %>%  # Unlist rank_hat properly
+    unnest_wider(rank_hat, names_sep = "_")  # Expand into separate columns
+    
+  # Rename y columns
+  colnames(y_df)[-1] <- paste0("y", 1:num_teams)
+  
+  # Create x matrix, representing positions 1:num_teams
+  x_matrix <- matrix(rep(1:num_teams, times = nrow(y_df)), ncol = num_teams, byrow = TRUE)
+  x_df <- as.data.frame(x_matrix)
+  colnames(x_df) <- paste0("x", 1:num_teams)
+  
+  # Combine x and y data frames
+  perms_df <- cbind(x_df, y_df %>% select(-simulation))
+  perms_df <- perms_df %>%
+    mutate(across(starts_with("x"), as.numeric)) %>%
+    mutate(across(starts_with("y"), as.numeric))
+  
+  # Generate all possible permutations of rankings
+  all_perms <- as.data.frame(do.call(rbind, permn(1:num_teams)))
+  colnames(all_perms) <- paste0("y", 1:num_teams)
+
+  # Count occurrences of each observed ranking
+  prob_df <- perms_df %>%
+    group_by(across(starts_with("x")),across(starts_with("y")))  %>%
+    summarise(count = n(), .groups = "drop")
+
+  # Merge with full permutation set to ensure all permutations exist
+  prob_df <- right_join(all_perms, prob_df, by = colnames(all_perms)) %>%
+    mutate(count = replace_na(count, 0)) %>%
+    mutate(probability = count / sum(count))  # Normalize probabilities
+  
+  w <- numeric(nrow(prob_df))  # Initialize weight vector for the number of rows in prob_df
+  
+  for (i in 1:num_teams) {
+    #x_i <- paste0("x", i)
+    #y_i <- paste0("y", i)
+    
+    #max_footrule <- sum(rank_weights * abs((1:num_teams) - (num_teams:1)))
+    # Loop through each row of prob_df
+    for (j in 1:nrow(prob_df)) {
+      x_vals <- as.numeric(prob_df[j, paste0("x", 1:num_teams)])
+      y_vals <- as.numeric(prob_df[j, paste0("y", 1:num_teams)])
+      
+      # Calculate the squared difference between x_i and y_i for each row j
+      #diff <- abs(prob_df[[x_i]][j] - prob_df[[y_i]][j])
+      #rank_diff <- abs(rank(x_vals) - rank(y_vals))
+      #w[j] <- w[j] + rank_weights[i] * diff^2  # Sum squared differences for each row
+      
+      # Weighted Kendall's Tau correlation
+      #x_rep <- rep(x_vals, rank_weights)
+      #y_rep <- rep(y_vals, rank_weights)
+      #tau <- cor(x_rep, y_rep, method="kendall")
+      #if(!is.na(tau)){
+        #w[j] <- (1 - tau) / 2 * choose(length(x_rep),2)
+      #} else{
+      #  diff <- abs(prob_df[[x_i]][j] - prob_df[[y_i]][j])
+      #  w[j] <- w[j] <- w[j] + rank_weights[i] * diff^2
+      #}
+      
+      # Truncated Normalized Kendall's Tau Distance
+      # Function to compute normalized "swap similarity" for top-K
+      w[j] <- weighted_kendall(rhat = y_vals, k=num_teams, salient_weights = rank_weights, wtype = wtype)
+      
+      
+      # Initialize weighted concordance / discordance sum
+      #weighted_inversions <- 0
+  
+      #for (l in 1:i) {
+      #  for (k in (l+1):num_teams) {
+      #    concordant <- (y_vals[l] - y_vals[k]) > 0
+      #    discordant <- (y_vals[l] - y_vals[k]) < 0
+          
+          # Weight each pair by sum of their rank_weights
+      #    pair_weight <- rank_weights[l] + rank_weights[k]
+          
+      #    if (discordant) weighted_inversions <- weighted_inversions + pair_weight
+      #  }
+      #}
+    #w[j] <- weighted_inversions
+      
+        # Calculate NDCG (Normalized discounted cummulative gain)
+      # x_vals tells us the true ranking positions
+      # y_vals tells us the predicted ranking positions
+      #relevance <- rank_weights * (num_teams - x_vals + 1)
+      # Calculate DCG based on predicted ranking (y_vals)
+      #dcg <- 0
+      # for (pos in 1:num_teams) {
+      #   # Find which team is at position 'pos' in the predicted ranking
+      #   team_idx <- which(y_vals == pos)
+      #   if (length(team_idx) > 0) {
+      #     # Use that team's relevance weight
+      #     dcg <- dcg + relevance[team_idx] / log2(pos + 1)
+      #   }
+      # }
+      # # Calculate ideal DCG (teams sorted by their rank_weights in descending order)
+      # ideal_order <- order(relevance, decreasing = TRUE)
+      # idcg <- 0
+      # for (pos in 1:num_teams) {
+      #   idcg <- idcg + relevance[ideal_order[pos]] / log2(pos + 1)
+      # }
+      # # NDCG = DCG / IDCG
+      # if (idcg > 0) {
+      #   ndcg <- dcg / idcg
+      #   # Convert NDCG (0 to 1, where 1 is perfect) to a distance measure
+      #   # Use (1 - NDCG) so that perfect match = 0 distance
+      #   w[j] <- 1 - ndcg
+      # } else {
+      #   w[j] <- 1  # Maximum distance if IDCG is 0
+      # }
+      
+      # Calculate weighted Spearman's footrule distance
+      # Footrule = sum of |true_rank - predicted_rank| for each item
+      # Weighted by rank_weights for each team
+      
+      #footrule_distance <- 0
+      #for (i in 1:num_teams) {
+        # Team i has true rank x_vals[i] and predicted rank y_vals[i]
+        #footrule_distance <- footrule_distance + rank_weights[i] * abs(x_vals[i] - y_vals[i])
+      #}
+      
+      # Normalize by maximum possible distance
+      #if (max_footrule > 0) {
+      #  w[j] <- footrule_distance / max_footrule
+      #} else {
+      #  w[j] <- 0  # All weights are 0, so distance is 0
+      #}
+      
+    }
+  }
+  #w <- 1 / (w+1)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
+  #w <- w/sum(w)
+  # Compute weights dynamically for each row
+  weighted_df <- prob_df %>%
+    mutate(w = w)
+
+  numerator <- sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * (1/factorial(num_teams)))))
+  denominator <- log2(factorial(num_teams)^2)
+
+  Raj_dist <- 1-numerator/denominator
+  # Return the weighted data frame with mutual information weights
+  return(Raj_dist)
+}
+
+# Single Elimination with reseeding
+reseeded_results_eight <- reseeded_results %>% filter(teams == 8)
+reseeded_results_eight$simulation <- rep(1:10000, each = nrow(reseeded_results_eight) / 10000)
+
+# Group Stage (like World Cup)
+group_stage_results_eight <- group_stage_results %>% filter(teams == 8)
+group_stage_results_eight$simulation <- rep(1:10000, each = nrow(group_stage_results_eight) / 10000)
+
+# Double Elimination
+de_norm_results_eight <- de_norm_results %>% filter(teams == 8)
+de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eight) / 10000)
+
+# Single Elimination with Normal Distribution
+all_results_norm$simulation <- rep(1:10000, each = nrow(all_results_norm) / 10000)
+
+# Single Elimination with 7 game series
+seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
+
+# ROund Robin with randomly assigning ties
+test_rr_noTies <- test_rr %>%
+  group_by(simulation) %>%
+  mutate(rank_hat = rank(rank_hat,ties.method="random"))
+
+# All possible orderings of teams one time
+perms_list <- permn(8)
+all_data <- list()
+# Loop through each permutation and create the data frame
+for (i in 1:length(perms_list)) {
+# Create a temporary data frame for the current permutation
+temp_df <- data.frame(
+true_rank = rep(1:8, each = 1),  # Each row gets a true_rank from 1 to 8
+rank_hat = perms_list[[i]],      # The current permutation's ranks
+simulation = rep(i, 8)           # Assign the simulation number to each row
+)
+# Add the temporary data frame to the list
+all_data[[i]] <- temp_df
+}
+# Combine all the data frames into one
+perms_df <- do.call(rbind, all_data)
+
+# Best Possible (every team in correct order)
+best <- data.frame(
+  true_rank = rep(1:8, times = 10000),  # Repeat 1-8 for 10,000 simulations
+  rank_hat = rep(1:8, times = 10000),   # Ensure rank_hat matches true_rank
+  simulation = rep(1:10000, each = 8)   # Assign each set to a simulation
+)
+# Worst Possible (worst team always wins; best last)
+worst <- data.frame(
+  true_rank = rep(1:8, times = 10000),  # Repeat 1-8 for 10,000 simulations
+  rank_hat = rep(8:1, times = 10000),   # Ensure rank_hat matches true_rank
+  simulation = rep(1:10000, each = 8)   # Assign each set to a simulation
+)
+
+
+# Function to compute mutual information for a given dataset
+compute_mut_plots <- function(dataset) {
+  num_teams <- length(unique(dataset$true_rank))
+  results <- numeric(num_teams)
+  for (i in 1:num_teams) {
+    binary_vector <- c(rep(1, i), rep(0, num_teams - i))  # Construct vector
+    results[i] <- mut_info(dataset, num_teams, binary_vector)  # Compute MI
+  }
+  return(results)
+}
+
+# Compute mutual information for each dataset
+mi_se_reseeded <- compute_mut_plots(reseeded_results_eight)
+mi_group_stage <- compute_mut_plots(group_stage_results_eight)
+mi_de_norm <- compute_mut_plots(de_norm_results_eight)
+mi_se_norm <- compute_mut_plots(all_results_norm)
+mi_test_rr <- compute_mut_plots(test_rr_noTies)
+mi_seven_se <- compute_mut_plots(seven_games_se_results)
+mi_random <- compute_mut_plots(equal_strengths)
+mi_se_unif <- compute_mut_plots(test_unif)
+mi_bad <- compute_mut_plots(bad_seeding_structure)
+mi_perms <- compute_mut_plots(perms_df)
+mi_best <- compute_mut_plots(best)
+mi_worst <- compute_mut_plots(worst)
+
+mi_plots_df <- data.frame(
+indices = 1:8,
+"Single Elimination (Reseeded)" = 1-mi_se_reseeded,
+"Group Stage" = 1-mi_group_stage,
+"Double Elimination" = 1-mi_de_norm,
+"Single Elimination (Set Structure)" = 1-mi_se_norm,
+"Coin Flip Single Elimination" = 1-mi_random,
+#"Unif_SE" = mi_se_unif,
+"Bad Seeding Structure Single Elimination" = 1-mi_bad,
+"Coin Flip Round Robin" = 1-mi_perms,
+"Round Robin" = 1-mi_test_rr,
+"Worst Possible" = 1-mi_worst,
+"Best Possible" = 1-mi_best,
+check.names = FALSE
+)
+
+# Reshape data into long format for ggplot
+df_long <- pivot_longer(mi_plots_df, cols = -indices, names_to = "Method", values_to = "MI")
+df_long <- df_long %>% mutate(Method = recode( Method, "Single.Elimination..Reseeded." = "Single Elimination (Reseeded)", "Group.Stage" = "Group Stage", "Double.Elimination" = "Double Elimination", "Single.Elimination..Set.Structure." = "Single Elimination (Set Structure)", "Coin.Flip.Single.Elimination" = "Coin Flip Single Elimination", "Bad.Seeding.Structure.Single.Elimination" = "Bad Seeding Structure Single Elimination", "Coin.Flip.Round.Robin" = "Coin Flip Round Robin", "Round.Robin" = "Round Robin", "Worst.Possible" = "Worst Possible", "Best.Possible" = "Best Possible" ))
+
+okabe_ito <- c(
+  "#E69F00", # orange
+  "#56B4E9", # sky blue
+  "#009E73", # bluish green
+  "#F0E442", # yellow
+  "#0072B2", # blue
+  "#D55E00", # vermillion
+  "#CC79A7", # reddish purple
+  "#999999", # gray
+  "#8A2BE2", # violet (extra)
+  "#20B2AA"  # teal (extra)
+)
+# Compute the ordering of methods by mean MI (descending) 
+method_order <- df_long %>% 
+  group_by(Method) %>% 
+  summarize(mean_MI = mean(MI, na.rm = TRUE)) %>% 
+  arrange(desc(mean_MI)) %>% 
+  pull(Method) 
+
+# Reorder Method factor levels by MI 
+df_long <- df_long %>% 
+  mutate(Method = factor(Method, levels = method_order)) 
+
+# Define color mapping in the new order 
+methods <- levels(df_long$Method) 
+method_colors <- setNames(okabe_ito[seq_along(methods)], methods)
+library(ggrepel)
+
+windowsFonts(Arial = windowsFont("Arial"))
+comparison_plot <- ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
+  geom_line(linewidth = 2.5) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    data = df_long %>% group_by(Method) %>% slice_max(indices, n = 1),
+    aes(label = Method),
+    hjust = 0,
+    size = 8,
+    family = "Arial",
+    nudge_x = 2.5,  # Push labels to the right
+    direction = "y",  # Only adjust vertically to avoid overlap
+    segment.size = 0.5,  # Add connecting lines
+    segment.color = "grey50"
+  ) +
+  labs(
+    title = "Comparison of Tournament Structures with Normal Strengths",
+    x = "Top i Number of Teams",
+    y = "Normalized Mutual Information \\ Entropy"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Arial", size = 32),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, size = 36),
+    axis.title = element_text(size = 30),
+    axis.text = element_text(size = 30),
+    plot.margin = margin(5, 150, 5, 5)  # Increased right margin
+  ) +
+  scale_color_manual(values = method_colors) +
+  scale_x_continuous(expand = expansion(mult = c(0.05, 0.15))) +  # Add more space on right
+  coord_cartesian(clip = "off")  # Changed to "off" to allow labels outside plot
+
+ggsave(
+  filename = "tournament_comparison_plot.png",  # Change file type if needed
+  plot = comparison_plot,  # Saves the last ggplot created
+  dpi = 600,        
+  bg = "white",
+  units = "in",
+  width = 15.28,
+  height = 13.43
+)
+
+
+# Apply normalization to all columns except "indices"
+df_close <- df_long %>% filter(Method %in% c("Single Elimination (Reseeded)", "Double Elimination", "Group Stage", "Single Elimination (Set Structure)" ))
+windowsFonts(Arial = windowsFont("Arial"))
+ggplot(df_close, aes(x = indices, y = MI, color = Method, group = Method)) +
+geom_line(linewidth = 2.5) +           # Add lines
+geom_point(size=3) +          # Add points
+labs(
+title = "Comparison of Tournament Structures with Normal Strengths",
+x = "Top i Number of Teams",
+y = "Normalized Mutual Information \\ Entropy"
+) +
+theme_minimal() +       # Use a clean theme
+theme(text = element_text(family = "Arial", size = 32),
+  legend.position = "bottom",
+  legend.box = "vertical",
+  plot.title = element_text(hjust = 0.5, size = 36),
+  axis.title = element_text(size = 30),
+  axis.text = element_text(size=30)) +
+  guides(color = guide_legend(nrow = 5)) +
+  scale_color_manual(values = method_colors)
+ggsave(
+  filename = "tournament_comparison_plot_close.png",  # Change file type if needed
+  plot = last_plot(),  # Saves the last ggplot created
+  dpi = 600,        
+  bg = "white",
+  units = "in",
+  width = 15.28,
+  height = 13.43
+)
+
+```
+
+```{r}
+compute_mut_plots_rydog <- function(dataset) {
+  num_teams <- length(unique(dataset$true_rank))
+  results <- numeric(num_teams)
+  for (i in 1:num_teams) {
+    binary_vector <- c(rep(1, i), rep(0, num_teams - i))  # Construct vector
+    results[i] <- mut_info(dataset, num_teams, binary_vector, wtype = "rydog")  # Compute MI
+  }
+  return(results)
+}
+
+# Compute mutual information for each dataset
+mi_se_reseeded_rydog <- compute_mut_plots_rydog(reseeded_results_eight)
+mi_group_stage_rydog <- compute_mut_plots_rydog(group_stage_results_eight)
+mi_de_norm_rydog <- compute_mut_plots_rydog(de_norm_results_eight)
+mi_se_norm_rydog <- compute_mut_plots_rydog(all_results_norm)
+mi_test_rr_rydog <- compute_mut_plots_rydog(test_rr_noTies)
+mi_seven_se_rydog <- compute_mut_plots_rydog(seven_games_se_results)
+mi_random_rydog <- compute_mut_plots_rydog(equal_strengths)
+mi_se_unif_rydog <- compute_mut_plots_rydog(test_unif)
+mi_bad_rydog <- compute_mut_plots_rydog(bad_seeding_structure)
+mi_perms_rydog <- compute_mut_plots_rydog(perms_df)
+mi_best_rydog <- compute_mut_plots_rydog(best)
+mi_worst_rydog <- compute_mut_plots_rydog(worst)
+
+mi_plots_df_rydog <- data.frame(
+indices = 1:8,
+"Single Elimination (Reseeded)" = 1-mi_se_reseeded_rydog,
+"Group Stage" = 1-mi_group_stage_rydog,
+"Double Elimination" = 1-mi_de_norm_rydog,
+"Single Elimination (Set Structure)" = 1-mi_se_norm_rydog,
+"Coin Flip Single Elimination" = 1-mi_random_rydog,
+#"Unif_SE" = mi_se_unif,
+"Bad Seeding Structure Single Elimination" = 1-mi_bad_rydog,
+"Coin Flip Round Robin" = 1-mi_perms_rydog,
+"Round Robin" = 1-mi_test_rr_rydog,
+"Worst Possible" = 1-mi_worst_rydog,
+"Best Possible" = 1-mi_best_rydog
+)
+
+# Reshape data into long format for ggplot
+df_long_rydog <- pivot_longer(mi_plots_df_rydog, cols = -indices, names_to = "Method", values_to = "MI")
+windowsFonts(Arial = windowsFont("Arial"))
+ggplot(df_long_rydog, aes(x = indices, y = MI, color = Method, group = Method)) +
+geom_line(linewidth = 2.5) +           # Add lines
+geom_point(size=3) +          # Add points
+labs(
+title = "Comparison of Tournament Structures with Normal Strengths (Rydog)",
+x = "Top i Number of Teams",
+y = "Normalized Mutual Information \\ Entropy (log10 scale)"
+) +
+theme_minimal() +       # Use a clean theme
+theme(text = element_text(family = "Arial", size = 32),
+  legend.position = "bottom",
+  legend.box = "vertical",
+  plot.title = element_text(hjust = 0.5, size = 36),
+  axis.title = element_text(size = 30),
+  axis.text = element_text(size=30)) +
+  guides(color = guide_legend(nrow = 5)) +
+  scale_y_log10(
+    labels = scales::label_number() 
+  ) +
+  scale_color_viridis_d(option = "H")
+ggsave(
+  filename = "tournament_comparison_plot_rydog.png",  # Change file type if needed
+  plot = last_plot(),  # Saves the last ggplot created
+  dpi = 600,        
+  bg = "white",
+  units = "in",
+  width = 20,
+  height = 13.43
+)
+
+
+# Apply normalization to all columns except "indices"
+df_close_rydog <- df_long_rydog %>% filter(Method %in% c("Single.Elimination..Reseeded.", "Double.Elimination", "Group.Stage", "Single.Elimination..Set.Structure." ))
+windowsFonts(Arial = windowsFont("Arial"))
+ggplot(df_close_rydog, aes(x = indices, y = MI, color = Method, group = Method)) +
+geom_line(linewidth = 2.5) +           # Add lines
+geom_point(size=3) +          # Add points
+labs(
+title = "Comparison of Tournament Structures with Normal Strengths (Rydog)",
+x = "Top i Number of Teams",
+y = "Normalized Mutual Information \\ Entropy (log10 scale)"
+) +
+theme_minimal() +       # Use a clean theme
+theme(text = element_text(family = "Arial", size = 32),
+  legend.position = "bottom",
+  legend.box = "vertical",
+  plot.title = element_text(hjust = 0.5, size = 36),
+  axis.title = element_text(size = 30),
+  axis.text = element_text(size=30)) +
+  guides(color = guide_legend(nrow = 5)) +
+  scale_y_log10(
+    labels = scales::label_number() 
+  ) +
+  scale_color_viridis_d(option = "H")
+ggsave(
+  filename = "tournament_comparison_plot_close_rydog.png",  # Change file type if needed
+  plot = last_plot(),  # Saves the last ggplot created
+  dpi = 600,        
+  bg = "white",
+  units = "in",
+  width = 20,
+  height = 13.43
+)
+```
+
+```{r}
+make_perms_df <- function(num_teams){
+  perms_list <- permn(1:num_teams)
+  all_data <- vector("list", length(perms_list))
+  
+  for (i in seq_along(perms_list)) {
+    all_data[[i]] <- data.frame(
+      true_rank  = 1:num_teams,     # True rank positions
+      rank_hat   = perms_list[[i]], # The current permutation
+      simulation = i
+    )
+  }
+  do.call(rbind, all_data)
+}
+
+# Generate datasets for 4, 6, and 10 teams
+res <- data.frame(
+  num_teams = 2:8,
+  mutual_info = sapply(2:8, function(i){
+    df <- make_perms_df(i)
+    mut_info(df, num_teams = i)
+  })
+)
+
+res
+
+
+
+```
+
+Why is it always 0.25?
+
+$$
+I(R;\hat{R}) = \sum_{R\in R} \sum_{\hat{R} \in \hat{R}} w(R,\hat{R})\times p(R,\hat{R})\times \log_2(\frac{p(R,\hat{R})}{p(R)\times p(\hat{R})})
+$$
+
+since every outcome is equally likely: $p(R,\hat{R}) = \frac{1}{n!}$
+
+because $R$ and $\hat{R}$ are independent and have equal probabilities,
+
+$H(R,\hat{R}) = H(R) + H(\hat{R}) = -2\sum_{x \in X} p(x)\log(p(x)) = -2(n!) \times (1/n!) \times\log_2(1/n!) = \log_2((n!)^2)$
+
+$$
+\frac{I(R,\hat{R})}{H(R,\hat{R})} = \frac{\sum \sum w(R,\hat{R}) \times \frac{1}{n!} \times \log_2 (\frac{1/n!}{(1/n!)^2})} {\log_2((n!)^2)}
+$$
+
+$\sum \sum w(R,\hat{R}) = 0.5\times n!$
+
+$$
+= \frac{0.5 \times n!\times \frac{1}{n!} \times \log_2(n!)}{2\times \log_2(n!)} =  \frac{0.5}{2} = 0.25
+$$
+
+include number of games (might be a range)
+
+Single Elimination - third place and without third place; series = 3,5,7
+
+Double Elimination
+
+-   Repechage
+
+-   True Double Elimination
+
+-   Consolation Bracket (loser's bracket best place is third)
+
+Triple Elimination
+
+Deterministic Outcomes
+
+Round Robin - with k rounds (1,2,3,5,7)
+
+Stepladder - 8 vs 7, winner plays 6, etc.
+
+Group Stage - winners of group advance, top 2 advance
+
+Staged Round Robin/Jacobian Ladder - top 2 in each group form new group, bottom 2 new group (each new group is a new round robin)
+
+High School Tennis Ladder - 1 vs 2, 3 vs 4, etc., Re-rank 2 vs 3, 4 vs 5, 6 vs 7, number of teams - 1 iterations
+

@@ -159,7 +159,9 @@ If one views the true ranking of the teams in a competition as a message to be s
 -   A limitation of mutual information is that it does not distinguish between the direction of information
 -   Given equal probabilities, the information found from a ranking of $(1,2,3,4)$ is equivalent to $(4,3,2,1)$
 -   Because of this, we proposed a new weighting function\
-    $$ I_w(r,\hat{r}) = \sum_r \sum_{\hat{r}} w(r,\hat{r}) * p(r, \hat{r}) \log{\frac{p(r,\hat{r})}{p(r)p(\hat{r})}} $$
+```{r out.width="150%", fig.show='hold', fig.align='center'}
+knitr::include_graphics("Weighted_Mutual_Information_Formula.png")
+```
 -   The final metric we used normalizes the results: $\frac{I_w(r,\hat{r})}{H(r,\hat{r})}$
 
 ## Top K-teams Weighted Kendall
@@ -185,9 +187,25 @@ If one views the true ranking of the teams in a competition as a message to be s
 #right_html <- right_table %>% 
 #  kable(format = "html", row.names = FALSE) %>% 
 #  kableExtra::kable_styling(font_size = 24)
-knitr::include_graphics("Top_k_Kendall.png")
+#knitr::include_graphics("Top_k_Kendall.png")
 
 ```
+
+$$\tau_w = \frac{\sum_{i\neq j} W_{ij} \times \text{sgn}(i-j)\times \text{sgn}(R_i - R_j)}{\sum_{i,j} W_{ij} - \sum_i W_{ii}}$$
+
+:::::: {style="position: relative; display: flex; height: 100%;"}
+::: {.fragment .fade-out fragment-index="1" style="position: absolute; width: 100%;"}
+```{r out.width="100%", fig.show='hold', fig.align='center'}
+knitr::include_graphics("Top_2_Kendall.png")
+```
+:::
+::: {.fragment .fade-in fragment-index="1" style="position: absolute; width: 100%;"}
+```{r out.width="100%", fig.show='hold', fig.align='center'}
+knitr::include_graphics("Top_3_Kendall.png")
+```
+:::
+::::::
+
 
 ## Tournament Simulations
 
@@ -228,21 +246,14 @@ knitr::include_graphics("simulation_example.png")
 
 ## Results
 
-:::::: {style="position: relative;"}
-::: {.fade-out fragment-index="1"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
-knitr::include_graphics("boxed_tournament_comparison_plot.png")
-```
-:::
-
-::: {.fragment .fade-in .fade-out fragment-index="1" fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
+:::::: {style="position: relative; display: flex; align-items: center; justify-content: center; height: 100%;"}
+::: {.fragment .fade-out fragment-index="1" style="position: absolute; width: 100%;"}
+```{r out.width="125%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot.png")
 ```
 :::
-
-::: {.fragment .fade-in fragment-index="2" style="position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);"}
-```{r out.width="60%", fig.show='hold', fig.align='center'}
+::: {.fragment .fade-in fragment-index="1" style="position: absolute; width: 100%;"}
+```{r out.width="150%", fig.show='hold', fig.align='center'}
 knitr::include_graphics("tournament_comparison_plot_close.png")
 ```
 :::

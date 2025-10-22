@@ -469,7 +469,7 @@ methods <- levels(df_long$Method)
 method_colors <- setNames(okabe_ito[seq_along(methods)], methods)
 
 windowsFonts(Arial = windowsFont("Arial"))
-comparison_plot <- ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
+ggplot(df_long, aes(x = indices, y = MI, color = Method, group = Method)) +
 geom_line(linewidth = 2.5) +           # Add lines
 geom_point(size=3) +          # Add points
 labs(
@@ -488,7 +488,7 @@ theme(text = element_text(family = "Arial", size = 32),
   scale_color_manual(values = method_colors)
 ggsave(
   filename = "tournament_comparison_plot.png",  # Change file type if needed
-  plot = comparison_plot,  # Saves the last ggplot created
+  plot = last_plot(),  # Saves the last ggplot created
   dpi = 600,        
   bg = "white",
   units = "in",
