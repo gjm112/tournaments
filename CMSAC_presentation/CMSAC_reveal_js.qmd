@@ -99,16 +99,10 @@ knitr::include_graphics("rhat_dist.png")
 
     -   What is considered "best"?
     
-    - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
+    - A good tournament: top *k* teams produced by the tournament matches closely to the true top *k* 
     
     :::
     
-::: {.incremental}
-
--   **Efficacy**: Final rankings should match the true rankings of the strength of the competitors
-
--   **Effectivity**: Interested in correctly ranking the best competitor as first
-:::
 
 
 ## Comparing Structures
@@ -117,15 +111,16 @@ knitr::include_graphics("rhat_dist.png")
 
     -   What is considered "best"?
     
-    - A good tournament: top *k* produced by the tournament matches closely to the true top *k* 
+    - A good tournament: top *k* teams produced by the tournament matches closely to the true top *k* 
 
--   **Efficacy**[^1]: Final rankings should match the true rankings of the strength of the competitors
+-   **Effectivity**[^1]: Interested in correctly ranking the best competitor as first
 
--   **Effectivity**[^2]: Interested in correctly ranking the best competitor as first
+-   **Efficacy**[^2]: Final rankings should match the true rankings of all the competitors
 
-[^1]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
+[^1]: Glenn (1960)
 
-[^2]: Glenn (1960)
+[^2]: Lasek and Gagolewsk (2018), Sziklai, Biró, and Csató (2022)
+
 
 ## Effectivity and Efficacy
 
@@ -143,12 +138,19 @@ knitr::include_graphics("salient examples.png")
 -   **Salient ranks**: output ranks of the competition you want to get correct
     -   Effectivity: 1 is only salient rank
     -   Efficacy: 1 through $n$ are salient ranks
+=======
+-   **Salient ranks**: output ranks of the tournament you want to get correct
+    -   Effectivity: 1 is only salient rank (*k*=1)
+    -   Efficacy: 1 through $n$ are salient ranks (*k*=n)
 :::
 
 ## Goal
 
 -   Want to quantify how well a structure can accurately order the competitors
 -   We propose a metric that quantifies how effectively different competition structures recover the true ranking
+=======
+-   Quantify how well a structure can accurately order the competitors using weighted mutual information
+-   We propose a metric that quantifies how effectively different tournament structures recover the true ranking of the teams
 
 ## Mutual Information
 
