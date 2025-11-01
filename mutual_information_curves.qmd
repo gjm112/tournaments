@@ -84,66 +84,53 @@ partial_kendall <- function(vec, k, weights = NULL){
   }
 
 
-weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weights = NULL) {
+weighted_kendall <- function(rhat, k, wtype = "symmetric_salience", salient_weights = NULL, r = NULL) {
   n <- length(rhat)
-  #salient_weights needs to be a vector of length k
+  if (is.null(r)) r <- 1:n
+  if (is.null(salient_weights)) salient_weights <- rep(1, k)
   
-  if(is.null(salient_weights)){
-    salient_weights <- rep(1,k)
-  }
-  
-  if (is.null(wtype)) {
-    w <- matrix(0, ncol = n, nrow = n)
-    for (q in k:1){
-      w[q, ] <- salient_weights[q]
-      w[, q] <- salient_weights[q]
-    }
-    w <- w/2
-  }
-  
-  if (wtype == "symmetric_salience") {
-    w <- matrix(0, ncol = n, nrow = n)
+  # Weight matrix
+  w <- matrix(0, ncol = n, nrow = n)
+  if (is.null(wtype) || wtype == "symmetric_salience") {
     for (q in k:1) {
       w[q, ] <- salient_weights[q]
       w[, q] <- salient_weights[q]
     }
-    #w[upper.tri(w)] <- w[upper.tri(w)]/2
-    #w[lower.tri(w)] <- w[lower.tri(w)]/2
   }
-  
-  #Ryan method
-  if (wtype == "rydog"){
-  w <- matrix(0, ncol = n, nrow = n)
-#  w[1:k, 1:k] <- 1
-  for (q in k:1) {
-    w[1:q, 1:q] <- salient_weights[q]
-    w[1:q, 1:q] <- salient_weights[q]
-  }
-  #w[upper.tri(w)] <- w[upper.tri(w)]/2
-  #w[lower.tri(w)] <- w[lower.tri(w)]/2
-  }
-  
-  
-  summ <- 0
-  for (i in 1:n) {
-    for (j in 1:n) {
-      if (i != j) {
-        summ <- summ + w[i, j] * sign(i - j) * sign(rhat[i] - rhat[j])
-        #print(summ)
-      }
-      
+  if (wtype == "rydog") {
+    for (q in k:1) {
+      w[1:q, 1:q] <- salient_weights[q]
     }
   }
   
-  out <- summ / (sum(w) - sum(diag(w)))
-  weight <- (out + 1) / 2
-  #print(sum(w))
-  #print(sum(diag(w)))
-  return(weight)
+  # Compute weighted Kendall numerator and denominator consistently
+  summ <- 0
+  denom <- 0
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j && w[i, j] != 0) {
+        # Skip uninformative pairs (ties in either vector)
+        if (r[i] == r[j] || rhat[i] == rhat[j]) next
   
+        denom <- denom + abs(w[i, j])
+        summ <- summ + w[i, j] * sign(r[i] - r[j]) * sign(rhat[i] - rhat[j])
+      }
+    }
+  }
+  
+  # Handle case where denom = 0 (e.g., all ties)
+  if (denom == 0) return(1)
+  
+  out <- summ / denom
+  weight <- (out + 1) / 2
+  return(weight)
 }
+
 weighted_kendall(c(2,1,3,4), k=4, salient_weights = c(3,1,1,0))
 weighted_kendall(c(2,1,3,4), k=2)
+
+weighted_kendall(c(1,1,1,1,5,6), k = 6, r = c(1,1,1,1,5,6))
+# Only works for k = # of top teams tied
 
 make_weights <- function(k) {
   w <- rep(0, 4)
@@ -714,3 +701,56 @@ Group Stage - winners of group advance, top 2 advance
 Staged Round Robin/Jacobian Ladder - top 2 in each group form new group, bottom 2 new group (each new group is a new round robin)
 
 High School Tennis Ladder - 1 vs 2, 3 vs 4, etc., Re-rank 2 vs 3, 4 vs 5, 6 vs 7, number of teams - 1 iterations
+
+## Combinations
+
+-   Manually setting the top-K teams with r=1 to look at if the top K teams were in the top K spots
+
+```{r}
+compute_mut_plots_combinations <- function(dataset, num_teams) {
+  
+  results <- numeric(num_teams)
+  
+  for (k in 1:num_teams) {
+    df <- dataset %>%
+      mutate(
+        true_rank = ifelse(true_rank <= k, 1, true_rank),
+        rank_hat = ifelse(rank_hat <= k, 1, rank_hat)
+      )
+    binary_vector <- c(rep(1, k), rep(0, num_teams - k))
+    results[k] <- mut_info(df, num_teams, binary_vector)
+  }
+  return(results)
+}
+
+combinations_se <- compute_mut_plots_combinations(all_results_norm, num_teams=8)
+combinations_rr <- compute_mut_plots_combinations(test_rr_noTies, num_teams=8)
+
+# Define x values
+x <- 1:8
+
+# Combine into one data frame for plotting
+plot_data <- data.frame(
+  x = rep(x, 2),
+  y = c(1-mi_se_norm, 1-combinations_se, 1-mi_test_rr, 1-combinations_rr),
+  type = rep(c("mi_se_norm", "combinations_se", "mi_test_rr", "combinatinos_rr"), each = 8)
+)
+
+# Create plot
+ggplot(plot_data, aes(x = x, y = y, color = type, group = type)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks = 1:8) +
+  labs(
+    x = "Salient Ranks",
+    y = "Value",
+    color = "Series",
+    title = "Comparison of MI vs Top K-teams"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5)
+  )
+
+```
