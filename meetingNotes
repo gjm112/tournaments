@@ -173,7 +173,7 @@ other
         - mean = 0.6945, median = 0.6944
     - using exponential distribution thing
         - mean = 0.4321, median = 0.4536
-         
+
 
 ## 10/18
 
@@ -258,3 +258,22 @@ round robin
         - two extremes: did it get the top one right and did it get everyone right
             - Olympics: want 1, 2, 3 to be correct then it does not matter
 - how many switches does it take to get original order from the predicted tournament order
+
+# 2025
+
+## 11/7
+
+Waterfall with 16 teams:
+- Seeds: 1 - 16
+- Division 2: seeds 9 - 16 get placed into groups (e.g., 9/10 randomly assigned to D2A and D2B, 11/12 to D2A, D2B, etc.)
+  - winners of D2A and D2B get floated to Division 1
+- Division 1: seeds 3 - 8 get placed into groups randomly; D2A and D2B winners also
+  - winners of D1A and D1B get floated to top 4
+- Top 4: double elimination (where loser of final goes to consolation and winner of consolation to grand final against final winner)
+
+Waterfall Examples (n large):
+- https://www.start.gg/tournament/supernova-2024/event/64-1v1-singles
+- https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles
+
+
+See also idea for plot with deterministic bounds (for any tournament type).
