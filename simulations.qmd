@@ -1,0 +1,340 @@
+---
+title: "Simulations"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(combinat)
+library(ggplot2)
+library(future)
+library(future.apply)
+library(progressr)
+
+# Use all cores except one
+cl <- parallel::makeCluster(parallel::detectCores() - 2)
+plan(cluster, workers = cl)
+
+
+teams <- 16
+```
+
+Note: The naming of each data frame has the following structure: tournament_distribution_ties_r_info
+
+-   tournament is the tournament structure
+-   distribution is the name of the distribution for $\theta$ (Normal, Uniform, Same, Manual)
+    -   Same is equal strengths or coin flip
+
+    -   Manual is an user created $\theta$ vector passed by adding theta_hat = *user input* at the end of the function
+-   ties: ties or noTies
+-   r is the number of games in a series or the number of iterations of round robin or group stage
+-   info is any additional information like reseeded, third place game, or bad seeding structure
+
+# Single Elimination
+
+```{r}
+single_elimination_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same"), 
+  ties = c(FALSE, TRUE), 
+  series = c(1, 3, 7), 
+  third_place = c(FALSE, TRUE), 
+  reseeded = c(FALSE, TRUE), 
+  bad_seeding_structure = c(FALSE, TRUE) 
+  )
+
+single_elimination_run_sim_block <- function(
+  teams, distribution, ties, series, third_place, reseeded,
+  bad_seeding_structure, p_block) {
+  
+  # Apply seeding structure rule
+  seeding_structure <- if (bad_seeding_structure) 1:16 else NULL
+  
+  # Build the key
+  parts <- c(
+  "singleElimination",
+  tolower(distribution),
+  ifelse(ties, "ties", "noTies"),
+  paste0(series),
+  if (third_place) "thirdplace",
+  if (reseeded) "reseeded",
+  if (bad_seeding_structure) "badseed"
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run the 10,000 tournament sims in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_single_elimination_tournament(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        series = series,
+        third_place = third_place,
+        reseeded = reseeded,
+        seeding_structure = seeding_structure
+      )
+    },
+    future.seed = TRUE   # parallel-safe RNG
+  )
+  
+  # Bind the simulation output
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # Update outer progress bar
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+with_progress({
+  p_block <- progressor(steps = nrow(single_elimination_param_grid))
+  for (i in seq_len(nrow(single_elimination_param_grid))) {
+    row <- single_elimination_param_grid[i, ]
+    
+    single_elimination_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      ties         = row$ties,
+      series       = row$series,
+      third_place  = row$third_place,
+      reseeded     = row$reseeded,
+      bad_seeding_structure = row$bad_seeding_structure,
+      p_block      = p_block
+    )
+  }
+})
+
+
+```
+
+# Double Elimination
+
+```{r}
+double_elimination_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same"), 
+  ties = c(FALSE, TRUE), 
+  series = c(1, 3, 7), 
+  final = c(FALSE, TRUE), 
+  bad_seeding_structure = c(FALSE, TRUE) 
+  )
+
+double_elimination_run_sim_block <- function(
+  teams, distribution, ties, series, final, bad_seeding_structure, p_block) {
+  
+  # Apply bad seeding structure override if required
+  seeding_structure <- if (bad_seeding_structure) 1:16 else NULL
+  
+  # Build key
+    # Build the key
+  parts <- c(
+    "doubleElimination",
+    tolower(distribution),
+    ifelse(ties, "ties", "noTies"),
+    paste0(series),
+    if (!final) "consolation",
+    if (bad_seeding_structure) "badseed"
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run 10,000 simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_double_elimination_tournament(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        series = series,
+        final = final,
+        seeding_structure = seeding_structure
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+
+with_progress({
+  p_block <- progressor(steps = nrow(double_elimination_param_grid))
+  
+  for (i in seq_len(nrow(double_elimination_param_grid))) {
+    row <- double_elimination_param_grid[i, ]
+    
+    double_elimination_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      ties         = row$ties,
+      series       = row$series,
+      final        = row$final,
+      bad_seeding_structure = row$bad_seeding_structure,
+      p_block = p_block
+    )
+  }
+})
+
+```
+
+# Round Robin
+
+```{r}
+round_robin_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same"), 
+  ties = c(FALSE, TRUE), 
+  r = c(1,2,4)
+  )
+
+round_robin_run_sim_block <- function(
+  teams, distribution, ties, r, p_block) {
+
+  # Build key
+    # Build the key
+  parts <- c(
+    "roundRobin",
+    tolower(distribution),
+    ifelse(ties, "ties", "noTies"),
+    paste0(r)
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run 10,000 simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10,
+    FUN = function(rep) {
+      simulate_roundrobin_r(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        r = r
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+
+with_progress({
+  p_block <- progressor(steps = nrow(round_robin_param_grid))
+  
+  for (i in seq_len(nrow(round_robin_param_grid))) {
+    row <- round_robin_param_grid[i, ]
+    
+    round_robin_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      ties         = row$ties,
+      r            = row$r,
+      p_block = p_block
+    )
+  }
+})
+```
+
+# Group Stage
+
+```{r}
+# Group stage is currently set so only the top 2 in each group advance
+group_stage_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same"), 
+  ties = c(FALSE, TRUE), 
+  rounds = c(1,2,4),
+  group_length = c(4,8),
+  third_place = c(FALSE, TRUE)
+  )
+
+group_stage_run_sim_block <- function(
+  teams, distribution, ties, rounds, group_length, p_block) {
+
+  # Build key
+    # Build the key
+  parts <- c(
+    "groupStage",
+    tolower(distribution),
+    ifelse(ties, "ties", "noTies"),
+    paste0(rounds),
+    paste0(group_length, "groups"),
+    if(third_place) "thirdplace"
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run 10,000 simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_group_stage_tournament(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        rounds = rounds,
+        group_length = group_length
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+
+with_progress({
+  p_block <- progressor(steps = nrow(group_stage_param_grid))
+  
+  for (i in seq_len(nrow(group_stage_param_grid))) {
+    row <- group_stage_param_grid[i, ]
+    
+    group_stage_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      ties         = row$ties,
+      rounds       = row$rounds,
+      group_length = row$group_length,
+      p_block = p_block
+    )
+  }
+})
+
+```
+
+# Waterfall
+
+# Step Ladder
+
+# Staged Round Robin
+
+# High School Tennis Ladder
