@@ -106,12 +106,14 @@ generate_elimination_tournament_structure(16)
 
 ```{r}
 # Simulate the single-elimination tournament
-simulate_single_elimination_tournament <- function(num_teams, distribution, seeding_structure = NULL, ties = T, series = 1, third_place = T, reseeded = F) {
+simulate_single_elimination_tournament <- function(num_teams, distribution, seeding_structure = NULL, ties = T, series = 1, third_place = T, reseeded = F, theta_hat = NULL) {
   
   if (num_teams <= 3) {
     stop("Number of Teams must be greater than 3.")
   }
+  
   teams <- paste(num_teams:1)
+  
   if (log2(num_teams) %% 1 != 0) {
     power_of_2 <- 2^ceiling(log2(num_teams))
     teams <- c(teams, rep(NA, power_of_2 - num_teams))
@@ -151,27 +153,16 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
     df <- arrange(unif_strength, true_rank)
   }
   else if (distribution == "Manual") {
-    cat("Please enter the strengths for each team in descending rank order:\n")
-    strengths <- numeric(num_teams)
-    for (i in num_teams:1) {
-      repeat {
-        input <- as.numeric(readline(paste("Strength for Team", num_teams - i + 1, ": ")))
-        if (!is.na(input)) {
-          strengths[i] <- input
-          break
-        } else {
-          cat("Invalid input. Please enter a numeric value.\n")
-        }
-      }
-    }
+    strengths <- theta_hat
     manual_strengths <- data.frame(
-      true_rank = as.numeric(teams),
       true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA, length(teams)),
       game_wins = rep(0, length(teams)),
       game_losses = rep(0, length(teams))
     )
-    df <- arrange(manual_strengths, true_rank)
+    df <- manual_strengths %>% arrange(true_strength) %>%
+      mutate(true_rank = as.numeric(teams)) %>%
+      arrange(true_strength, true_rank)
   }
   else {
     stop("Distribution not found: Enter Manual to input your own strengths")
@@ -213,20 +204,39 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
       if (reseeded && length(teams) > 1) {
         # Remove NA teams for sorting
         valid_teams <- teams[!is.na(teams)]
-        na_teams <- teams[is.na(teams)]
+        num_byes <- sum(is.na(teams))
         
         # Sort valid teams by their true rank (best to worst)
         sorted_teams <- valid_teams[order(as.numeric(valid_teams))]
         
-        # Create reseeded matchups: 1 vs worst, 2nd vs 2nd worst, etc.
+        # Create reseeded matchups with byes going to top seeds
         n_valid <- length(sorted_teams)
+        
         if (n_valid > 1) {
           reseeded_teams <- c()
-          for (j in 1:(n_valid/2)) {
-            reseeded_teams <- c(reseeded_teams, sorted_teams[j], sorted_teams[n_valid - j + 1])
+          
+          # If there are byes, give them to the top seeds
+          if (num_byes > 0) {
+            # Top seeds get byes
+            for (j in 1:num_byes) {
+              reseeded_teams <- c(reseeded_teams, sorted_teams[j], NA)
+            }
+            # Remaining teams play each other
+            remaining_teams <- sorted_teams[(num_byes + 1):n_valid]
+            n_remaining <- length(remaining_teams)
+            if (n_remaining > 1) {
+              for (j in 1:(n_remaining/2)) {
+                reseeded_teams <- c(reseeded_teams, remaining_teams[j], remaining_teams[n_remaining - j + 1])
+              }
+            }
+          } else {
+            # No byes: standard reseeding (best vs worst)
+            for (j in 1:(n_valid/2)) {
+              reseeded_teams <- c(reseeded_teams, sorted_teams[j], sorted_teams[n_valid - j + 1])
+            }
           }
-          # Add back any NA teams (byes)
-          teams <- c(reseeded_teams, na_teams)
+          
+          teams <- reseeded_teams
         }
       }
       
