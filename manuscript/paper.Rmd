@@ -371,7 +371,7 @@ As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This require
 <!-- #This is what we use for weights -->
 <!-- ``` -->
 
-One and appropriate weight function was chosen, we get the following formula for weighted information: 
+Once an appropriate weight function $w(r, \hat{r})$ is chosen, we get the following formula for weighted information: 
 
 $$
 I_w(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r})p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
@@ -382,18 +382,30 @@ $$
 
 @Shieh1998: Weighted Kendall's Tau
 
-Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second set of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$. As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].  
+Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second vector of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$, becomes a function of $m$ (and also, as before, $r$ and $hat{r}$).  As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].  
 
-
-^[7]: One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere.  
+^[7]: One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere (i.e. $m = \{1,1,1,0\}$).    
 
 In addition, one can also weight the salient ranks.  For example, in the Olmypics where getting the top three correct is the main objective, one could argue that it is more important to get the first place correct than the third place. This could lead to, for instance, a salient weight vector of $m = \{5,3,1,0, \cdots, 0\}$ giving 5 times the weight to getting the first place team correct as getting the third team correct.  
 
 With the addition of the salient weighting function, $m$, the formula for weighted mutual information becomes:
 
 $$
-wI_m(r_{\{{i|m_i >0}\}}, \hat{r}_{\{{i|m_i >0}\}})=\sum_{r_{\{{i|m_i >0}\}}}\sum_{\hat{r}_{\{{i|m_i >0}\}}} w_m(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}}) \times
+I^m_w(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r}, m)p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
 $$
+.
+
+If we choose to use the weighted Kendall's $\tau$ for our weights, $w(r, \hat{r}, m)$ would be: 
+
+$$
+w(r, \hat{r}, m) = \frac{\sum_{i \ne j} m^{\star}_{ij}\text{sign}_{(0+)}(r_i - r_j)sign_{(0+)}(\hat{r}_i - \hat{r}_j)}{\sum_{i,j}m^{\star}_{i,j}- \sum_i m^{\star}_{i,i}}
+$$
+where $m^{\star}_{i,j} = m_{min(i,j)}$ and $sign_{(0+)}(.)$ is the sign of the input with the special case that a 0 maps to 1. 
+
+
+<!-- $$ -->
+<!-- wI_m(r_{\{{i|m_i >0}\}}, \hat{r}_{\{{i|m_i >0}\}})=\sum_{r_{\{{i|m_i >0}\}}}\sum_{\hat{r}_{\{{i|m_i >0}\}}} w_m(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}}) \times -->
+<!-- $$ -->
 
 <!-- $$ -->
 <!-- p(\hat{r}_{\{{i|m_i > 0}\}}, r_{\{{i|m_i >0}\}})\times \\  -->
@@ -403,7 +415,7 @@ $$
 
 Because this mutual information is unitless, the formula can be standardized to be between 0 and 1 as follows: 
 $$
-\frac{wI_m(r,\hat{r})}{\text{max}\{H(r), H(\hat{r})\}}
+\frac{I^m_w(r,\hat{r})}{\text{max}\{H(r), H(\hat{r})\}}
 $$
 
 where $H(.)$ is the usual Shannon entropy. Competition structures with
@@ -443,6 +455,7 @@ Specifically, we examined the following structures:
 -   Single elimination bracket, usual seeding (1 vs 8, 4 vs 5, 3 vs 6, 2 vs 7) matches determined by a coin toss.  
 -   Round Robin, normally distributed strengths
 -   Every Possible Permutation: All possible $8! = 40320$ permutations of rankings are equally likely.
+
 
 
 
