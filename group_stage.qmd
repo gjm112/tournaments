@@ -28,7 +28,7 @@ simulate_match <- function(team1, team2, strength1, strength2) {
 ### Simulate Each Group
 
 ```{r}
-simulate_group_stage_tournament <- function(num_teams, distribution, group_length = 4, ties = TRUE, rounds = 1, seeded=F) {
+simulate_group_stage_tournament <- function(num_teams, distribution, group_length = 4, ties = TRUE, rounds = 1, third_place = T, theta_hat = NULL) {
   
   if (num_teams <= 3) {
     stop("Number of Teams must be greater than 3.")
@@ -75,27 +75,16 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
     df <- arrange(team_strengths, true_rank)
   }
   else if (distribution == "Manual") {
-    cat("Please enter the strengths for each team in descending rank order:\n")
-    strengths <- numeric(num_teams)
-    for (i in num_teams:1) {
-      repeat {
-        input <- as.numeric(readline(paste("Strength for Team", num_teams - i + 1, ": ")))
-        if (!is.na(input)) {
-          strengths[i] <- input
-          break
-        } else {
-          cat("Invalid input. Please enter a numeric value.\n")
-        }
-      }
-    }
-    team_strengths <- data.frame(
-      true_rank = as.numeric(teams),
-      theta = strengths,
+    strengths <- theta_hat
+    manual_strengths <- data.frame(
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA, length(teams)),
       game_wins = rep(0, length(teams)),
       game_losses = rep(0, length(teams))
     )
-    df <- arrange(team_strengths, true_rank)
+    df <- manual_strengths %>% arrange(true_strength) %>%
+      mutate(true_rank = as.numeric(teams)) %>%
+      arrange(true_strength, true_rank)
   }
   else {
     stop("Distribution not found: Enter Manual to input your own strengths")
@@ -189,12 +178,20 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
     select(true_rank, theta, game_wins, game_losses, groups, group_rank, rank_hat, distribution)
   
 
+  # Get top finishers from each group (group_rank <= 1.5 covers both rank 1 and tied 1.5)
   group_winners <- final_df %>%
-    filter(group_rank == 1) %>%
+    group_by(groups) %>%
+    filter(group_rank == min(group_rank)) %>%  # Get best finisher(s)
+    slice(1) %>%  # If still tied, take first one
+    ungroup() %>%
     arrange(groups)
   
+  # Get second place finishers (next best after winners)
   group_seconds <- final_df %>%
-    filter(group_rank == 2) %>%
+    group_by(groups) %>%
+    arrange(group_rank, true_rank) %>%  # Sort by rank, then true_rank as tiebreaker
+    slice(2) %>%  # Take second team
+    ungroup() %>%
     arrange(groups)
   
   n_groups <- length(unique(final_df$groups))
@@ -216,7 +213,7 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
   }
   matchup_vector
   
-  knockout_results <- simulate_knockout(df = final_df, matchup_vector = matchup_vector, series = 1, third_place = TRUE)
+  knockout_results <- simulate_knockout(df = final_df, matchup_vector = matchup_vector, series = 1, third_place = third_place)
   
   knockout_results <- knockout_results %>%
     filter(!is.na(rank_hat))
@@ -227,8 +224,14 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
   final_df %>% filter(rank_hat >= num_groups),   # group-stage only teams
   knockout_results %>% filter(!is.na(rank_hat))  # knockout-stage teams
 ) %>%
-  arrange(true_rank) %>%
-    mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+  arrange(true_rank)
+  if (ties == F){
+    final_df <- final_df %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+  } else{
+    final_df <- final_df %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "average"))
+  }
 
   
   return(combined_df)
@@ -236,7 +239,7 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
 
 # Example usage:
 # Single simulation
-result <- simulate_group_stage_tournament(num_teams = 8, distribution = "Normal", group_length = 4, ties=F)
+result <- simulate_group_stage_tournament(num_teams = 16, distribution = "Same", group_length = 4, ties=T)
 
 group_stage_results <- list()
 for (teams in c(8)) {

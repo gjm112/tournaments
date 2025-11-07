@@ -43,41 +43,87 @@ simulate_match <- function(team1, team2, strengths) {
 round robin tournament function for n rounds
 
 ```{r}
-simulate_roundrobin_r <- function(teams, strengths, r){
+simulate_roundrobin_r <- function(num_teams, distribution, ties = TRUE, r = 1, theta_hat = NULL) {
+  teams <- paste(1:num_teams)
   n <- length(teams)
-  win_counts <- numeric(n)
-  for (i in 1:r){
-    for (i in seq_along(teams)){
-      for (j in seq_along(teams)){
-        if (i != j){
-          match_winner <- simulate_match(teams[i],teams[j],strengths)
-          if (match_winner == teams[i]) {
-            win_counts[i] <- win_counts[i] + 1
-          } else {
-            win_counts[j] <- win_counts[j] + 1
-          }
+  
+  # Initialize strength vector
+  if (distribution == "Normal") {
+    strengths <- qnorm(1:num_teams / (num_teams + 1))
+  } else if (distribution == "Same") {
+    strengths <- rep(0, num_teams)
+  } else if (distribution == "Uniform") {
+    strengths <- qunif(1:num_teams / (num_teams + 1), 0, sqrt(12))
+  } else if (distribution == "Manual") {
+    if (is.null(theta_hat)) {
+      stop("theta_hat must be provided for Manual distribution")
+    }
+    strengths <- theta_hat
+  } else {
+    stop("Distribution not found: Enter Manual to input your own strengths")
+  }
+  
+  # Initialize win/loss counters (indexed by original team position)
+  game_wins <- rep(0, num_teams)
+  game_losses <- rep(0, num_teams)
+  
+  # Simulate round robin tournament r times
+  for (round in 1:r) {
+    for (i in 1:(num_teams - 1)) {
+      for (j in (i + 1):num_teams) {
+        team1 <- teams[i]
+        team2 <- teams[j]
+        strength1 <- strengths[i]
+        strength2 <- strengths[j]
+        
+        # Simulate match between team i and team j using their strengths
+        match_winner <- simulate_match(team1, team2, strength1, strength2)
+        
+        # Check which team won based on the returned team name
+        if (match_winner == team1) {
+          game_wins[i] <- game_wins[i] + 1
+          game_losses[j] <- game_losses[j] + 1
+        } else {
+          game_wins[j] <- game_wins[j] + 1
+          game_losses[i] <- game_losses[i] + 1
         }
       }
     }
   }
-  results <- data.frame(
-    Team = teams,
-    Game_Wins = win_counts
+  
+  # Create final dataframe with results
+  df <- data.frame(
+    team = teams,
+    true_strength = strengths,
+    game_wins = game_wins,
+    game_losses = game_losses,
+    distribution = distribution
   )
   
-  # Ranks teams based on number of wins (includes ties)
-  results$Rank_Hat <- rank(-results$Game_Wins, ties.method = "average")
-  results <- results[order(results$Rank_Hat),]
+  # Sort by true_strength to assign true rankings
+  df <- df %>% 
+    arrange(desc(true_strength)) %>% 
+    mutate(true_rank = row_number())
   
-  results <- results %>% 
-    inner_join(strengths, by = 'Team') %>% 
-    select(Team, True_Rank, True_Strength, Rank_Hat, Game_Wins)
+  # Rank teams based on number of wins
+  if (ties == TRUE) {
+    df$rank_hat <- rank(-df$game_wins, ties.method = "average")
+  } else {
+    df$rank_hat <- rank(-df$game_wins, ties.method = "random")
+  }
   
-  return(results)
+  # Select and order columns as specified
+  df <- df %>% 
+    select(true_rank, true_strength, rank_hat, game_wins, game_losses, distribution) %>%
+    arrange(true_rank)
+  
+  return(df)
 }
+
+simulate_roundrobin_r(16,"Normal", r = 4)
 ```
 
-## Uniform Distribution of Strengths
+##  Uniform Distribution of Strengths
 
 run tournament for n rounds
 

@@ -1,0 +1,58 @@
+---
+title: "NFL Playoffs"
+format: html
+editor: visual
+---
+
+## Standard NFL Playoff Format
+
+```{r}
+# Initialize storage for results
+nfl_results <- vector("list", 10000)
+
+for (sim in 1:10000){
+  nfc <- simulate_single_elimination_tournament(num_teams = 6, distribution = "Manual", 
+                                                 ties=T, series=1, 
+                                                 seeding_structure = c(1,NA,5,4,6,3,2,NA), 
+                                                 third_place=F, reseeded=T, theta_hat = nfc_theta)
+  
+  afc <- simulate_single_elimination_tournament(num_teams = 6, distribution = "Manual", 
+                                                 ties=T, series=1, 
+                                                 seeding_structure = c(1,NA,2,6,4,5,3,NA), 
+                                                 third_place=F, reseeded=T, theta_hat = afc_theta)
+  
+  nfc_theta_df <- nfc %>%
+    left_join(theta, by = c("true_strength" = "theta")) %>%
+    select(c(true_strength, true_rank, rank_hat, team))
+  
+  afc_theta_df <- afc %>%
+    left_join(theta, by = c("true_strength" = "theta")) %>%
+    select(c(true_strength, true_rank, rank_hat, team))
+  
+  winner_nfc <- nfc_theta_df %>% filter(rank_hat == 1)
+  winner_afc <- afc_theta_df %>% filter(rank_hat == 1)
+  sb_winner <- simulate_match(winner_nfc$team, winner_afc$team, 
+                              winner_nfc$true_strength, winner_afc$true_strength)
+  
+  # Combine and adjust rankings
+  nfl_playoff_results <- rbind(nfc_theta_df, afc_theta_df) %>%
+    mutate(
+      # Super Bowl winner gets rank 1, both conference winners get rank 2, others shift down
+      rank_hat = case_when(
+        team == sb_winner ~ 1,
+        rank_hat == 1 ~ 2,  # losing conference champion
+        TRUE ~ rank_hat + 1
+      )
+    ) %>%
+    arrange(-true_strength) %>%
+    mutate(
+      true_rank = 1:12,
+      sim_id = sim
+    )
+  
+  all_results[[sim]] <- nfl_playoff_results
+}
+
+# Combine all simulations
+nfl_results <- bind_rows(all_results)
+```
