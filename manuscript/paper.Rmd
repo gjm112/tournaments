@@ -216,25 +216,24 @@ work and ideas for future directions.
 Consider a set of $n$ teams indexed from $i = 1, 2, \cdots, n$ each with
 an associated true strength parameter
 $\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)$ such that
-$(\theta_1 > \theta_2 > \ldots > \theta_n)$. Next, let
+$(\theta_1 \ge \theta_2 \ge \ldots \ge \theta_n)$. Next, let
 $r(\boldsymbol{\theta})$ be the indexes of $\boldsymbol{\theta}$ when
 $\theta$ is sorted from largest to smallest so that
-$r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$. Next define
+$r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}$ (Note: While we allow for two values of $\theta$ to be equal to each other, we choose to assign unique ranks to each $\theta_i$).  Next define
 $T(\phi, s)$ as a tournament with schedule $\phi$ and seeding structure
 $s$. $\phi$ contains all the information about the scheduling of teams,
 which could be fully known prior to the tournament (*e.g.* round robin)
 or determined as the tournament progresses (*e.g.* single elimination
 tournament). We then let $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ be an
 $n$-dimensional vector-valued random variable that gives the results of
-a tournament as a vector of the indexes of the vector
-$\boldsymbol{\theta}$. The index in the first position of the vector
+a tournament as a vector of the indexes of
+$\boldsymbol{\theta}$. The number in the first position of the vector
 $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the
-team that finished first, the index in the second position of the vector
+team that finished first, the number in the second position of the vector
 $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ indicates the index of the
-team that finished second, and so on.
+team that finished second, and so on.  (Note: We do allow for ties in $\hat{r}$.) 
 
-For example, in a $n$ = 4 team tournament,
-$\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that
+For example, in a $n$ = 4 team tournament, $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 4) indicates that
 the team with index 3 (i.e. the true third best team) won the
 tournament, the true second best team finished second, the true best
 team finished third and the true 4th team finished 4th in that
@@ -242,14 +241,18 @@ particular tournament. If $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ =
 (1, 2, 3, 4), this means that the random outcome of the tournament was
 the same as the true ordering of the teams.
 
+As noted above we allow for ties in $\hat{r}$.  Continuing the above example, if $\hat{r}(T(\phi, s),\boldsymbol{\theta})$ = (3, 2, 1, 3) this indicates that the teams that are truly ranked 1st and 4th tied for 3rd.  
+
+We need a transition: 
 If one views the true ranking of the teams in a tournament as a message
 to be sent to a receiver and the outcome of the tournament as a message
 that is received, we can measure the "goodness" of a tournament in terms
 of its ability to accurately transmit the true ranking. We can then use
 concepts from information theory to assess the ability of a tournament
 to correctly rank teams. Specifically, we start with the concept of
-mutual information (@Guiasu1977-nu). For two random variables $X$ and
-$Y$ mutual information is defined as:
+mutual information (@Guiasu1977-nu). 
+
+For two random variables $X$ and $Y$ mutual information is defined as:
 
 $$
 I(X;Y)=\sum_{y\in Y}\sum_{x\in X}p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
@@ -261,13 +264,9 @@ $I(r(\boldsymbol{\theta}),\hat{r}(T(\phi, s),\boldsymbol{\theta}))$. For
 simplicity, we drop the arguments from the functions $r$ and $\hat{r}$
 for ease of exposition.
 
-We note here that $r$ is not a random variable, however, since the
-indexing of the teams in the vector $\boldsymbol{\theta}$ is arbitrary
-(we use 1, 2, 3, etc. for convenience, but any indexing is valid), we
-can view this a random variable where all permutation so of the $n$
-teams are equally likely. Therefore when calculating the mutual
-information in this setting, we set $p(r) = \frac{1}{n!}$. By a similar
-argument we set $p(\hat{r}) = \frac{1}{n!}$.
+In order to compute mutual information, marginal distributions of $r$ and $\hat{r}$ are required.  Without knowing $r$, all possible permutations of $\hat{r}$ are equally likely so we set $p(\hat{r}) = \frac{1}{n!}$. By a similar argument we set $p(r) = \frac{1}{n!}$.  
+
+we set . By a similar argument we set $p(\hat{r}) = \frac{1}{n!}$.
 
 We define the mutual information of $r$ and $\hat{r}$ to be:
 
@@ -300,13 +299,14 @@ both of these cases the mutual information will be maximized at:
 
 $$
 I(r,\hat{r})= n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{\left(\frac{1}{n!}\right)^2} = n! log((n!)^2)
-$$ and for the specific case when $n=4$ would be: $$
+$$ and for the specific case when $n=4$ would be: 
+$$
 4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
 $$
 
 # Weighted Mutual Information
 
-In order to alleviate this problem, we instead consider *weighted* mutual information (@Guiasu1977-nu). We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$.  Essentially, this problem comes down to choosing a metric that measures the distance between the vectors $\hat{r}$ and $r$. One then gives more weight to combinations of $\hat{r}$ and $r$ that are closer and less weight to combinations that are far apart.  A natural choice for distance between vectors the sum of squared deviations between the two vectors.  Specifically, we define the loss function between $\hat{r}$ and $r$ to be $l(r, \hat{r}) = \sum_{i=1}^n (\hat{r}_i - r_i)^2$.  Then, since small losses should be associated with large weights, we focus on the recipricol of this loss function. 
+In order to alleviate this problem, we instead consider *weighted* mutual information (@Guiasu1977-nu). We want to give more weight to permutations from $\hat{r}$ that are "closer" to $r$.  Essentially, this problem comes down to choosing a metric that measures the closeness between the vectors $\hat{r}$ and $r$. One then gives more weight to combinations of $\hat{r}$ and $r$ that are closer and less weight to combinations that are far apart.  A natural choice for distance between vectors the sum of squared deviations between the two vectors.  Specifically, we define the loss function between $\hat{r}$ and $r$ to be $l(r, \hat{r}) = \sum_{i=1}^n (\hat{r}_i - r_i)^2$.  Then, since small losses should be associated with large weights, we focus on the recipricol of this loss function. 
 
 In general, any loss function $l(r, \hat{r})$ can be used to define the weighting function as follows:
 
@@ -354,9 +354,10 @@ w(\hat{r},r) = \frac{\rho_\tau + 1}{2} = 1 - \frac{\# \text{ discordant pairs}}{
 $$ 
 and the number of discordant pairs is equivalent to the number of adjacent swaps needed to get the order of $\hat{r}$ correct.  
 
-As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This requires two adjacent swaps to get $\hat{r}$ to equal $r$ (i.e swap 4 with 2 and then 3 with 2). The Kendall's $\tau$ value between these two vectors is `r cor(c(1,2,3,4),c(1,3,4,2), method = "kendall")`.  We would then define the weight between the two vectors to be $(\rho_{\tau} + 1)/2 =$ `r (cor(c(1,2,3,4),c(1,3,4,2), method = "kendall") + 1)/2`.  This is exactly equivalent to $1 - \frac{\#\text{ adj swaps}}{{n \choose 2}}$.  
+As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This requires two adjacent swaps to get $\hat{r}$ to equal $r$ (i.e swap 4 with 2 and then 3 with 2). The Kendall's $\tau$ value between these two vectors is $\frac{1}{3}$.  We would then define the weight between the two vectors to be $(\rho_{\tau} + 1)/2 = \frac{2}{3}$ .  This is exactly equivalent to $1 - \frac{\#\text{ adj swaps}}{{n \choose 2}}$.  
 
-
+<!-- `r cor(c(1,2,3,4),c(1,3,4,2), method = "kendall")` -->
+<!-- `r (cor(c(1,2,3,4),c(1,3,4,2), method = "kendall") + 1)/2` -->
 
 <!-- ```{r} -->
 <!-- cor(c(1,2,3,4),c(1,3,4,2), method = "kendall") -->
@@ -373,13 +374,13 @@ As an example, consider $r = (1,2,3,4)$ and $\hat{r} = (1,3,4,2)$.  This require
 One and appropriate weight function was chosen, we get the following formula for weighted information: 
 
 $$
-wI(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r})p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+I_w(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r})p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
 $$
 
 
 # Salient Weights (and ranks)
 
-@shieh1998weighted: Weighted Kendall's Tau
+@Shieh1998: Weighted Kendall's Tau
 
 Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second set of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$. As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].  
 
@@ -394,15 +395,15 @@ $$
 wI_m(r_{\{{i|m_i >0}\}}, \hat{r}_{\{{i|m_i >0}\}})=\sum_{r_{\{{i|m_i >0}\}}}\sum_{\hat{r}_{\{{i|m_i >0}\}}} w_m(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}}) \times
 $$
 
-$$
-p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})\times \\ 
+<!-- $$ -->
+<!-- p(\hat{r}_{\{{i|m_i > 0}\}}, r_{\{{i|m_i >0}\}})\times \\  -->
 
-\log \frac {p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})}{p(r_{\{{i  \mid m_i >0}\}})p(\hat{r}_{\{{i \mid m_i >0}\}})}
-$$
+<!-- \log \frac{p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})}{p(r_{\{{i  \mid m_i >0}\}})p(\hat{r}_{\{{i \mid m_i >0}\}})} -->
+<!-- $$ -->
 
 Because this mutual information is unitless, the formula can be standardized to be between 0 and 1 as follows: 
 $$
-\frac{wI_m(r,\hat{r})}{\text{max\{}H(r), H(\hat{r})\}}
+\frac{wI_m(r,\hat{r})}{\text{max}\{H(r), H(\hat{r})\}}
 $$
 
 where $H(.)$ is the usual Shannon entropy. Competition structures with
