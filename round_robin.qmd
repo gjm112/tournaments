@@ -123,7 +123,7 @@ simulate_roundrobin_r <- function(num_teams, distribution, ties = TRUE, r = 1, t
 simulate_roundrobin_r(16,"Normal", r = 4)
 ```
 
-##  Uniform Distribution of Strengths
+## Uniform Distribution of Strengths
 
 run tournament for n rounds
 
