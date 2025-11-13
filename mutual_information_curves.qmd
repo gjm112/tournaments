@@ -223,54 +223,36 @@ library(viridis)
 
 mut_info <- function(sims, num_teams, rank_weights = NULL, wtype = "symmetric_salience"){
   # Handle missing weights (default to equal weights if not provided)
-  if (is.null(rank_weights)){
-    rank_weights <- rep(1,num_teams)
+  if (is.null(rank_weights)) {
+    rank_weights <- rep(1, num_teams)
   }
-  # Extract y values from sims, assuming `rank_hat` contains a list of rankings per simulation
+
+  # Extract rank_hat lists, widen into columns y1..yN
   y_df <- sims %>%
     group_by(simulation) %>%
-    summarise(rank_hat = list(rank_hat)) %>%  # Ensure rank_hat is a list column
-    mutate(rank_hat = map(rank_hat, unlist)) %>%  # Unlist rank_hat properly
-    unnest_wider(rank_hat, names_sep = "_")  # Expand into separate columns
-    
-  # Rename y columns
+    summarise(rank_hat = list(rank_hat), .groups = "drop") %>%
+    mutate(rank_hat = map(rank_hat, unlist)) %>%
+    unnest_wider(rank_hat, names_sep = "_")
+
   colnames(y_df)[-1] <- paste0("y", 1:num_teams)
-  
-  # Create x matrix, representing positions 1:num_teams
-  x_matrix <- matrix(rep(1:num_teams, times = nrow(y_df)), ncol = num_teams, byrow = TRUE)
-  x_df <- as.data.frame(x_matrix)
-  colnames(x_df) <- paste0("x", 1:num_teams)
-  
-  # Combine x and y data frames
-  perms_df <- cbind(x_df, y_df %>% select(-simulation))
-  perms_df <- perms_df %>%
-    mutate(across(starts_with("x"), as.numeric)) %>%
-    mutate(across(starts_with("y"), as.numeric))
-  
-  # Generate all possible permutations of rankings
-  all_perms <- as.data.frame(do.call(rbind, permn(1:num_teams)))
-  colnames(all_perms) <- paste0("y", 1:num_teams)
 
-  # Count occurrences of each observed ranking
-  prob_df <- perms_df %>%
-    group_by(across(starts_with("x")),across(starts_with("y")))  %>%
-    summarise(count = n(), .groups = "drop")
-
-  # Merge with full permutation set to ensure all permutations exist
-  prob_df <- right_join(all_perms, prob_df, by = colnames(all_perms)) %>%
-    mutate(count = replace_na(count, 0)) %>%
-    mutate(probability = count / sum(count))  # Normalize probabilities
+  # Probability of each observed permutation
+  prob_df <- y_df %>%
+    select(starts_with("y")) %>%
+    group_by(across(everything())) %>%
+    summarise(count = n(), .groups = "drop") %>%
+    mutate(probability = count / sum(count))
   
   w <- numeric(nrow(prob_df))  # Initialize weight vector for the number of rows in prob_df
   
-  for (i in 1:num_teams) {
+  #for (i in 1:num_teams) {
     #x_i <- paste0("x", i)
     #y_i <- paste0("y", i)
     
     #max_footrule <- sum(rank_weights * abs((1:num_teams) - (num_teams:1)))
     # Loop through each row of prob_df
     for (j in 1:nrow(prob_df)) {
-      x_vals <- as.numeric(prob_df[j, paste0("x", 1:num_teams)])
+      #x_vals <- as.numeric(prob_df[j, paste0("x", 1:num_teams)])
       y_vals <- as.numeric(prob_df[j, paste0("y", 1:num_teams)])
       
       # Calculate the squared difference between x_i and y_i for each row j
@@ -358,7 +340,7 @@ mut_info <- function(sims, num_teams, rank_weights = NULL, wtype = "symmetric_sa
       #}
       
     }
-  }
+  #}
   #w <- 1 / (w+1)  # Inverse of squared differences and manually change 0 probabilities to 1 on the inverse
   #w <- w/sum(w)
   # Compute weights dynamically for each row
@@ -368,7 +350,7 @@ mut_info <- function(sims, num_teams, rank_weights = NULL, wtype = "symmetric_sa
   numerator <- sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * (1/factorial(num_teams)))))
   denominator <- log2(factorial(num_teams)^2)
 
-  Raj_dist <- 1-numerator/denominator
+  Raj_dist <- numerator/denominator
   # Return the weighted data frame with mutual information weights
   return(Raj_dist)
 }
@@ -388,8 +370,6 @@ de_norm_results_eight$simulation <- rep(1:10000, each = nrow(de_norm_results_eig
 # Single Elimination with Normal Distribution
 all_results_norm$simulation <- rep(1:10000, each = nrow(all_results_norm) / 10000)
 
-# Single Elimination with 7 game series
-seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
 
 # ROund Robin with randomly assigning ties
 test_rr_noTies <- test_rr %>%
@@ -426,6 +406,8 @@ worst <- data.frame(
   simulation = rep(1:10000, each = 8)   # Assign each set to a simulation
 )
 
+# Single Elimination with 7 game series
+seven_games_se_results$simulation <- rep(1:10000, each = nrow(seven_games_se_results) / 10000)
 
 # Function to compute mutual information for a given dataset
 compute_mut_plots <- function(dataset) {
@@ -454,17 +436,17 @@ mi_worst <- compute_mut_plots(worst)
 
 mi_plots_df <- data.frame(
 indices = 1:8,
-"Single Elimination (Reseeded)" = 1-mi_se_reseeded,
-"Group Stage" = 1-mi_group_stage,
-"Double Elimination" = 1-mi_de_norm,
-"Single Elimination (Set Structure)" = 1-mi_se_norm,
-"Coin Flip Single Elimination" = 1-mi_random,
+"Single Elimination (Reseeded)" = mi_se_reseeded,
+"Group Stage" = mi_group_stage,
+"Double Elimination" = mi_de_norm,
+"Single Elimination (Set Structure)" = mi_se_norm,
+"Coin Flip Single Elimination" = mi_random,
 #"Unif_SE" = mi_se_unif,
-"Bad Seeding Structure Single Elimination" = 1-mi_bad,
-"Coin Flip Round Robin" = 1-mi_perms,
-"Round Robin" = 1-mi_test_rr,
-"Worst Possible" = 1-mi_worst,
-"Best Possible" = 1-mi_best,
+"Bad Seeding Structure Single Elimination" = mi_bad,
+"Coin Flip Round Robin" = mi_perms,
+"Round Robin" = mi_test_rr,
+"Worst Possible" = mi_worst,
+"Best Possible" = mi_best,
 check.names = FALSE
 )
 
@@ -560,112 +542,117 @@ ggsave(
 
 ```
 
+## MI Calculation and Plotting
+
+These functions can take a list of dataframes and create mutual information that can then be plotted.
+
 ```{r}
-compute_mut_plots_rydog <- function(dataset) {
-  num_teams <- length(unique(dataset$true_rank))
-  results <- numeric(num_teams)
-  for (i in 1:num_teams) {
-    binary_vector <- c(rep(1, i), rep(0, num_teams - i))  # Construct vector
-    results[i] <- mut_info(dataset, num_teams, binary_vector, wtype = "rydog")  # Compute MI
+compute_mi_for_datasets <- function(dataset_list) {
+  # Validate input
+  if (!is.list(dataset_list)) {
+    stop("dataset_list must be a list of data frames")
   }
-  return(results)
+  
+  # Get dataset names from the list
+  if (!is.null(names(dataset_list)) && all(names(dataset_list) != "")) {
+    dataset_names <- names(dataset_list)
+  } else {
+    dataset_names <- paste0("Dataset_", seq_along(dataset_list))
+  }
+  
+  # Helper function to add simulation number if needed
+  add_simulation_number <- function(df) {
+    if (!"simulation" %in% colnames(df)) {
+      n_rows <- nrow(df)
+      n_sims <- 10000
+      rows_per_sim <- round(n_rows / n_sims)
+      
+      # Memory efficient: create simulation numbers
+      df$simulation <- rep(1:n_sims, each = rows_per_sim)
+    }
+    return(df)
+  }
+  
+  # Compute MI for all datasets and store as list column
+  mi_list <- lapply(seq_along(dataset_list), function(i) {
+    df <- dataset_list[[i]]
+    df <- add_simulation_number(df)
+    
+    # Compute MI - returns a vector or dataframe
+    result <- compute_mut_plots(df)
+    
+    # Convert to vector if it's a dataframe
+    if (is.data.frame(result)) {
+      result <- unlist(result)
+    }
+    
+    return(result)
+  })
+  
+  # Return dataframe with list column
+  data.frame(
+    dataset = dataset_names,
+    stringsAsFactors = FALSE
+  ) %>%
+    mutate(mi = mi_list)
 }
 
-# Compute mutual information for each dataset
-mi_se_reseeded_rydog <- compute_mut_plots_rydog(reseeded_results_eight)
-mi_group_stage_rydog <- compute_mut_plots_rydog(group_stage_results_eight)
-mi_de_norm_rydog <- compute_mut_plots_rydog(de_norm_results_eight)
-mi_se_norm_rydog <- compute_mut_plots_rydog(all_results_norm)
-mi_test_rr_rydog <- compute_mut_plots_rydog(test_rr_noTies)
-mi_seven_se_rydog <- compute_mut_plots_rydog(seven_games_se_results)
-mi_random_rydog <- compute_mut_plots_rydog(equal_strengths)
-mi_se_unif_rydog <- compute_mut_plots_rydog(test_unif)
-mi_bad_rydog <- compute_mut_plots_rydog(bad_seeding_structure)
-mi_perms_rydog <- compute_mut_plots_rydog(perms_df)
-mi_best_rydog <- compute_mut_plots_rydog(best)
-mi_worst_rydog <- compute_mut_plots_rydog(worst)
+# Example usage:
+mi_ex <- compute_mi_for_datasets(list(
+   singleElimination_normal_noTies_1 = singleElimination_normal_noTies_1,
+   singleElimination_normal_noTies_1_badseed = singleElimination_normal_noTies_1_badseed
+ ))
+ 
 
-mi_plots_df_rydog <- data.frame(
-indices = 1:8,
-"Single Elimination (Reseeded)" = 1-mi_se_reseeded_rydog,
-"Group Stage" = 1-mi_group_stage_rydog,
-"Double Elimination" = 1-mi_de_norm_rydog,
-"Single Elimination (Set Structure)" = 1-mi_se_norm_rydog,
-"Coin Flip Single Elimination" = 1-mi_random_rydog,
-#"Unif_SE" = mi_se_unif,
-"Bad Seeding Structure Single Elimination" = 1-mi_bad_rydog,
-"Coin Flip Round Robin" = 1-mi_perms_rydog,
-"Round Robin" = 1-mi_test_rr_rydog,
-"Worst Possible" = 1-mi_worst_rydog,
-"Best Possible" = 1-mi_best_rydog
-)
+plot_mi <- function(mi_results, dataset_names = NULL) {
+  # If no dataset names specified, plot all datasets
+  if (is.null(dataset_names)) {
+    dataset_names <- mi_results$dataset
+  }
+  
+  # Filter to only requested datasets
+  filtered_results <- mi_results %>%
+    filter(dataset %in% dataset_names)
+  
+  if (nrow(filtered_results) == 0) {
+    stop("No matching datasets found in results.")
+  }
+  
+  # Convert list column to long format for plotting
+  plot_df <- filtered_results %>%
+    rowwise() %>%
+    mutate(
+      index = list(1:length(mi)),
+      mi_values = list(mi)
+    ) %>%
+    unnest(cols = c(index, mi_values)) %>%
+    ungroup()
+  
+  # Create plot
+  ggplot(plot_df, aes(x = index, y = mi_values, color = dataset, group = dataset)) +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Mutual Information Comparison",
+      x = "Top K Teams",
+      y = "Mutual Information (MI)",
+      color = "Dataset"
+    ) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    scale_x_continuous(breaks = 1:max(plot_df$index)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10),
+      legend.position = "bottom",
+      legend.title = element_text(size = 11, face = "bold"),
+      legend.text = element_text(size = 9)
+    ) +
+    scale_color_brewer(palette = "Set1")
+}
 
-# Reshape data into long format for ggplot
-df_long_rydog <- pivot_longer(mi_plots_df_rydog, cols = -indices, names_to = "Method", values_to = "MI")
-windowsFonts(Arial = windowsFont("Arial"))
-ggplot(df_long_rydog, aes(x = indices, y = MI, color = Method, group = Method)) +
-geom_line(linewidth = 2.5) +           # Add lines
-geom_point(size=3) +          # Add points
-labs(
-title = "Comparison of Tournament Structures with Normal Strengths (Rydog)",
-x = "Top i Number of Teams",
-y = "Normalized Mutual Information \\ Entropy (log10 scale)"
-) +
-theme_minimal() +       # Use a clean theme
-theme(text = element_text(family = "Arial", size = 32),
-  legend.position = "bottom",
-  legend.box = "vertical",
-  plot.title = element_text(hjust = 0.5, size = 36),
-  axis.title = element_text(size = 30),
-  axis.text = element_text(size=30)) +
-  guides(color = guide_legend(nrow = 5)) +
-  scale_y_log10(
-    labels = scales::label_number() 
-  ) +
-  scale_color_viridis_d(option = "H")
-ggsave(
-  filename = "tournament_comparison_plot_rydog.png",  # Change file type if needed
-  plot = last_plot(),  # Saves the last ggplot created
-  dpi = 600,        
-  bg = "white",
-  units = "in",
-  width = 20,
-  height = 13.43
-)
-
-
-# Apply normalization to all columns except "indices"
-df_close_rydog <- df_long_rydog %>% filter(Method %in% c("Single.Elimination..Reseeded.", "Double.Elimination", "Group.Stage", "Single.Elimination..Set.Structure." ))
-windowsFonts(Arial = windowsFont("Arial"))
-ggplot(df_close_rydog, aes(x = indices, y = MI, color = Method, group = Method)) +
-geom_line(linewidth = 2.5) +           # Add lines
-geom_point(size=3) +          # Add points
-labs(
-title = "Comparison of Tournament Structures with Normal Strengths (Rydog)",
-x = "Top i Number of Teams",
-y = "Normalized Mutual Information \\ Entropy (log10 scale)"
-) +
-theme_minimal() +       # Use a clean theme
-theme(text = element_text(family = "Arial", size = 32),
-  legend.position = "bottom",
-  legend.box = "vertical",
-  plot.title = element_text(hjust = 0.5, size = 36),
-  axis.title = element_text(size = 30),
-  axis.text = element_text(size=30)) +
-  guides(color = guide_legend(nrow = 5)) +
-  scale_y_log10(
-    labels = scales::label_number() 
-  ) +
-  scale_color_viridis_d(option = "H")
-ggsave(
-  filename = "tournament_comparison_plot_close_rydog.png",  # Change file type if needed
-  plot = last_plot(),  # Saves the last ggplot created
-  dpi = 600,        
-  bg = "white",
-  units = "in",
-  width = 20,
-  height = 13.43
-)
+plot_mi(mi_ex)
 ```
 
 ```{r}
