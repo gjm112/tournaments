@@ -77,14 +77,15 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
   else if (distribution == "Manual") {
     strengths <- theta_hat
     manual_strengths <- data.frame(
-      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
-      rank_hat = rep(NA, length(teams)),
-      game_wins = rep(0, length(teams)),
-      game_losses = rep(0, length(teams))
+      theta = strengths,  # Also renamed to match other distributions
+      rank_hat = rep(NA, length(strengths)),
+      game_wins = rep(0, length(strengths)),
+      game_losses = rep(0, length(strengths))
     )
-    df <- manual_strengths %>% arrange(true_strength) %>%
-      mutate(true_rank = as.numeric(teams)) %>%
-      arrange(true_strength, true_rank)
+    df <- manual_strengths %>% 
+      arrange(desc(theta)) %>%
+      mutate(true_rank = row_number()) %>%
+      arrange(true_rank)
   }
   else {
     stop("Distribution not found: Enter Manual to input your own strengths")
@@ -148,34 +149,28 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
     
     # Rank teams within each group
     group_df <- df[df$groups == g, ]
-    if (ties) {
-      group_df$group_rank <- rank(-group_df$game_wins, ties.method = "average")
-    } else {
-      group_df$group_rank <- rank(-group_df$game_wins, ties.method = "random")
-    }
-    
+
+    group_df$group_rank <- rank(-group_df$game_wins, ties.method = "random")
+
+
     all_group_results[[g]] <- group_df
   }
-  
+
   # Combine all group results
   final_df <- do.call(rbind, all_group_results)
-  
+
   # Calculate overall tournament ranking
   # First by group rank, then by total wins, then by true rank as tiebreaker
   final_df <- final_df %>%
     arrange(group_rank, desc(game_wins), true_rank)
   
-  if (ties) {
-    final_df$rank_hat <- rank(interaction(final_df$group_rank, -final_df$game_wins), ties.method = "average")
-  } else {
-    final_df$rank_hat <- rank(interaction(final_df$group_rank, -final_df$game_wins, final_df$true_rank), ties.method = "random")
-  }
-  
   final_df <- final_df %>%
     mutate(distribution = distribution) %>%
     arrange(true_rank) %>%
-    mutate(rank_hat = ifelse(group_rank <= 2, group_rank, num_groups + group_rank)) %>%
+    mutate(rank_hat = ifelse(group_rank <= 2, group_rank, num_groups*group_rank)) %>%
     select(true_rank, theta, game_wins, game_losses, groups, group_rank, rank_hat, distribution)
+  
+  #print(final_df)
   
 
   # Get top finishers from each group (group_rank <= 1.5 covers both rank 1 and tied 1.5)
@@ -223,8 +218,7 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
   combined_df <- bind_rows(
   final_df %>% filter(rank_hat >= num_groups),   # group-stage only teams
   knockout_results %>% filter(!is.na(rank_hat))  # knockout-stage teams
-) %>%
-  arrange(true_rank)
+) %>% arrange(true_rank)
   if (ties == F){
     final_df <- final_df %>%
       mutate(rank_hat = rank(rank_hat, ties.method = "random"))
