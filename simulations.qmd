@@ -409,9 +409,341 @@ with_progress({
 
 # Getting Mutual Information
 
+### Functions to get MI and put it in a Data Frame for Plots
+
 ```{r}
-for (df in single_elimination_df){
-  MI_singleElimination <- compute_mi_for_datasets(df)
+library(ggsci)
+compute_mi_for_datasets <- function(dataset_list) {
+  # Validate input
+  if (!is.list(dataset_list)) {
+    stop("dataset_list must be a list of data frames")
+  }
+  
+  # Get dataset names from the list
+  if (!is.null(names(dataset_list)) && all(names(dataset_list) != "")) {
+    dataset_names <- names(dataset_list)
+  } else {
+    dataset_names <- paste0("Dataset_", seq_along(dataset_list))
+  }
+  
+  # Helper function to add simulation number if needed
+  add_simulation_number <- function(df) {
+    if (!"simulation" %in% colnames(df)) {
+      n_rows <- nrow(df)
+      n_sims <- 10000
+      rows_per_sim <- round(n_rows / n_sims)
+      
+      # Memory efficient: create simulation numbers
+      df$simulation <- rep(1:n_sims, each = rows_per_sim)
+    }
+    return(df)
+  }
+  
+  # Compute MI for all datasets and store as list column
+  mi_list <- lapply(seq_along(dataset_list), function(i) {
+    df <- dataset_list[[i]]
+    df <- add_simulation_number(df)
+    
+    # Compute MI - returns a vector or dataframe
+    result <- compute_mut_plots(df)
+    
+    # Convert to vector if it's a dataframe
+    if (is.data.frame(result)) {
+      result <- unlist(result)
+    }
+    
+    return(result)
+  })
+  
+  # Return dataframe with list column
+  data.frame(
+    dataset = dataset_names,
+    stringsAsFactors = FALSE
+  ) %>%
+    mutate(mi = mi_list)
 }
+
+# Example usage:
+mi_ex <- compute_mi_for_datasets(list(
+   singleElimination_normal_noTies_1,
+   singleElimination_normal_noTies_1_badseed
+ ))
+ 
+
+plot_mi <- function(mi_results, dataset_names = NULL) {
+  # If no dataset names specified, plot all datasets
+  if (is.null(dataset_names)) {
+    dataset_names <- mi_results$dataset
+  }
+  
+  # Filter to only requested datasets
+  filtered_results <- mi_results %>%
+    filter(dataset %in% dataset_names)
+  
+  if (nrow(filtered_results) == 0) {
+    stop("No matching datasets found in results.")
+  }
+  
+  # Convert list column to long format for plotting
+  plot_df <- filtered_results %>%
+    rowwise() %>%
+    mutate(
+      index = list(1:length(mi)),
+      mi_values = list(mi)
+    ) %>%
+    unnest(cols = c(index, mi_values)) %>%
+    ungroup()
+  
+  return(plot_df)
+}
+```
+
+### Getting MI for All Structures
+
+```{r}
+compute_and_store_mi_by_tournament <- function(tournament_structure) {
+  
+  # Validate input
+  valid_structures <- c("singleElimination", "doubleElimination", "roundRobin", "groupStage", "stepLadder")
+  if (!tournament_structure %in% valid_structures) {
+    stop(paste("Invalid tournament_structure. Must be one of:", 
+               paste(valid_structures, collapse = ", ")))
+  }
+  
+  # Helper function to collect datasets for a specific tournament type
+  collect_tournament_datasets <- function(param_grid, tournament_type, key_builder) {
+    dataset_list <- list()
+    
+    for (i in seq_len(nrow(param_grid))) {
+      row <- param_grid[i, ]
+      parts <- key_builder(row, tournament_type)
+      key <- paste(parts, collapse = "_")
+      
+      if (exists(key, envir = .GlobalEnv)) {
+        dataset_list[[key]] <- get(key, envir = .GlobalEnv)
+      } else {
+        warning(paste("Dataset not found:", key))
+      }
+    }
+    
+    return(dataset_list)
+  }
+  
+  # Key builders for each tournament type
+  single_elim_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0(row$series),
+      if (row$third_place) "thirdplace",
+      if (row$reseeded) "reseeded",
+      if (row$bad_seeding_structure) "badseed"
+    )
+  }
+  
+  double_elim_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0(row$series),
+      if (!row$final) "consolation",
+      if (row$bad_seeding_structure) "badseed"
+    )
+  }
+  
+  round_robin_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0(row$r)
+    )
+  }
+  
+  group_stage_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0(row$rounds),
+      paste0(row$group_length, "groups")
+    )
+  }
+  
+   stepLadder_key <- function(row, type) {
+    c(
+    type,
+    tolower(row$distribution),
+    paste0(row$series),
+    if (row$bad_seeding_structure) "badseed"
+    )
+   }
+   
+  
+  # Function to process a single tournament type
+  process_tournament_type <- function(type_name, param_grid, key_builder) {
+    message(paste("Collecting", type_name, "datasets..."))
+    datasets <- collect_tournament_datasets(param_grid, type_name, key_builder)
+    
+    message(paste("Computing MI for", type_name, "..."))
+    mi_results <- compute_mi_for_datasets(datasets)
+    
+    # Store in global environment
+    mi_var_name <- paste0(type_name, "_mi")
+    assign(mi_var_name, mi_results, envir = .GlobalEnv)
+    
+    # Create summary
+    summary_df <- data.frame(
+      dataset = names(mi_results),
+      mi = mi_results,
+      stringsAsFactors = FALSE
+    )
+    
+    message(paste("- Created", mi_var_name, "with", length(mi_results), "datasets"))
+    
+    return(list(mi = mi_results, summary = summary_df))
+  }
+  
+  # Process based on tournament_structure input
+  results_list <- list()
+  summary_list <- list()
+  
+  if (tournament_structure %in% c("singleElimination")) {
+    result <- process_tournament_type("singleElimination", 
+                                      single_elimination_param_grid, 
+                                      single_elim_key)
+    results_list$singleElimination <- result$mi
+    summary_list$singleElimination <- result$summary
+  }
+  
+  if (tournament_structure %in% c("doubleElimination")) {
+    result <- process_tournament_type("doubleElimination", 
+                                      double_elimination_param_grid, 
+                                      double_elim_key)
+    results_list$doubleElimination <- result$mi
+    summary_list$doubleElimination <- result$summary
+  }
+  
+  if (tournament_structure %in% c("roundRobin")) {
+    result <- process_tournament_type("roundRobin", 
+                                      round_robin_param_grid, 
+                                      round_robin_key)
+    results_list$roundRobin <- result$mi
+    summary_list$roundRobin <- result$summary
+  }
+  
+  if (tournament_structure %in% c("groupStage")) {
+    result <- process_tournament_type("groupStage", 
+                                      group_stage_param_grid, 
+                                      group_stage_key)
+    results_list$groupStage <- result$mi
+    summary_list$groupStage <- result$summary
+  }
+   if (tournament_structure %in% c("stepLadder")) {
+    result <- process_tournament_type("stepLadder", 
+                                      stepLadder_param_grid, 
+                                      stepLadder_key)
+    results_list$stepLadder <- result$mi
+    summary_list$stepLadder <- result$summary
+  }
+  
+  message("\n✓ MI computation complete!")
+  
+  # Return a list of all results (optional)
+  invisible(results_list)
+}
+
+compute_and_store_mi_by_tournament("groupStage")
+
+
+all_mi <- bind_rows(
+  singleElimination_mi,
+  doubleElimination_mi,
+  groupStage_mi,
+  roundRobin_mi,
+  stepLadder_mi
+)
+```
+
+## MI Plots
+
+```{r}
+# Example Plot for Round Robin
+roundRobin_plot_df <- plot_mi(roundRobin_mi)
+
+ggplot(roundRobin_plot_df, aes(x = index, y = mi_values, color = dataset, group = dataset)) +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Mutual Information Round Robin Comparison",
+      x = "Top K Teams",
+      y = "Mutual Information (MI)",
+      color = "Dataset"
+    ) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    scale_x_continuous(breaks = 1:max(roundRobin_plot_df$index)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10),
+      legend.position = "bottom",
+      legend.title = element_text(size = 11, face = "bold"),
+      legend.text = element_text(size = 9)
+    ) +
+    scale_color_d3("category20")
+
+
+normal_plot_df <- plot_mi(all_mi, c("singleElimination_normal_noTies_1", "doubleElimination_normal_noTies_1", "roundRobin_normal_noTies_1", "groupStage_normal_noTies_1_4groups", "stepLadder_normal_1"))
+
+ggplot(normal_plot_df, aes(x = index, y = mi_values, color = dataset, group = dataset)) +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Mutual Information Normal Comparison",
+      x = "Top K Teams",
+      y = "Mutual Information (MI)",
+      color = "Dataset"
+    ) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    scale_x_continuous(breaks = 1:max(normal_plot_df$index)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10),
+      legend.position = "right",
+      legend.title = element_text(size = 11, face = "bold"),
+      legend.text = element_text(size = 9)
+    ) +
+    scale_color_d3("category20")
+
+unif_plot_df <- plot_mi(all_mi, c("singleElimination_uniform_noTies_1", "doubleElimination_uniform_noTies_1", "roundRobin_uniform_noTies_1", "groupStage_uniform_noTies_1_4groups", "stepLadder_uniform_1"))
+
+ggplot(unif_plot_df, aes(x = index, y = mi_values, color = dataset, group = dataset)) +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Mutual Information Uniform Comparison",
+      x = "Top K Teams",
+      y = "Mutual Information (MI)",
+      color = "Dataset"
+    ) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    scale_x_continuous(breaks = 1:max(unif_plot_df$index)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10),
+      legend.position = "right",
+      legend.title = element_text(size = 11, face = "bold"),
+      legend.text = element_text(size = 9)
+    ) +
+    scale_color_d3("category20")
+
+
 
 ```
