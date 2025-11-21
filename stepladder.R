@@ -36,6 +36,16 @@ simulate_step_ladder <- function(num_teams, distribution, seeding_structure = NU
       game_losses = rep(0,length(teams))
     )
     df <- arrange(normal_strengths, true_rank)
+    } else if (distribution == "Exponential"){
+      strengths <- sapply(num_teams, function(n) { qexp(1:n/(n+1)) })
+      unif_strength <- data.frame(
+        true_rank = as.numeric(teams),
+        true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+        game_wins = rep(0,length(teams)),
+        game_losses = rep(0,length(teams)),
+        rank_hat = rep(NA,length(teams))
+      )
+      df <- arrange(unif_strength, true_rank)
   } else if (distribution == "Manual") {
     strengths <- theta_hat
     manual_strengths <- data.frame(
@@ -148,4 +158,4 @@ simulate_step_ladder <- function(num_teams, distribution, seeding_structure = NU
 }
 
 
-simulate_step_ladder(4, "Normal", series = 3, seeding_structure = c(1,2,3,4))
+simulate_step_ladder(4, "Exponential", series = 3, seeding_structure = c(1,2,3,4))

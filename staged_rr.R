@@ -44,6 +44,17 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
     )
     df <- arrange(team_strengths, true_rank)
   }
+  else if (distribution == "Exponential"){
+    strengths <- sapply(num_teams, function(n) { qexp(1:n/(n+1)) })
+    unif_strength <- data.frame(
+      true_rank = as.numeric(teams),
+      true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+      game_wins = rep(0,length(teams)),
+      game_losses = rep(0,length(teams)),
+      rank_hat = rep(NA,length(teams))
+    )
+    df <- arrange(unif_strength, true_rank)
+  }
   else if (distribution == "Manual") {
     strengths <- true_strength_hat
     manual_strengths <- data.frame(
@@ -247,17 +258,18 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
 
   combined_df <- rbind(top_results, bottom_results)
 
-
   if (ties == F){
-    final_df <- final_df %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "random"))
+    final_df <- combined_df %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "random")) %>%
+      arrange(true_rank, rank_hat)
   } else{
-    final_df <- final_df %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "average"))
+    final_df <- combined_df %>%
+      mutate(rank_hat = rank(rank_hat, ties.method = "average")) %>%
+      arrange(true_rank)
   }
 
 
-  return(combined_df)
+  return(final_df)
 }
 
-simulate_staged_rr(16, "Normal", rounds=10)
+simulate_staged_rr(16, "Normal", rounds=1)

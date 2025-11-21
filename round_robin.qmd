@@ -54,6 +54,8 @@ simulate_roundrobin_r <- function(num_teams, distribution, ties = TRUE, r = 1, t
     strengths <- rep(0, num_teams)
   } else if (distribution == "Uniform") {
     strengths <- qunif(1:num_teams / (num_teams + 1), 0, sqrt(12))
+  } else if (distribution == "Exponential") {
+    strengths <- qexp(1:num_teams / (num_teams + 1), 1)
   } else if (distribution == "Manual") {
     if (is.null(theta_hat)) {
       stop("theta_hat must be provided for Manual distribution")
