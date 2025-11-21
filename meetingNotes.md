@@ -275,5 +275,27 @@ Waterfall Examples (n large):
 - https://www.start.gg/tournament/supernova-2024/event/64-1v1-singles
 - https://www.start.gg/tournament/super-smash-con-2023/event/64-1v1-singles
 
+## 11/21
+
+Structures we want to do with 16 teams: 
+ - single elimination
+   - normal
+   - series
+   - third place game
+   - reseeding
+   - bad seeding
+ - double elimination
+   - true
+   - consolation bracket (?)
+   - repechage (greg will code) (!!!)
+ - triple elimination
+ - deterministic outcomes (better team always wins, round robin)
+ - round robin
+   - (1, 2, 4) rounds (?)
+ - stepladder
+ - waterfall (!!!)
+ - group stage (round robin → knockout)
+ - high school tennis ladder (n-1 iterations) (!!!)
+
 
 See also idea for plot with deterministic bounds (for any tournament type).
