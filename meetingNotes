@@ -1,4 +1,4 @@
-## 9/12
+## 9/12/24
 
 - lit review on tournament structures or competition frameworks
     - go through papers - Goossens paper
@@ -61,7 +61,7 @@ other
     - logistic regression with indictors for the competitors
 - Glickman - researcher
 
-## 9/26
+## 9/26/24
 
 - Bradley Terry model
     - logistic regression
@@ -113,7 +113,7 @@ other
         - single elimination - allow byes, need seeding structure?
 - paper name for repechage: Run It Back
 
-## 10/10
+## 10/10/24
 
 - round robin function
     - $\theta$ = vector of strengths using `runif()`
@@ -161,7 +161,7 @@ other
         - ex. 8 teams = $2^n$
             - $8!/2^7 = 315$
 
-## 10/17 Progress
+## 10/17/24 Progress
 
 - number of distinct tournament setups for $2^n$ teams: $(2^n)!/2^{(2^n-1)}$
 - added round robin distribution of correlations (Kendall rank) between true strengths and function output ranks
@@ -175,7 +175,7 @@ other
         - mean = 0.4321, median = 0.4536
 
 
-## 10/18
+## 10/18/24
 
 - round robin with two or three rounds and compare kendall coefficient
 - $e^x / (1+e^x) = e^{(i-j)}/(1+e^{(i-j)})$
@@ -202,7 +202,7 @@ other
         - use $e^x / (1+e^x)$ for winning probability
     - Zach: work on single elimination function
 
-## 10/31
+## 10/31/24
 
 - don’t want to generate strengths randomly because we want to control them more
     - pick the values so they are the same every time (space out to match normal)
@@ -220,7 +220,7 @@ round robin
     - balanced design
     - Taguchi
 
-## 11/8
+## 11/8/24
 
 - run round robin with 4 teams for 1-4 times
     - make scatterplot of correlations between different number of round robins run
@@ -235,7 +235,7 @@ round robin
     - take one tournament structure and write out every possible tournament outcome (128 outcomes) to get different kendall’s taus. can get exact distribution
         - do best and worst correlation
 
-## 12/13
+## 12/13/24
 
 - how we are evaluating the tournaments
     - probability curve of the top team winning the whole thing
@@ -261,7 +261,70 @@ round robin
 
 # 2025
 
-## 11/7
+## 1/24/25
+
+- run 1000 simulations for different numbers of teams
+    - uniform and normal distributions for strengths
+    - 3-8 teams, 16 teams
+    - save them as list objects to send to Zach to be run in probability curve code
+
+## 2/27/25
+
+- talking about entropy and mutual information
+    - trying to convey information: message is the true ranks, tournament structure processes it, and the outcome is the message that is received
+    - issue with mutual information: if 1234 is true and 4321 is outcome, gives the same mutual information as if the outcome was correct
+        - so need weighted information - weight outcomes we want more
+        - weight: squared difference between true and predicted and take reciprocal
+            - force differences of 0 to be 1
+            - large differences between true and predicted give big sum of squared but small reciprocal so small weight
+    - but also times where we only care about top team or top three teams
+        - additional layer of weighting that is either a number or 0 for whether we care about the placement of that team
+        - called rank weights
+
+## 10/21/25
+
+- way to expand our research
+    - if we care about the top 3 teams but not the order of the rankings
+        - what if we only care about identifying the top n but not getting their order correct
+        - modify weighting function so they get the same weights
+        - for kendall’s tau, how many swaps to make sure the group is correct
+        - just changing the weighting
+
+## 11/7/25
+
+- structure of the paper
+- have been working on
+    - solved if we want to get the top 4 teams but we do not care about the rankings
+        - r hat to 1 1 1 1 for top four teams rather than 1 2 3 4
+    - do something “real” so we have actual “data”
+        - take real season of nfl, estimate thetas for a single season - 2010
+        - try different playoff structures to see how they perform
+        - bad seeding and reseeding after rounds
+        - playoff structure is different than other major sports in america
+- maybe need standard error if we want to use this measure in decision making process of designing tournaments
+    - bootstrapping
+- structures we want to do (16 teams?)
+    - single elimination
+        - normal
+        - series
+        - third place game
+        - reseeding
+        - bad seeding
+    - double elimination
+        - true
+        - consolation bracket (?)
+        - repechage (greg will code) (!!!)
+    - ~~triple elimination~~
+    - deterministic outcomes (better team always wins, round robin)
+    - round robin
+        - (1, 2, 4) rounds (?)
+    - stepladder
+    - waterfall / stepladder round robin (round robin → round robin) (!!!)
+    - group stage (round robin → knockout)
+    - high school tennis ladder (n-1 iterations) (!!!)
+- lit review
+
+## 11/7/25 - Ryan Notes
 
 Waterfall with 16 teams:
 - Seeds: 1 - 16
@@ -277,3 +340,52 @@ Waterfall Examples (n large):
 
 
 See also idea for plot with deterministic bounds (for any tournament type).
+
+## 11/14/25
+
+- parameters for different loops
+    - RR
+        - distributions: normal, uniform, equal chance
+            - add Exp(1)
+        - ties: randomly assign or ties allowed
+        - k = 1, 2, 4
+        - n = 16
+    - SE
+        - distribution
+        - ties
+        - series: 1, 3, 7
+        - third: T/F
+        - resseded
+        - worst seeding
+        - stepladder is variation of SE
+    - DE
+        - distribution
+        - ties
+        - series
+        - consolation vs true DE
+        - worst seeding
+    - group stage
+        - distribution
+        - ties
+        - rounds within groups: 1, 2, 4
+        - group size: 4 or 8 (where top 2 advance)
+    - staged RR (working on it)
+        - 4x4 → 4x4
+        - 8x2 → 8x2
+- paper sections
+    - tournament structures (compare within tournament structures)
+    - different distributions (compare across structures)
+        - normal
+        - uniform
+        - equal
+        - exponential
+- other notes
+    - just use random assignment for ties & always have a third place game
+    - round robin - facet graphs
+        - normal (k = 1, 2, 4)
+        - uniform
+        - equal
+        - exp
+    - SE
+        - X axis: different distributions
+        - Y: number of rounds (1, 3, 7)
