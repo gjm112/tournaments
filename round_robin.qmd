@@ -122,7 +122,17 @@ simulate_roundrobin_r <- function(num_teams, distribution, ties = TRUE, r = 1, t
   return(df)
 }
 
-simulate_roundrobin_r(16,"Normal", r = 1)
+simulate_roundrobin_r(4,"Normal", r = 1)
+
+df <- list()
+for (i in 1:100000){
+  df[[i]] <- simulate_roundrobin_r(4, "Same", r=1)
+}
+
+test <- do.call(rbind, df)
+test$simulation <- rep(c(1:100000), each = 4)
+
+compute_mut_plots(test)
 ```
 
 ## Uniform Distribution of Strengths

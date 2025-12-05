@@ -37,7 +37,7 @@ Note: The naming of each data frame has the following structure: tournament_dist
 
 ```{r}
 single_elimination_param_grid <- expand.grid( 
-  distribution = c("Normal","Uniform", "Same", "Exponential"), 
+  distribution = c("Normal","Uniform", "Same", "Exponential"),
   ties = c(FALSE, TRUE), 
   series = c(1, 3, 7), 
   third_place = c(FALSE, TRUE), 
@@ -65,9 +65,9 @@ single_elimination_run_sim_block <- function(
 
   key <- paste(parts, collapse = "_")
   
-  # Run the 100,000 tournament sims in parallel
+  # Run the 10,000 tournament sims in parallel
   sim_list <- future_lapply(
-    X = 1:100000,
+    X = 1:10000,
     FUN = function(rep) {
       simulate_single_elimination_tournament(
         num_teams = teams,
@@ -145,9 +145,9 @@ double_elimination_run_sim_block <- function(
 
   key <- paste(parts, collapse = "_")
   
-  # Run 100,000 simulations in parallel
+  # Run 10,000 simulations in parallel
   sim_list <- future_lapply(
-    X = 1:100000,
+    X = 1:10000,
     FUN = function(rep) {
       simulate_double_elimination_tournament(
         num_teams = teams,
@@ -193,6 +193,79 @@ with_progress({
 
 ```
 
+### Repechege
+
+```{r}
+repechege_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same", "Exponential"), 
+  ties = c(FALSE, TRUE), 
+  series = c(1, 3, 7), 
+  bad_seeding_structure = c(FALSE, TRUE) 
+  )
+
+repechege_run_sim_block <- function(
+  teams, distribution, ties, series, bad_seeding_structure, p_block) {
+  
+  # Apply bad seeding structure override if required
+  seeding_structure <- if (bad_seeding_structure) 1:16 else NULL
+  
+  # Build key
+    # Build the key
+  parts <- c(
+    "Repechage",
+    tolower(distribution),
+    ifelse(ties, "ties", "noTies"),
+    paste0(series),
+    if (bad_seeding_structure) "badseed"
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run 10,000 simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_repechege_tournament(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        series = series,
+        seeding_structure = seeding_structure
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+
+with_progress({
+  p_block <- progressor(steps = nrow(repechege_param_grid))
+  
+  for (i in seq_len(nrow(repechege_param_grid))) {
+    row <- repechege_param_grid[i, ]
+    
+    repechege_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      ties         = row$ties,
+      series       = row$series,
+      bad_seeding_structure = row$bad_seeding_structure,
+      p_block = p_block
+    )
+  }
+})
+```
+
 ## Round Robin
 
 ```{r}
@@ -216,9 +289,9 @@ round_robin_run_sim_block <- function(
 
   key <- paste(parts, collapse = "_")
   
-  # Run 100,000 simulations in parallel
+  # Run 10,000 simulations in parallel
   sim_list <- future_lapply(
-    X = 1:1000000,
+    X = 1:5000,
     FUN = function(rep) {
       simulate_roundrobin_r(
         num_teams = teams,
@@ -285,9 +358,9 @@ group_stage_run_sim_block <- function(
 
   key <- paste(parts, collapse = "_")
   
-  # Run 100,000 simulations in parallel
+  # Run 10,000 simulations in parallel
   sim_list <- future_lapply(
-    X = 1:100000,
+    X = 1:10000,
     FUN = function(rep) {
       simulate_group_stage_tournament(
         num_teams = teams,
@@ -360,9 +433,9 @@ stepLadder_run_sim_block <- function(
 
   key <- paste(parts, collapse = "_")
   
-  # Run 100,000 simulations in parallel
+  # Run 10,000 simulations in parallel
   sim_list <- future_lapply(
-    X = 1:100000,
+    X = 1:10000,
     FUN = function(rep) {
       simulate_step_ladder(
         num_teams = teams,
@@ -547,6 +620,25 @@ plot_mi <- function(mi_results, dataset_names = NULL) {
   
   return(plot_df)
 }
+
+compute_mut_plots_combinations <- function(dataset) {
+  
+  num_teams <- teams
+  
+  results <- numeric(num_teams)
+  
+  for (k in 1:num_teams) {
+    df <- dataset %>%
+      mutate(
+        true_rank = ifelse(true_rank <= k, 1, true_rank),
+        rank_hat = ifelse(rank_hat <= k, 1, rank_hat)
+      )
+    binary_vector <- c(rep(1, k), rep(0, num_teams - k))
+    results[k] <- mut_info(df, num_teams, binary_vector)
+  }
+  return(results)
+}
+
 ```
 
 ### Getting MI for All Structures
@@ -555,7 +647,7 @@ plot_mi <- function(mi_results, dataset_names = NULL) {
 compute_and_store_mi_by_tournament <- function(tournament_structure) {
   
   # Validate input
-  valid_structures <- c("singleElimination", "doubleElimination", "roundRobin", "groupStage", "stepLadder")
+  valid_structures <- c("singleElimination", "doubleElimination", "roundRobin", "groupStage", "stepLadder", "Repechage")
   if (!tournament_structure %in% valid_structures) {
     stop(paste("Invalid tournament_structure. Must be one of:", 
                paste(valid_structures, collapse = ", ")))
@@ -600,6 +692,16 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
       ifelse(row$ties, "ties", "noTies"),
       paste0(row$series),
       if (!row$final) "consolation",
+      if (row$bad_seeding_structure) "badseed"
+    )
+  }
+  
+  repechege_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0(row$series),
       if (row$bad_seeding_structure) "badseed"
     )
   }
@@ -683,6 +785,13 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
     results_list$doubleElimination <- result
   }
   
+   if (tournament_structure %in% c("Repechage")) {
+    result <- process_tournament_type("Repechage", 
+                                      repechege_param_grid, 
+                                      repechege_key)
+    results_list$Repechege <- result
+  }
+  
   if (tournament_structure %in% c("roundRobin")) {
     result <- process_tournament_type("roundRobin", 
                                       round_robin_param_grid, 
@@ -714,13 +823,24 @@ compute_and_store_mi_by_tournament("doubleElimination")
 compute_and_store_mi_by_tournament("roundRobin")
 compute_and_store_mi_by_tournament("groupStage")
 compute_and_store_mi_by_tournament("stepLadder")
+compute_and_store_mi_by_tournament("Repechage")
 
 all_mi <- bind_rows(
   singleElimination_mi,
   doubleElimination_mi,
   groupStage_mi,
   roundRobin_mi,
-  stepLadder_mi
+  stepLadder_mi,
+  Repechage_mi
+)
+
+all_mi_combinations <- bind_rows(
+  singleElimination_combinations_mi,
+  doubleElimination_combinations_mi,
+  groupStage_combinations_mi,
+  roundRobin_combinations_mi,
+  stepLadder_combinations_mi,
+  Repechage_combinations_mi
 )
 ```
 
@@ -737,19 +857,19 @@ combined_plot_df <- plot_mi(all_mi, c(
   "singleElimination_normal_noTies_1",
   "singleElimination_uniform_noTies_1", 
   "singleElimination_same_noTies_1", 
-  #"singleElimination_exponential_noTies_1",
+  "singleElimination_exponential_noTies_1",
   "doubleElimination_normal_noTies_1", 
   "doubleElimination_uniform_noTies_1",
   "doubleElimination_same_noTies_1", 
-  #"doubleElimination_exponential_noTies_1", 
+  "doubleElimination_exponential_noTies_1", 
   "roundRobin_normal_noTies_1", 
   "roundRobin_uniform_noTies_1", 
   "roundRobin_same_noTies_1", 
-  #"roundRobin_exponential_noTies_1", 
+  "roundRobin_exponential_noTies_1", 
   "groupStage_normal_noTies_1_4groups",
   "groupStage_uniform_noTies_1_4groups",
-  "groupStage_same_noTies_1_4groups"#,
-  #"groupStage_exponential_noTies_1_4groups"
+  "groupStage_same_noTies_1_4groups",
+  "groupStage_exponential_noTies_1_4groups"
   )
 )
 
@@ -828,7 +948,83 @@ combined_plot <- ggplot(combined_plot_df, aes(x = index, y = mi_values, color = 
   scale_color_d3("category20") +
   guides(color = guide_legend(nrow = 2))
 
+
+
+
+combined_combinations_df <- plot_mi(all_mi_combinations, c(
+  "singleElimination_normal_noTies_1",
+  "singleElimination_uniform_noTies_1", 
+  "singleElimination_same_noTies_1", 
+  "singleElimination_exponential_noTies_1",
+  "doubleElimination_normal_noTies_1", 
+  "doubleElimination_uniform_noTies_1",
+  "doubleElimination_same_noTies_1", 
+  "doubleElimination_exponential_noTies_1", 
+  "roundRobin_normal_noTies_1", 
+  "roundRobin_uniform_noTies_1", 
+  "roundRobin_same_noTies_1", 
+  "roundRobin_exponential_noTies_1", 
+  "groupStage_normal_noTies_1_4groups",
+  "groupStage_uniform_noTies_1_4groups",
+  "groupStage_same_noTies_1_4groups",
+  "groupStage_exponential_noTies_1_4groups"
+  )
+)
+
+
+combined_combinations_df <- combined_combinations_df %>%
+  select(-any_of(c("tournament_type", "distribution", "group_length"))) %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_dataset_name_combined(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    # Create a label for the additional parameters
+    param_label = paste(tournament_type, sep = "\n")
+  )
+
+combined_combinations_df <- combined_combinations_df %>%
+  mutate(
+    color_group = case_when(
+      tournament_type == "groupStage" ~ "groupStage (4 Groups)",
+      TRUE ~ tournament_type
+    )
+  )
+
+combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    ~ distribution,
+    labeller = labeller(
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 7),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 2))
+
 print(combined_plot)
+print(combined_combinations_plot)
 ```
 
 ## Single Elimination
@@ -987,37 +1183,214 @@ single_elimination_ties_plot <- ggplot(single_elim_ties_df, aes(x = index, y = m
   scale_color_d3("category20") +
   guides(color = guide_legend(nrow = 2))
 
-# Display plots
-print(single_elimination_noties_plot)
-print(single_elimination_ties_plot)
-```
-
-## Double Elimination
-
-```{r}
-double_elimination_plot_df <- plot_mi(doubleElimination_mi)
+# Combine the combination datasets
+single_elimination_combinations_plot_df <- bind_rows(
+  plot_mi(singleElimination_combinations_mi),
+  plot_mi(stepLadder_combinations_mi)
+)
 
 # Parse dataset names to extract parameters
-parse_dataset_name <- function(dataset_name) {
+parse_dataset_name_se <- function(dataset_name) {
   parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract tournament type (first part)
+  tournament_type <- parts[1]
   
   # Extract distribution (second part)
   distribution <- parts[2]
   distribution <- str_to_title(distribution)
   
-  # Extract ties (third part)
-  ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
-  
-  # Extract series (fourth part - just the number)
-  series <- as.numeric(parts[4])
-  
-  # Check for consolation (fifth part might be "consolation")
-  #final <- ifelse(length(parts) >= 5 && parts[5] == "consolation", "Consolation", "Final")
-  
-  # Check for badseed (could be fifth or sixth part)
-  bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  if (tournament_type == "singleElimination") {
+    # Extract ties (third part)
+    ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+    
+    # Extract series (fourth part - just the number)
+    series <- as.numeric(parts[4])
+    
+    # Check for third_place (could be in position 5+)
+    third_place <- ifelse(any(parts == "thirdplace"), "Third Place", "No Third Place")
+    
+    # Check for reseeded
+    reseeded <- ifelse(any(parts == "reseeded"), "Reseeded", "Not Reseeded")
+    
+    # Check for badseed
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  } else if (tournament_type == "stepLadder") {
+    # Step ladder doesn't have ties parameter
+    ties <- "No Ties"  # Default for step ladder
+    
+    # Extract series (third part for step ladder)
+    series <- as.numeric(parts[3])
+    
+    # Step ladder specific defaults
+    third_place <- "No Third Place"
+    reseeded <- "Not Reseeded"
+    
+    # Check for badseed
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  }
   
   return(data.frame(
+    tournament_type = tournament_type,
+    distribution = distribution,
+    ties = ties,
+    series = series,
+    third_place = third_place,
+    reseeded = reseeded,
+    bad_seeding = bad_seeding
+  ))
+}
+
+# Add parameter columns to the plot data
+single_elimination_combinations_plot_df <- single_elimination_combinations_plot_df %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "third_place", "reseeded", "bad_seeding", "param_label", "color_group"))) %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_dataset_name_se(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  filter(third_place == "Third Place" | tournament_type == "stepLadder") %>% 
+  mutate(
+    series = factor(series, levels = c(1, 3, 7)),
+    # Create a label for the additional parameters
+    param_label = paste(tournament_type, reseeded, bad_seeding, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+single_elimination_combinations_plot_df <- single_elimination_combinations_plot_df %>%
+  mutate(
+    color_group = paste(tournament_type, reseeded, bad_seeding, sep = " | ")
+  )
+
+# Filter data for No Ties
+single_elim_combinations_noties_df <- single_elimination_combinations_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+single_elim_combinations_ties_df <- single_elimination_combinations_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties (Combinations)
+single_elimination_combinations_noties_plot <- ggplot(single_elim_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Series:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Single Elimination (Combinations): Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Parameters"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 7),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 2))
+
+# Plot 2: Ties (Combinations)
+single_elimination_combinations_ties_plot <- ggplot(single_elim_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Series:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Single Elimination (Combinations): Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Parameters"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 7),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 2))
+
+# Display plots
+print(single_elimination_noties_plot)
+print(single_elimination_ties_plot)
+
+# Display plots
+print(single_elimination_combinations_noties_plot)
+print(single_elimination_combinations_ties_plot)
+
+```
+
+## Double Elimination
+
+```{r}
+double_elimination_plot_df <- bind_rows(
+  plot_mi(doubleElimination_mi),
+  plot_mi(Repechage_mi)
+)
+
+# Parse dataset names to extract parameters
+parse_dataset_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract tournament type (first part)
+  tournament_type <- parts[1]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  if (tournament_type == "doubleElimination"){
+    # Extract ties (third part)
+    ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+    
+    # Extract series (fourth part - just the number)
+    series <- as.numeric(parts[4])
+    
+    # Check for consolation (fifth part might be "consolation")
+    #final <- ifelse(length(parts) >= 5 && parts[5] == "consolation", "Consolation", "Final")
+    
+    # Check for badseed (could be fifth or sixth part)
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  } else if (tournament_type == "Repechage"){
+    # Extract ties (third part)
+    ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+    
+    # Extract series (fourth part - just the number)
+    series <- as.numeric(parts[4])
+    
+    # Check for badseed (could be fifth or sixth part)
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  }
+  
+  return(data.frame(
+    tournament_type = tournament_type,
     distribution = distribution,
     ties = ties,
     series = series,
@@ -1028,6 +1401,7 @@ parse_dataset_name <- function(dataset_name) {
 
 # Add parameter columns to the plot data
 double_elimination_plot_df <- double_elimination_plot_df %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "color_group"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name(dataset[1]))
@@ -1037,13 +1411,13 @@ double_elimination_plot_df <- double_elimination_plot_df %>%
   mutate(
     series = factor(series, levels = c(1, 3, 7)),
     # Create a label for the additional parameters
-    param_label = paste(bad_seeding, sep = "\n")
+    param_label = paste(tournament_type, bad_seeding, sep = "\n")
   )
 
 # Create a consistent color variable based on the parameter combinations
 double_elimination_plot_df <- double_elimination_plot_df %>%
-  mutate(
-    color_group = paste(bad_seeding, sep = " | ")
+   mutate(
+    color_group = paste(tournament_type, bad_seeding, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -1120,9 +1494,158 @@ double_elimination_ties_plot <- ggplot(double_elimination_plot_ties_df, aes(x = 
   scale_color_d3("category20") +
   guides(color = guide_legend(nrow = 1))
 
+double_elimination_combinations_plot_df <- bind_rows(
+  plot_mi(doubleElimination_combinations_mi),
+  plot_mi(Repechage_combinations_mi)
+)
+
+# Parse dataset names to extract parameters
+parse_dataset_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract tournament type (first part)
+  tournament_type <- parts[1]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  if (tournament_type == "doubleElimination"){
+    # Extract ties (third part)
+    ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+    
+    # Extract series (fourth part - just the number)
+    series <- as.numeric(parts[4])
+    
+    # Check for consolation (fifth part might be "consolation")
+    #final <- ifelse(length(parts) >= 5 && parts[5] == "consolation", "Consolation", "Final")
+    
+    # Check for badseed (could be fifth or sixth part)
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  } else if (tournament_type == "Repechage"){
+    # Extract ties (third part)
+    ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+    
+    # Extract series (fourth part - just the number)
+    series <- as.numeric(parts[4])
+    
+    # Check for badseed (could be fifth or sixth part)
+    bad_seeding <- ifelse(any(parts == "badseed"), "Bad Seed", "Good Seed")
+  }
+  
+  return(data.frame(
+    tournament_type = tournament_type,
+    distribution = distribution,
+    ties = ties,
+    series = series,
+    #final = final,
+    bad_seeding = bad_seeding
+  ))
+}
+
+# Add parameter columns to the plot data
+double_elimination_combinations_plot_df <- double_elimination_combinations_plot_df %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "color_group"))) %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_dataset_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    series = factor(series, levels = c(1, 3, 7)),
+    # Create a label for the additional parameters
+    param_label = paste(tournament_type, bad_seeding, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+double_elimination_combinations_plot_df <- double_elimination_combinations_plot_df %>%
+   mutate(
+    color_group = paste(tournament_type, bad_seeding, sep = " | ")
+  )
+
+# Filter data for No Ties
+double_elimination_combinations_plot_noTies_df <- double_elimination_combinations_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+double_elimination_combinations_plot_ties_df <- double_elimination_combinations_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties (Combinations)
+double_elimination_combinations_noties_plot <- ggplot(double_elimination_combinations_plot_noTies_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Double Elimination (Combinations): Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Seeding"
+  ) +
+  scale_y_continuous(limits = c(0.25, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Ties (Combinations)
+double_elimination_combinations_ties_plot <- ggplot(double_elimination_combinations_plot_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Double Elimination (Combinations): Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Seeding"
+  ) +
+  scale_y_continuous(limits = c(0.25, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+
 # Display plots
 print(double_elimination_noties_plot)
 print(double_elimination_ties_plot)
+
+# Display plots
+print(double_elimination_combinations_noties_plot)
+print(double_elimination_combinations_ties_plot)
 
 ```
 
@@ -1234,9 +1757,119 @@ roundRobin_ties_plot <- ggplot(roundRobin_plot_ties_df, aes(x = index, y = mi_va
   ) +
   scale_color_d3("category20")
 
+roundRobin_combinations_plot_df <- plot_mi(roundRobin_combinations_mi)
+
+# Parse dataset names to extract parameters
+parse_dataset_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  # Extract ties (third part)
+  ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+  
+  # Extract series (fourth part - just the number)
+  rounds <- as.numeric(parts[4])
+  
+  return(data.frame(
+    distribution = distribution,
+    ties = ties,
+    rounds = rounds
+  ))
+}
+
+# Add parameter columns to the plot data
+roundRobin_combinations_plot_df <- roundRobin_combinations_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_dataset_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    series = factor(rounds, levels = c(1, 2, 4)),
+  )
+
+# Filter data for No Ties
+roundRobin_combinations_plot_noties_df <- roundRobin_combinations_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+roundRobin_combinations_plot_ties_df <- roundRobin_combinations_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties (Combinations)
+roundRobin_combinations_noties_plot <- ggplot(roundRobin_combinations_plot_noties_df, aes(x = index, y = mi_values, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Round Robin (Combinations): Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20")
+
+# Plot 2: Ties (Combinations)
+roundRobin_combinations_ties_plot <- ggplot(roundRobin_combinations_plot_ties_df, aes(x = index, y = mi_values, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Round Robin (Combinations): Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20")
+
+
 # Display plots
 print(roundRobin_noties_plot)
 print(roundRobin_ties_plot)
+
+# Display plots
+print(roundRobin_combinations_noties_plot)
+print(roundRobin_combinations_ties_plot)
 
 ```
 
@@ -1364,8 +1997,133 @@ group_stage_ties_plot <- ggplot(group_stage_ties_df, aes(x = index, y = mi_value
   scale_color_d3("category20") +
   guides(color = guide_legend(nrow = 1))
 
+group_stage_combinations_plot_df <- plot_mi(groupStage_combinations_mi)
+
+# Parse dataset names to extract parameters
+parse_dataset_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  # Extract ties (third part)
+  ties <- ifelse(parts[3] == "ties", "Ties", "No Ties")
+  
+  # Extract series (fourth part - just the number)
+  rounds <- as.numeric(parts[4])
+  
+  # Check for group length (fifth part)
+  group_length <- as.numeric(str_extract(parts[5], "\\d+"))
+  
+  return(data.frame(
+    distribution = distribution,
+    ties = ties,
+    rounds = rounds,
+    group_length = group_length
+  ))
+}
+
+# Add parameter columns to the plot data
+group_stage_combinations_plot_df <- group_stage_combinations_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_dataset_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    series = factor(rounds, levels = c(1, 2, 4)),
+    # Create a label for the additional parameters
+    param_label = paste(group_length, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+group_stage_combinations_plot_df <- group_stage_combinations_plot_df %>%
+  mutate(
+    color_group = paste(group_length, sep = " | ")
+  )
+
+# Filter data for No Ties
+group_stage_combinations_noties_df <- group_stage_combinations_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+group_stage_combinations_ties_df <- group_stage_combinations_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties (Combinations)
+group_stage_combinations_noties_plot <- ggplot(group_stage_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Group Stage (Combinations): Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Ties (Combinations)
+group_stage_combinations_ties_plot <- ggplot(group_stage_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Group Stage (Combinations): Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
 # Display plots
 print(group_stage_noties_plot)
 print(group_stage_ties_plot)
+
+# Display plots
+print(group_stage_combinations_noties_plot)
+print(group_stage_combinations_ties_plot)
 
 ```

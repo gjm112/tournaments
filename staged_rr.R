@@ -273,3 +273,4 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
 }
 
 simulate_staged_rr(16, "Normal", rounds=1)
+
