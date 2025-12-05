@@ -78,7 +78,7 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
       strengths <- sapply(num_teams, function(n) { qexp(1:n/(n+1)) })
       unif_strength <- data.frame(
         true_rank = as.numeric(teams),
-        true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
+        theta = c(strengths, rep(NA, length(teams) - num_teams)),
         game_wins = rep(0,length(teams)),
         game_losses = rep(0,length(teams)),
         rank_hat = rep(NA,length(teams))
@@ -242,35 +242,7 @@ simulate_group_stage_tournament <- function(num_teams, distribution, group_lengt
   return(combined_df)
 }
 
-# Example usage:
-# Single simulation
-result <- simulate_group_stage_tournament(num_teams = 16, distribution = "Same", group_length = 4, ties=T)
-
-group_stage_results <- list()
-for (teams in c(8)) {
-  group_stage_results[[as.character(teams)]] <- list()
-  for (replicate in 1:10000) {
-    # Store each simulation result in the list with unique indexing
-    group_stage_results[[as.character(teams)]][[replicate]] <- simulate_group_stage_tournament(
-      num_teams = teams,
-      distribution = "Normal",
-      group_length = 4,
-      ties = F
-    )
-  }
-}
-
-group_stage_results <- do.call(rbind, lapply(names(group_stage_results), function(teams) {
-  team_results <- do.call(rbind, group_stage_results[[teams]])
-  team_results$teams <- as.numeric(teams)
-  return(team_results)
-}))
-
-group_stage_results %>% select(true_rank, game_wins, game_losses, groups, group_rank, rank_hat)
-
-# Proportion of true #1 teams that finish group_rank > 2
-sum(group_stage_results$true_rank == 1 & group_stage_results$group_rank > 2) /
-sum(group_stage_results$true_rank == 1)
+simulate_group_stage_tournament(16, "Exponential")
 
 ```
 
