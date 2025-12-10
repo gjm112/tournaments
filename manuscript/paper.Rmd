@@ -116,6 +116,8 @@ small number of possible competition structures, but the interested
 reader can find a more complete list of competition structures in
 @Goosens2024, @Appleton1995-zn and @Csato2021.
 
+@Daniels1969
+
 A natural question of interest after reviewing different types of
 competition structures is: which competition structure is best? As with
 most complicated questions, the answer is "it depends". One commonsense
