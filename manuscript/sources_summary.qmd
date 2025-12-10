@@ -9,7 +9,6 @@ bibliography: references.bib
 
 # Lit Review
 
-
 There are hundreds of different competitions structures that dictate how a set of teams compete against each other to determine an overall ranking. Common structures include bracket tournaments where if a team wins their competition, they advance to the next round. Bracket tournaments can be run as single elimination where competitors advance or are eliminated based on a single match (e.g. NCAA College Basketball Tournament, National Football League (NFL) playoffs, major tennis tournaments) or where each round is contested as a best of $k$ series (e.g. $k$ = 7: National Basketball Association (NBA) playoffs, National Hockey League (NHL) playoffs, $k$ varies by round: Major League Baseball (MLB), Women's National Basketball Association (WNBA)) and the series winner advance while the series loser is eliminated. Additional styles of the bracket tournaments include variations where competitors are not eliminated after a single loss, such as in double elimination tournaments where competitors continue until they have lost twice. Within double elimination tournaments, there are several variations. For instance, the NCAA College Wrestling tournament is a double elimination tournament, however, if a competitor loses a match, they fall into the consolation bracket and the best they can finish after a loss before the finals is 3rd place, making this not a "true" double elimination format. Olympic judo uses a variant of this system with single elimination until the quarterfinals followed by a consolation bracket consisting of the four quarterfinal losers who still have a chance for a bronze medal[^1].
 
 [^1]: in Olympic judo they award two bronze medals to the two competitors who each win their side of the consolation bracket
@@ -43,13 +42,9 @@ In light of this, many different competition structures have been proposed, seve
 
 In this paper, we propose a novel metric for evaluating different competition structures using an information theoretic approach. As an analogy, we view the results of a tournament as a transmitted message, and we use information theory to assess how accurately the message (i.e. the tournament results) matches the true transmission (i.e. the true ranking of competitors).
 
-
 # Josie Lit Review
 
-In @Carroll1883, Lewis Carroll evaluated the method of assigning prizes in Lawn Tennis Tournaments
-
-
-
+In @Carroll1883, a very early evaluation of tournaments and rankings, Lewis Carroll evaluated paired comparisons and the method of assigning prizes in Lawn Tennis Tournaments. He found that competitors were not correctly ranked at the end of the competition, so he proposed a system of rules for conducting tournaments that would take less time and would lead to equitable results. He also proposed an equitable system for scoring in matches, which included abolishing the concept of "sets" and to make a "match" consist of "games" instead. He concludes that his new methods eliminate the element of luck in tournaments so competitors are fully evaluated on their skills, making it possible to predict who will win.
 
 
 
