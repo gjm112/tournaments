@@ -2,11 +2,13 @@
 title: "sources_summary"
 format: html
 editor: visual
+bibliography: references.bib
 ---
 
 # Tournament Paper - Lit Review
 
 # Lit Review
+
 
 There are hundreds of different competitions structures that dictate how a set of teams compete against each other to determine an overall ranking. Common structures include bracket tournaments where if a team wins their competition, they advance to the next round. Bracket tournaments can be run as single elimination where competitors advance or are eliminated based on a single match (e.g. NCAA College Basketball Tournament, National Football League (NFL) playoffs, major tennis tournaments) or where each round is contested as a best of $k$ series (e.g. $k$ = 7: National Basketball Association (NBA) playoffs, National Hockey League (NHL) playoffs, $k$ varies by round: Major League Baseball (MLB), Women's National Basketball Association (WNBA)) and the series winner advance while the series loser is eliminated. Additional styles of the bracket tournaments include variations where competitors are not eliminated after a single loss, such as in double elimination tournaments where competitors continue until they have lost twice. Within double elimination tournaments, there are several variations. For instance, the NCAA College Wrestling tournament is a double elimination tournament, however, if a competitor loses a match, they fall into the consolation bracket and the best they can finish after a loss before the finals is 3rd place, making this not a "true" double elimination format. Olympic judo uses a variant of this system with single elimination until the quarterfinals followed by a consolation bracket consisting of the four quarterfinal losers who still have a chance for a bronze medal[^1].
 
@@ -40,6 +42,15 @@ If the only goal of a competition structure was high efficacy of the salient ran
 In light of this, many different competition structures have been proposed, several of which are mentioned previously. Given these many competition structures, ideally there would be a way comparing the performance of different competition structures to each other.
 
 In this paper, we propose a novel metric for evaluating different competition structures using an information theoretic approach. As an analogy, we view the results of a tournament as a transmitted message, and we use information theory to assess how accurately the message (i.e. the tournament results) matches the true transmission (i.e. the true ranking of competitors).
+
+
+# Josie Lit Review
+
+In @Carroll1883, Lewis Carroll evaluated the method of assigning prizes in Lawn Tennis Tournaments
+
+
+
+
 
 
 # Notes from Other Papers
