@@ -116,6 +116,8 @@ small number of possible competition structures, but the interested
 reader can find a more complete list of competition structures in
 @Goosens2024, @Appleton1995-zn and @Csato2021.
 
+@Daniels1969
+
 A natural question of interest after reviewing different types of
 competition structures is: which competition structure is best? As with
 most complicated questions, the answer is "it depends". One commonsense
@@ -382,20 +384,20 @@ $$
 
 @Shieh1998: Weighted Kendall's Tau
 
-Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second vector of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$, becomes a function of $m$ (and also, as before, $r$ and $hat{r}$).  As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].  
+In addition to the the weighting function $w$, we defined a second set of weights that we refer to as the "salient weights" and denote as the vector $m$.  This set of weights is used to indicate which ranks have been determined to salient (as previously described) and consists of a vector of length $n$ with elements that are positive for each of the salient ranks and 0 otherwise.  As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e.  measuring effectivity).  In an event such as the Olympics, the salient weights could be 1's for the first three elements and 0's elsewhere such that $m = \{1,1,1,0\}$.  Additionally, one can also weight the salient ranks.  For example, continuing the Olmypics example where getting the top three correct is the main objective, one could argue that it is more important to get the first place correct than the third place. This could lead to, for instance, a salient weight vector of $m = \{5,3,1,0, \cdots, 0\}$ giving 5 times the weight to getting the first place team correct as getting the third team correct.
 
-^[7]: One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere (i.e. $m = \{1,1,1,0\}$).    
+<!-- Regardless of which method one chooses for defining weights between $\hat{r}$ and $r$, a second set of weights needs to be defined because the number of teams that need to be accurately ordered differs based on the choice of salient ranks. Therefore, we define a second vector of weights, $m$, which is used to indicate which ranks are salient. We call these the "salient weights" to differentiate from the other weighting function, $w$, becomes a function of $m$ (and also, as before, $r$ and $hat{r}$).  As an example, for a four-team tournament, if the organizer decided that only the correctly choosing the best team as the winner was important, then $m = \{1,0,0,0\}$ (i.e. essentially measuring effectivity)^[7].   -->
 
-In addition, one can also weight the salient ranks.  For example, in the Olmypics where getting the top three correct is the main objective, one could argue that it is more important to get the first place correct than the third place. This could lead to, for instance, a salient weight vector of $m = \{5,3,1,0, \cdots, 0\}$ giving 5 times the weight to getting the first place team correct as getting the third team correct.  
+<!-- ^[7]: One can imagine that in an event like the Olympics, the salient weights would be 1's for the first three elements and 0's elsewhere (i.e. $m = \{1,1,1,0\}$).     -->
 
-With the addition of the salient weighting function, $m$, the formula for weighted mutual information becomes:
+With the addition of the salient weighting vector, $m$, the formula for weighted mutual information becomes:
 
 $$
-I^m_w(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r}, m)p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+I_w(r,\hat{r},m)= \sum_{r}\sum_{\hat{r}}w(r, \hat{r}, m)p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
 $$
 .
 
-If we choose to use the weighted Kendall's $\tau$ for our weights, $w(r, \hat{r}, m)$ would be: 
+Incorporating $m$ into this function is straightforward for many weighting functions.  However, using weighted Kendall's $\tau$, $w(r, \hat{r}, m)$ is slightly more complex and becomes: 
 
 $$
 w(r, \hat{r}, m) = \frac{\sum_{i \ne j} m^{\star}_{ij}\text{sign}_{(0+)}(r_i - r_j)sign_{(0+)}(\hat{r}_i - \hat{r}_j)}{\sum_{i,j}m^{\star}_{i,j}- \sum_i m^{\star}_{i,i}}
@@ -413,15 +415,15 @@ where $m^{\star}_{i,j} = m_{min(i,j)}$ and $sign_{(0+)}(.)$ is the sign of the i
 <!-- \log \frac{p(\hat{r}_{\{{i|m_i >0}\}}, r_{\{{i|m_i >0}\}})}{p(r_{\{{i  \mid m_i >0}\}})p(\hat{r}_{\{{i \mid m_i >0}\}})} -->
 <!-- $$ -->
 
-Because this mutual information is unitless, the formula can be standardized to be between 0 and 1 as follows: 
+Finally, because this mutual information is unitless, the formula can be standardized to be between 0 and 1 as follows: 
 $$
-\frac{I^m_w(r,\hat{r})}{\text{max}\{H(r), H(\hat{r})\}}
+I^{\star}_w(r,\hat{r},m) = \frac{I_w(r,\hat{r},m)}{\text{max}\{H(r), H(\hat{r})\}}
 $$
 
-where $H(.)$ is the usual Shannon entropy. Competition structures with
-higher levels of efficacy are indicated when our measure is closer to 1.
-Likewise, competition structures that are near 0 by our proposed metric
-indicate low levels of efficacy.
+where $H(.)$ is the usual Shannon entropy. Using this framework, values of $I^{\star}_w(r,\hat{r},m)$ near 1 indicated competition structures with high efficacy.  Values near 0.25 indicate tournament structures where all possible rankings are equally likely and values near 0 indicate rankings that are [what is the right word here "Inverse efficacy"?]
+
+
+<!-- Likewise, competition structures that are near 0 by our proposed metric indicate low levels of efficacy. -->
 
 <!-- $$ -->
 
