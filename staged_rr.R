@@ -1,4 +1,8 @@
-simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k = 2, stages = 2, ties = TRUE, rounds = 1, true_strength_hat = NULL) {
+simulate_staged_rr <- function(num_teams, distribution, group_length = 4, top_k = 2,
+                               stages = 2, ties = TRUE, rounds = 1, theta_hat = NULL,
+                               grouping_mode = "by_rank") {
+  # grouping_mode: "by_rank" for 4x4 (rank 1s together, rank 2s together, etc.)
+  #                "by_pairs" for 2x8 (1st&2nd together, 3rd&4th together, etc.)
 
   if (num_teams <= 3) {
     stop("Number of Teams must be greater than 3.")
@@ -56,7 +60,7 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
     df <- arrange(unif_strength, true_rank)
   }
   else if (distribution == "Manual") {
-    strengths <- true_strength_hat
+    strengths <- theta_hat
     manual_strengths <- data.frame(
       true_strength = c(strengths, rep(NA, length(teams) - num_teams)),
       rank_hat = rep(NA, length(teams)),
@@ -74,18 +78,14 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
   num_groups <- num_teams / group_length
 
   # Create balanced groups using snake draft seeding
-  # Sort teams by strength (best to worst)
   df <- df %>% arrange(desc(true_strength))
 
-  # Assign groups using snake draft method
   df$groups <- NA
   for (i in 1:nrow(df)) {
     group_round <- ceiling(i / num_groups)
     if (group_round %% 2 == 1) {
-      # Forward direction for odd rounds
       group_id <- ((i - 1) %% num_groups) + 1
     } else {
-      # Reverse direction for even rounds
       group_id <- num_groups - ((i - 1) %% num_groups)
     }
     df$groups[i] <- group_id
@@ -103,19 +103,16 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
     group_teams <- df[df$groups == g, ]
     n_group_teams <- nrow(group_teams)
 
-    # Play round robin within the group
     for (r in 1:rounds) {
       for (i in 1:(n_group_teams - 1)) {
         for (j in (i + 1):n_group_teams) {
           team1 <- group_teams$true_rank[i]
           team2 <- group_teams$true_rank[j]
-
           strength1 <- group_teams$true_strength[i]
           strength2 <- group_teams$true_strength[j]
 
           match_winner <- simulate_match(team1, team2, strength1, strength2)
 
-          # Update wins and losses
           if (match_winner == team1) {
             df$game_wins[df$true_rank == team1] <- df$game_wins[df$true_rank == team1] + 1
             df$game_losses[df$true_rank == team2] <- df$game_losses[df$true_rank == team2] + 1
@@ -127,150 +124,124 @@ simulate_staged_rr <-  function(num_teams, distribution, group_length = 4, top_k
       }
     }
 
-    # Rank teams within each group
     group_df <- df[df$groups == g, ]
-
     group_df$group_rank <- rank(-group_df$game_wins, ties.method = "random")
-
-
     all_group_results[[g]] <- group_df
   }
 
-  # Combine all group results
   final_df <- do.call(rbind, all_group_results)
 
-  # Calculate overall tournament ranking
-  # First by group rank, then by total wins, then by true rank as tiebreaker
-  final_df <- final_df %>%
-    arrange(group_rank, desc(game_wins), true_rank)
+  # Organize teams into second-stage groups based on grouping mode
+  if (grouping_mode == "by_rank") {
+    # Mode 1: Group by same placement (all 1st place together, all 2nd place together, etc.)
+    stage2_groups <- list()
+    for (rank_position in 1:group_length) {
+      stage2_groups[[rank_position]] <- final_df %>%
+        filter(group_rank == rank_position) %>%
+        arrange(true_rank)
+    }
+  } else if (grouping_mode == "by_pairs") {
+    # Mode 2: Group by pairs of placements (1st&2nd together, 3rd&4th together, etc.)
+    stage2_groups <- list()
+    teams_per_stage2_group <- num_groups  # Number of teams in each stage 2 group
+    num_stage2_groups <- group_length / teams_per_stage2_group  # Number of stage 2 groups
 
+    for (pair_idx in 1:num_stage2_groups) {
+      start_rank <- (pair_idx - 1) * teams_per_stage2_group + 1
+      end_rank <- pair_idx * teams_per_stage2_group
 
-  final_df$rank_hat <- rank(interaction(final_df$group_rank, -final_df$game_wins, final_df$true_rank), ties.method = "random")
+      stage2_groups[[pair_idx]] <- final_df %>%
+        filter(group_rank >= start_rank & group_rank <= end_rank) %>%
+        arrange(true_rank)
+    }
+  } else {
+    stop("Invalid grouping_mode. Use 'by_rank' or 'by_pairs'")
+  }
 
-  bottom_rank <- num_teams/num_groups + 1
+  # Simulate second stage for each group
+  all_stage2_results <- list()
 
-  top_group <- final_df %>%
-    mutate(distribution = distribution) %>%
-    arrange(true_rank) %>%
-    mutate(rank_hat = ifelse(group_rank <= top_k, group_rank, bottom_rank)) %>%
-    filter(group_rank <= top_k) %>%
-    select(true_rank, true_strength, game_wins, game_losses, groups, group_rank, rank_hat, distribution)
+  for (g in 1:length(stage2_groups)) {
+    stage2_team_data <- stage2_groups[[g]]
+    n_stage2_teams <- nrow(stage2_team_data)
 
-  #print(top_group)
+    # Start with stage 1 wins/losses
+    game_wins <- stage2_team_data$game_wins
+    game_losses <- stage2_team_data$game_losses
 
-  bottom_group <- final_df %>%
-    mutate(distribution = distribution) %>%
-    arrange(desc(true_rank)) %>%
-    mutate(rank_hat = ifelse(group_rank <= top_k, group_rank, bottom_rank)) %>%
-    filter(group_rank > top_k) %>%
-    select(true_rank, true_strength, game_wins, game_losses, groups, group_rank, rank_hat, distribution)
+    # Track stage 2 wins separately
+    stage2_wins <- rep(0, n_stage2_teams)
+    stage2_losses <- rep(0, n_stage2_teams)
 
-  #print(bottom_group)
+    for (r in 1:rounds) {
+      for (i in 1:(n_stage2_teams - 1)) {
+        for (j in (i + 1):n_stage2_teams) {
+          team1 <- stage2_team_data$true_rank[i]
+          team2 <- stage2_team_data$true_rank[j]
+          strength1 <- stage2_team_data$true_strength[i]
+          strength2 <- stage2_team_data$true_strength[j]
 
-  # Initialize win/loss counters (indexed by original team position)
-  game_wins <- rep(0, num_teams)
-  game_losses <- rep(0, num_teams)
+          match_winner <- simulate_match(team1, team2, strength1, strength2)
 
-  top_teams <- top_group$true_rank
-  top_strengths <- top_group$true_strength
-
-  # Build the alternating order
-  for (round in 1:rounds) {
-    for (i in 1:(length(top_teams) - 1)) {
-      for (j in (i + 1):length(top_teams)) {
-        team1 <- top_teams[i]
-        team2 <- top_teams[j]
-        strength1 <- top_strengths[i]
-        strength2 <- top_strengths[j]
-
-        # Simulate match between team i and team j using their strengths
-        match_winner <- simulate_match(team1, team2, strength1, strength2)
-
-        # Check which team won based on the returned team name
-        if (match_winner == team1) {
-          game_wins[i] <- game_wins[i] + 1
-          game_losses[j] <- game_losses[j] + 1
-        } else {
-          game_wins[j] <- game_wins[j] + 1
-          game_losses[i] <- game_losses[i] + 1
+          if (match_winner == team1) {
+            game_wins[i] <- game_wins[i] + 1
+            game_losses[j] <- game_losses[j] + 1
+            stage2_wins[i] <- stage2_wins[i] + 1
+            stage2_losses[j] <- stage2_losses[j] + 1
+          } else {
+            game_wins[j] <- game_wins[j] + 1
+            game_losses[i] <- game_losses[i] + 1
+            stage2_wins[j] <- stage2_wins[j] + 1
+            stage2_losses[i] <- stage2_losses[i] + 1
+          }
         }
       }
     }
-  }
 
-  # Create final dataframe with results
-  top_results <- data.frame(
-    true_rank = top_teams,
-    true_strength = top_strengths,
-    game_wins = game_wins,
-    game_losses = game_losses,
-    distribution = distribution
-  ) %>% slice(1:(top_k*num_groups))
-  if (ties == TRUE) {
-    top_results$rank_hat <- rank(-top_results$game_wins, ties.method = "average")
-  } else {
-    top_results$rank_hat <- rank(-top_results$game_wins, ties.method = "random")
-  }
-  #print(top_results)
+    # Create results dataframe for this stage 2 group
+    stage2_results <- data.frame(
+      true_rank = stage2_team_data$true_rank,
+      true_strength = stage2_team_data$true_strength,
+      game_wins = game_wins,
+      game_losses = game_losses,
+      stage2_group = g,
+      distribution = distribution
+    )
 
-
-  bottom_teams <- bottom_group$true_rank
-  bottom_strengths <- bottom_group$true_strength
-
-  # Build the alternating order
-  for (round in 1:rounds) {
-    for (i in 1:(nrow(bottom_group) - 1)) {
-      for (j in (i + 1):nrow(bottom_group)) {
-        team1 <- bottom_teams[i]
-        team2 <- bottom_teams[j]
-        strength1 <- bottom_strengths[i]
-        strength2 <- bottom_strengths[j]
-
-        # Simulate match between team i and team j using their strengths
-        match_winner <- simulate_match(team1, team2, strength1, strength2)
-
-        # Check which team won based on the returned team name
-        if (match_winner == team1) {
-          game_wins[i] <- game_wins[i] + 1
-          game_losses[j] <- game_losses[j] + 1
-        } else {
-          game_wins[j] <- game_wins[j] + 1
-          game_losses[i] <- game_losses[i] + 1
-        }
-      }
+    # Rank within this stage 2 group based on stage 2 performance only
+    if (ties == TRUE) {
+      stage2_results$group_rank <- rank(-stage2_wins, ties.method = "average")
+    } else {
+      stage2_results$group_rank <- rank(-stage2_wins, ties.method = "random")
     }
+
+    all_stage2_results[[g]] <- stage2_results
   }
 
-  # Create final dataframe with results
-  bottom_results <- data.frame(
-    true_rank = bottom_teams,
-    true_strength = bottom_strengths,
-    game_wins = game_wins,
-    game_losses = game_losses,
-    distribution = distribution
-  ) %>% slice(1:(top_k*num_groups))
-  if (ties == TRUE) {
-    bottom_results$rank_hat <- rank(-bottom_results$game_wins, ties.method = "average") + bottom_rank - 1
-  } else {
-    bottom_results$rank_hat <- rank(-bottom_results$game_wins, ties.method = "random") + bottom_rank - 1
-  }
-  #print(bottom_results)
+  # Combine all stage 2 results
+  combined_results <- do.call(rbind, all_stage2_results)
 
-  combined_df <- rbind(top_results, bottom_results)
+  # Calculate final rankings
+  # Rank offset based on which stage 2 group they were in
+  combined_results <- combined_results %>%
+    group_by(stage2_group) %>%
+    mutate(
+      rank_offset = (stage2_group - 1) * n(),
+      rank_hat = group_rank + rank_offset
+    ) %>%
+    ungroup() %>%
+    arrange(true_rank)
 
-  if (ties == F){
-    final_df <- combined_df %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "random")) %>%
-      arrange(true_rank, rank_hat)
-  } else{
-    final_df <- combined_df %>%
-      mutate(rank_hat = rank(rank_hat, ties.method = "average")) %>%
-      arrange(true_rank)
-  }
+  final_results <- combined_results %>%
+    select(true_rank, true_strength, game_wins, game_losses, rank_hat, distribution)
 
-
-  return(final_df)
+  # Convert to data.frame (not tibble)
+  return(as.data.frame(final_results))
 }
 
-simulate_staged_rr(16, "Normal", rounds=1)
+# Example usage:
+# For 4 groups of 4 (winners play together, 2nd place together, etc.):
+simulate_staged_rr(16, "Normal", group_length = 4, rounds = 1, grouping_mode = "by_rank")
 
+# For 2 groups of 8 (1st&2nd together, 3rd&4th together, etc.):
+simulate_staged_rr(16, "Normal", group_length = 8, rounds = 1, grouping_mode = "by_pairs")

@@ -478,7 +478,158 @@ with_progress({
 
 ## Staged Round Robin
 
+```{r}
+# Create separate parameter grids for each configuration
+staged_rr_param_grid_4x4 <- expand.grid( 
+  distribution = c("Normal", "Uniform", "Same", "Exponential"), 
+  ties = c(FALSE, TRUE), 
+  rounds = c(1, 2, 4),
+  group_length = 4,
+  grouping_mode = "by_rank",
+  stringsAsFactors = FALSE
+)
+
+staged_rr_param_grid_2x8 <- expand.grid( 
+  distribution = c("Normal", "Uniform", "Same", "Exponential"), 
+  ties = c(FALSE, TRUE), 
+  rounds = c(1, 2, 4),
+  group_length = 8,
+  grouping_mode = "by_pairs",
+  stringsAsFactors = FALSE
+)
+
+# Combine both grids
+staged_rr_param_grid <- rbind(staged_rr_param_grid_4x4, staged_rr_param_grid_2x8)
+
+staged_rr_run_sim_block <- function(
+  teams, distribution, ties, rounds, group_length, grouping_mode, p_block) {
+  
+  # Build the key
+  parts <- c(
+    "stagedRR",
+    tolower(distribution),
+    ifelse(ties, "ties", "noTies"),
+    paste0("r", rounds),
+    paste0("g", group_length)
+  )
+  key <- paste(parts, collapse = "_")
+  
+  # Run simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_staged_rr(
+        num_teams = teams,
+        distribution = distribution,
+        ties = ties,
+        rounds = rounds,
+        group_length = group_length,
+        grouping_mode = grouping_mode
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+# Run the simulations with progress bar
+with_progress({
+  p_block <- progressor(steps = nrow(staged_rr_param_grid))
+  
+  for (i in seq_len(nrow(staged_rr_param_grid))) {
+    row <- staged_rr_param_grid[i, ]
+    
+    staged_rr_run_sim_block(
+      teams        = teams, 
+      distribution = row$distribution,
+      ties         = row$ties,
+      rounds       = row$rounds,
+      group_length = row$group_length,
+      grouping_mode = row$grouping_mode,
+      p_block = p_block
+    )
+  }
+})
+
+```
+
 ## High School Tennis Ladder
+
+```{r}
+tennis_ladder_param_grid <- expand.grid( 
+  distribution = c("Normal","Uniform", "Same", "Exponential"), 
+  r = c(5,10,15),
+  bad_seeding_structure = c(FALSE, TRUE) 
+  )
+
+tennis_ladder_run_sim_block <- function(
+  teams, distribution, ties, r, p_block, bad_seeding_structure) {
+  
+  # Apply bad seeding structure override if required
+  seeding_structure <- if (bad_seeding_structure) 16:1 else NULL
+
+  # Build key
+    # Build the key
+  parts <- c(
+    "tennisLadder",
+    tolower(distribution),
+    paste0(r),
+    if (bad_seeding_structure) "badseed"
+  )
+
+  key <- paste(parts, collapse = "_")
+  
+  # Run 10,000 simulations in parallel
+  sim_list <- future_lapply(
+    X = 1:10000,
+    FUN = function(rep) {
+      simulate_tennis_ladder(
+        num_teams = teams,
+        distribution = distribution,
+        r = r,
+        seeding_structure = seeding_structure
+      )
+    },
+    future.seed = TRUE    # ensures parallel RNG is valid
+  )
+  
+  final_df <- do.call(rbind, sim_list)
+  final_df$teams <- teams
+  
+  assign(key, final_df, envir = .GlobalEnv)
+  
+  # UPDATE BLOCK-LEVEL PROGRESS BAR
+  p_block()
+  
+  message("Finished: ", key)
+}
+
+
+with_progress({
+  p_block <- progressor(steps = nrow(tennis_ladder_param_grid))
+  
+  for (i in seq_len(nrow(tennis_ladder_param_grid))) {
+    row <- tennis_ladder_param_grid[i, ]
+    
+    tennis_ladder_run_sim_block(
+      teams        = teams,
+      distribution = row$distribution,
+      r            = row$r,
+      bad_seeding_structure = row$bad_seeding_structure,
+      p_block = p_block
+    )
+  }
+})
+```
 
 # Getting Mutual Information
 
@@ -647,7 +798,8 @@ compute_mut_plots_combinations <- function(dataset) {
 compute_and_store_mi_by_tournament <- function(tournament_structure) {
   
   # Validate input
-  valid_structures <- c("singleElimination", "doubleElimination", "roundRobin", "groupStage", "stepLadder", "Repechage")
+  valid_structures <- c("singleElimination", "doubleElimination", "roundRobin", 
+                       "groupStage", "stepLadder", "Repechage", "stagedRR", "tennisLadder")
   if (!tournament_structure %in% valid_structures) {
     stop(paste("Invalid tournament_structure. Must be one of:", 
                paste(valid_structures, collapse = ", ")))
@@ -725,15 +877,44 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
     )
   }
   
-   stepLadder_key <- function(row, type) {
+  stepLadder_key <- function(row, type) {
     c(
-    type,
-    tolower(row$distribution),
-    paste0(row$series),
-    if (row$bad_seeding_structure) "badseed"
+      type,
+      tolower(row$distribution),
+      paste0(row$series),
+      if (row$bad_seeding_structure) "badseed"
     )
-   }
-   
+  }
+  
+  tennisLadder_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      paste0(row$r),
+      if (row$bad_seeding_structure) "badseed"
+    )
+  }
+  
+  # Key builders for stagedRR (both configurations)
+  staged_rr_4x4_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0("r", row$rounds),
+      paste0("g", row$group_length)
+    )
+  }
+  
+  staged_rr_2x8_key <- function(row, type) {
+    c(
+      type,
+      tolower(row$distribution),
+      ifelse(row$ties, "ties", "noTies"),
+      paste0("r", row$rounds),
+      paste0("g", row$group_length)
+    )
+  }
   
   # Function to process a single tournament type
   process_tournament_type <- function(type_name, param_grid, key_builder) {
@@ -785,11 +966,11 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
     results_list$doubleElimination <- result
   }
   
-   if (tournament_structure %in% c("Repechage")) {
+  if (tournament_structure %in% c("Repechage")) {
     result <- process_tournament_type("Repechage", 
                                       repechege_param_grid, 
                                       repechege_key)
-    results_list$Repechege <- result
+    results_list$Repechage <- result
   }
   
   if (tournament_structure %in% c("roundRobin")) {
@@ -805,11 +986,28 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
                                       group_stage_key)
     results_list$groupStage <- result
   }
-   if (tournament_structure %in% c("stepLadder")) {
+  
+  if (tournament_structure %in% c("stepLadder")) {
     result <- process_tournament_type("stepLadder", 
                                       stepLadder_param_grid, 
                                       stepLadder_key)
     results_list$stepLadder <- result
+  }
+  
+  # Process stagedRR - combined approach using full param grid
+  if (tournament_structure %in% c("stagedRR")) {
+    # Use the combined param grid and a unified key builder
+    result <- process_tournament_type("stagedRR", 
+                                      staged_rr_param_grid,
+                                      staged_rr_4x4_key)  # Works for both since key structure is same
+    results_list$stagedRR <- result
+  }
+  
+  if (tournament_structure %in% c("tennisLadder")) {
+    result <- process_tournament_type("tennisLadder", 
+                                      tennis_ladder_param_grid, 
+                                      tennisLadder_key)
+    results_list$tennisLadder <- result
   }
   
   message("\n✓ MI computation complete!")
@@ -818,29 +1016,38 @@ compute_and_store_mi_by_tournament <- function(tournament_structure) {
   invisible(results_list)
 }
 
+# Run computations for all tournament types
 compute_and_store_mi_by_tournament("singleElimination")
 compute_and_store_mi_by_tournament("doubleElimination")
 compute_and_store_mi_by_tournament("roundRobin")
 compute_and_store_mi_by_tournament("groupStage")
 compute_and_store_mi_by_tournament("stepLadder")
 compute_and_store_mi_by_tournament("Repechage")
+compute_and_store_mi_by_tournament("stagedRR")
+compute_and_store_mi_by_tournament("tennisLadder")
 
+# Combine all MI results
 all_mi <- bind_rows(
   singleElimination_mi,
   doubleElimination_mi,
   groupStage_mi,
   roundRobin_mi,
   stepLadder_mi,
-  Repechage_mi
+  Repechage_mi,
+  stagedRR_mi,
+  tennisLadder_mi
 )
 
+# Combine all MI combinations results
 all_mi_combinations <- bind_rows(
   singleElimination_combinations_mi,
   doubleElimination_combinations_mi,
   groupStage_combinations_mi,
   roundRobin_combinations_mi,
   stepLadder_combinations_mi,
-  Repechage_combinations_mi
+  Repechage_combinations_mi,
+  stagedRR_combinations_mi,
+  tennisLadder_combinations_mi
 )
 ```
 
@@ -869,7 +1076,15 @@ combined_plot_df <- plot_mi(all_mi, c(
   "groupStage_normal_noTies_1_4groups",
   "groupStage_uniform_noTies_1_4groups",
   "groupStage_same_noTies_1_4groups",
-  "groupStage_exponential_noTies_1_4groups"
+  "groupStage_exponential_noTies_1_4groups",
+  "stagedRR_normal_noTies_r1_g4",
+  "stagedRR_uniform_noTies_r1_g4",
+  "stagedRR_same_noTies_r1_g4",
+  "stagedRR_exponential_noTies_r1_g4",
+  "tennisLadder_normal_15",
+  "tennisLadder_uniform_15",
+  "tennisLadder_same_15",
+  "tennisLadder_exponential_15"
   )
 )
 
@@ -883,22 +1098,33 @@ parse_dataset_name_combined <- function(dataset_name) {
   distribution <- parts[2]
   distribution <- str_to_title(distribution)
   
-  # default group length
+  # default group length/rounds
   group_length <- NA
+  rounds <- NA
   
   if(tournament_type == "groupStage"){
     group_length <- as.numeric(str_extract(parts[5], "\\d+"))
-    }
+  }
+  
+  if(tournament_type == "stagedRR"){
+    group_length <- as.numeric(str_extract(parts[5], "\\d+"))
+    rounds <- as.numeric(str_extract(parts[4], "\\d+"))
+  }
+  
+  if(tournament_type == "tennisLadder"){
+    rounds <- as.numeric(parts[3])
+  }
   
   return(data.frame(
     tournament_type = tournament_type,
     distribution = distribution,
-    group_length = group_length
+    group_length = group_length,
+    rounds = rounds
   ))
 }
 
 combined_plot_df <- combined_plot_df %>%
-  select(-any_of(c("tournament_type", "distribution", "group_length"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "group_length", "rounds"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name_combined(dataset[1]))
@@ -914,6 +1140,8 @@ combined_plot_df <- combined_plot_df %>%
   mutate(
     color_group = case_when(
       tournament_type == "groupStage" ~ "groupStage (4 Groups)",
+      tournament_type == "stagedRR" ~ "stagedRR (4 Groups)",
+      tournament_type == "tennisLadder" ~ "tennisLadder (15 Rounds)",
       TRUE ~ tournament_type
     )
   )
@@ -967,13 +1195,21 @@ combined_combinations_df <- plot_mi(all_mi_combinations, c(
   "groupStage_normal_noTies_1_4groups",
   "groupStage_uniform_noTies_1_4groups",
   "groupStage_same_noTies_1_4groups",
-  "groupStage_exponential_noTies_1_4groups"
+  "groupStage_exponential_noTies_1_4groups",
+  "stagedRR_normal_noTies_r1_g4",
+  "stagedRR_uniform_noTies_r1_g4",
+  "stagedRR_same_noTies_r1_g4",
+  "stagedRR_exponential_noTies_r1_g4",
+  "tennisLadder_normal_15",
+  "tennisLadder_uniform_15",
+  "tennisLadder_same_15",
+  "tennisLadder_exponential_15"
   )
 )
 
 
 combined_combinations_df <- combined_combinations_df %>%
-  select(-any_of(c("tournament_type", "distribution", "group_length"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "group_length", "rounds"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name_combined(dataset[1]))
@@ -989,6 +1225,8 @@ combined_combinations_df <- combined_combinations_df %>%
   mutate(
     color_group = case_when(
       tournament_type == "groupStage" ~ "groupStage (4 Groups)",
+      tournament_type == "stagedRR" ~ "stagedRR (4 Groups)",
+      tournament_type == "tennisLadder" ~ "tennisLadder (15 Rounds)",
       TRUE ~ tournament_type
     )
   )
@@ -2126,4 +2364,458 @@ print(group_stage_ties_plot)
 print(group_stage_combinations_noties_plot)
 print(group_stage_combinations_ties_plot)
 
+```
+
+## Staged Round Robin
+
+```{r}
+staged_rr_plot_df <- plot_mi(stagedRR_mi)
+
+# Parse dataset names to extract parameters for staged RR
+parse_staged_rr_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  # Extract ties (third part)
+  ties <- ifelse(parts[3] == "noTies", "No Ties", "Ties")
+  
+  # Extract rounds (fourth part - extract number after 'r')
+  rounds <- as.numeric(str_extract(parts[4], "\\d+"))
+  
+  # Extract group length (fifth part - extract number after 'g')
+  group_length <- as.numeric(str_extract(parts[5], "\\d+"))
+  
+  return(data.frame(
+    distribution = distribution,
+    ties = ties,
+    rounds = rounds,
+    group_length = group_length
+  ))
+}
+
+# Add parameter columns to the plot data
+staged_rr_plot_df <- staged_rr_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_staged_rr_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    series = factor(rounds, levels = c(1, 2, 4)),
+    # Create a label for the additional parameters
+    param_label = paste(group_length, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+staged_rr_plot_df <- staged_rr_plot_df %>%
+  mutate(
+    color_group = paste(group_length, sep = " | ")
+  )
+
+# Filter data for No Ties
+staged_rr_noties_df <- staged_rr_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+staged_rr_ties_df <- staged_rr_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties
+staged_rr_noties_plot <- ggplot(staged_rr_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Staged RR: Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Ties
+staged_rr_ties_plot <- ggplot(staged_rr_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Staged RR: Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+staged_rr_combinations_plot_df <- plot_mi(stagedRR_combinations_mi)
+
+# Add parameter columns to the plot data
+staged_rr_combinations_plot_df <- staged_rr_combinations_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_staged_rr_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    series = factor(rounds, levels = c(1, 2, 4)),
+    # Create a label for the additional parameters
+    param_label = paste(group_length, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+staged_rr_combinations_plot_df <- staged_rr_combinations_plot_df %>%
+  mutate(
+    color_group = paste(group_length, sep = " | ")
+  )
+
+# Filter data for No Ties
+staged_rr_combinations_noties_df <- staged_rr_combinations_plot_df %>%
+  filter(ties == "No Ties")
+
+# Filter data for Ties
+staged_rr_combinations_ties_df <- staged_rr_combinations_plot_df %>%
+  filter(ties == "Ties")
+
+# Plot 1: No Ties (Combinations)
+staged_rr_combinations_noties_plot <- ggplot(staged_rr_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Staged RR (Combinations): Mutual Information (No Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Ties (Combinations)
+staged_rr_combinations_ties_plot <- ggplot(staged_rr_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    series ~ distribution,
+    labeller = labeller(
+      series = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Staged RR (Combinations): Mutual Information (Ties)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Group Length:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Display plots
+print(staged_rr_noties_plot)
+print(staged_rr_ties_plot)
+
+# Display plots
+print(staged_rr_combinations_noties_plot)
+print(staged_rr_combinations_ties_plot)
+```
+
+## Tennis Ladder
+
+```{r}
+tennis_ladder_plot_df <- plot_mi(tennisLadder_mi)
+
+# Parse dataset names to extract parameters for tennis ladder
+parse_tennis_ladder_name <- function(dataset_name) {
+  parts <- str_split(dataset_name, "_")[[1]]
+  
+  # Extract distribution (second part)
+  distribution <- parts[2]
+  distribution <- str_to_title(distribution)
+  
+  # Extract rounds (third part - the number)
+  rounds <- as.numeric(parts[3])
+  
+  # Check if it's a "badseed" variant (fourth part)
+  seed_type <- ifelse(length(parts) >= 4 && parts[4] == "badseed", "Bad Seed", "Good Seed")
+  
+  return(data.frame(
+    distribution = distribution,
+    rounds = rounds,
+    seed_type = seed_type
+  ))
+}
+
+# Add parameter columns to the plot data
+tennis_ladder_plot_df <- tennis_ladder_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_tennis_ladder_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    rounds_factor = factor(rounds, levels = c(5, 10, 15)),
+    # Create a label for the additional parameters
+    param_label = paste(rounds, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+tennis_ladder_plot_df <- tennis_ladder_plot_df %>%
+  mutate(
+    color_group = paste(rounds, sep = " | ")
+  )
+
+# Filter data for Good Seed
+tennis_ladder_goodseed_df <- tennis_ladder_plot_df %>%
+  filter(seed_type == "Good Seed")
+
+# Filter data for Bad Seed
+tennis_ladder_badseed_df <- tennis_ladder_plot_df %>%
+  filter(seed_type == "Bad Seed")
+
+# Plot 1: Good Seed
+tennis_ladder_goodseed_plot <- ggplot(tennis_ladder_goodseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    rounds_factor ~ distribution,
+    labeller = labeller(
+      rounds_factor = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Tennis Ladder: Mutual Information (Good Seed)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Rounds:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Bad Seed
+tennis_ladder_badseed_plot <- ggplot(tennis_ladder_badseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    rounds_factor ~ distribution,
+    labeller = labeller(
+      rounds_factor = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Tennis Ladder: Mutual Information (Bad Seed)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Rounds:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+tennis_ladder_combinations_plot_df <- plot_mi(tennisLadder_combinations_mi)
+
+# Add parameter columns to the plot data
+tennis_ladder_combinations_plot_df <- tennis_ladder_combinations_plot_df %>%
+  group_by(dataset) %>%
+  mutate(
+    params = list(parse_tennis_ladder_name(dataset[1]))
+  ) %>%
+  unnest(params) %>%
+  ungroup() %>%
+  mutate(
+    rounds_factor = factor(rounds, levels = c(5, 10, 15)),
+    # Create a label for the additional parameters
+    param_label = paste(rounds, sep = "\n")
+  )
+
+# Create a consistent color variable based on the parameter combinations
+tennis_ladder_combinations_plot_df <- tennis_ladder_combinations_plot_df %>%
+  mutate(
+    color_group = paste(rounds, sep = " | ")
+  )
+
+# Filter data for Good Seed
+tennis_ladder_combinations_goodseed_df <- tennis_ladder_combinations_plot_df %>%
+  filter(seed_type == "Good Seed")
+
+# Filter data for Bad Seed
+tennis_ladder_combinations_badseed_df <- tennis_ladder_combinations_plot_df %>%
+  filter(seed_type == "Bad Seed")
+
+# Plot 1: Good Seed (Combinations)
+tennis_ladder_combinations_goodseed_plot <- ggplot(tennis_ladder_combinations_goodseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    rounds_factor ~ distribution,
+    labeller = labeller(
+      rounds_factor = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Tennis Ladder (Combinations): Mutual Information (Good Seed)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Rounds:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Plot 2: Bad Seed (Combinations)
+tennis_ladder_combinations_badseed_plot <- ggplot(tennis_ladder_combinations_badseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  facet_grid(
+    rounds_factor ~ distribution,
+    labeller = labeller(
+      rounds_factor = function(x) paste("Rounds:", x),
+      distribution = function(x) x
+    )
+  ) +
+  labs(
+    title = "Tennis Ladder (Combinations): Mutual Information (Bad Seed)",
+    x = "Top K Teams",
+    y = "Mutual Information (MI)",
+    color = "Rounds:"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = 1:16) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 8),
+    strip.text = element_text(size = 10, face = "bold"),
+    legend.position = "bottom", 
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 8),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_color_d3("category20") +
+  guides(color = guide_legend(nrow = 1))
+
+# Display plots
+print(tennis_ladder_goodseed_plot)
+print(tennis_ladder_badseed_plot)
+
+# Display plots
+print(tennis_ladder_combinations_goodseed_plot)
+print(tennis_ladder_combinations_badseed_plot)
 ```
