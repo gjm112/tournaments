@@ -172,10 +172,6 @@ results <- data.frame(
 results
 
 
-
-weighted_kendall(c(1,1,1,1,5,6), k = 3, r = c(1,1,1,1,5,6))
-# Only works for k = # of top teams tied
-
 make_weights <- function(k) {
   w <- rep(0, 4)
   w[1:k] <- 1
@@ -214,6 +210,7 @@ for (k in 1:4) {
 
 # Combine across all k
 rhat_df <- bind_rows(all_results)
+rhat_df %>% filter(k==1)
 ```
 
 ```{r}
@@ -346,6 +343,7 @@ mut_info <- function(sims, num_teams, rank_weights = NULL, wtype = "symmetric_sa
   # Compute weights dynamically for each row
   weighted_df <- prob_df %>%
     mutate(w = w)
+  print(weighted_df)
 
   numerator <- sum(weighted_df$w * weighted_df$probability * log2(weighted_df$probability / (1/factorial(num_teams) * (1/factorial(num_teams)))))
   denominator <- log2(factorial(num_teams)^2)

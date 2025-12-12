@@ -405,6 +405,13 @@ simulate_single_elimination_tournament <- function(num_teams, distribution, seed
   return(final_results)
 }
 
+df <- list()
+for (i in 1:1000){
+  df[[i]] <- simulate_single_elimination_tournament(4, "Same", ties=F,third_place = F, seeding_structure = c(1,2,3,4))
+}
 
+test <- do.call(rbind, df)
+test$simulation <- rep(c(1:1000), each = 4)
 
+compute_mut_plots(test)
 ```
