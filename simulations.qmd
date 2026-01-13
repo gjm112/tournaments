@@ -1062,27 +1062,27 @@ library(ggsci)
 ```{r}
 combined_plot_df <- plot_mi(all_mi, c(
   "singleElimination_normal_noTies_1",
-  "singleElimination_uniform_noTies_1", 
+  #"singleElimination_uniform_noTies_1", 
   "singleElimination_same_noTies_1", 
   "singleElimination_exponential_noTies_1",
   "doubleElimination_normal_noTies_1", 
-  "doubleElimination_uniform_noTies_1",
+  #"doubleElimination_uniform_noTies_1",
   "doubleElimination_same_noTies_1", 
   "doubleElimination_exponential_noTies_1", 
   "roundRobin_normal_noTies_1", 
-  "roundRobin_uniform_noTies_1", 
+  #"roundRobin_uniform_noTies_1", 
   "roundRobin_same_noTies_1", 
   "roundRobin_exponential_noTies_1", 
   "groupStage_normal_noTies_1_4groups",
-  "groupStage_uniform_noTies_1_4groups",
+  #"groupStage_uniform_noTies_1_4groups",
   "groupStage_same_noTies_1_4groups",
   "groupStage_exponential_noTies_1_4groups",
   "stagedRR_normal_noTies_r1_g4",
-  "stagedRR_uniform_noTies_r1_g4",
+  #"stagedRR_uniform_noTies_r1_g4",
   "stagedRR_same_noTies_r1_g4",
   "stagedRR_exponential_noTies_r1_g4",
   "tennisLadder_normal_15",
-  "tennisLadder_uniform_15",
+  #"tennisLadder_uniform_15",
   "tennisLadder_same_15",
   "tennisLadder_exponential_15"
   )
@@ -1138,15 +1138,22 @@ combined_plot_df <- combined_plot_df %>%
 
 combined_plot_df <- combined_plot_df %>%
   mutate(
-    color_group = case_when(
-      tournament_type == "groupStage" ~ "groupStage (4 Groups)",
-      tournament_type == "stagedRR" ~ "stagedRR (4 Groups)",
-      tournament_type == "tennisLadder" ~ "tennisLadder (15 Rounds)",
+    competition_type = case_when(
+      tournament_type == "groupStage" ~ "Group Stage (4 Groups)",
+      tournament_type == "stagedRR" ~ "Staged Round Robin (4 Groups)",
+      tournament_type == "tennisLadder" ~ "Tennis Ladder (15 Rounds)",
+      tournament_type == "singleElimination" ~ "Single Elimination",
+      tournament_type == "doubleElimination" ~ "Double Elimination",
+      tournament_type == "roundRobin" ~ "Round Robin",
       TRUE ~ tournament_type
+    ),
+    distribution = case_when(
+      distribution == "Same" ~ "Coin Flip",
+      TRUE ~ distribution
     )
   )
 
-combined_plot <- ggplot(combined_plot_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+combined_plot <- ggplot(combined_plot_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1156,9 +1163,10 @@ combined_plot <- ggplot(combined_plot_df, aes(x = index, y = mi_values, color = 
     )
   ) +
   labs(
-    title = "Mutual Information (No Ties)",
+    title = "Weighted Mutual Information",
     x = "Top K Teams",
-    y = "Mutual Information (MI)"
+    y = "Mutual Information (MI)",
+    color = "Competiton Type"
   ) +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
   scale_x_continuous(breaks = 1:16) + 
@@ -1181,27 +1189,27 @@ combined_plot <- ggplot(combined_plot_df, aes(x = index, y = mi_values, color = 
 
 combined_combinations_df <- plot_mi(all_mi_combinations, c(
   "singleElimination_normal_noTies_1",
-  "singleElimination_uniform_noTies_1", 
+  #"singleElimination_uniform_noTies_1", 
   "singleElimination_same_noTies_1", 
   "singleElimination_exponential_noTies_1",
   "doubleElimination_normal_noTies_1", 
-  "doubleElimination_uniform_noTies_1",
+  #"doubleElimination_uniform_noTies_1",
   "doubleElimination_same_noTies_1", 
   "doubleElimination_exponential_noTies_1", 
   "roundRobin_normal_noTies_1", 
-  "roundRobin_uniform_noTies_1", 
+  #"roundRobin_uniform_noTies_1", 
   "roundRobin_same_noTies_1", 
   "roundRobin_exponential_noTies_1", 
   "groupStage_normal_noTies_1_4groups",
-  "groupStage_uniform_noTies_1_4groups",
+  #"groupStage_uniform_noTies_1_4groups",
   "groupStage_same_noTies_1_4groups",
   "groupStage_exponential_noTies_1_4groups",
   "stagedRR_normal_noTies_r1_g4",
-  "stagedRR_uniform_noTies_r1_g4",
+  #"stagedRR_uniform_noTies_r1_g4",
   "stagedRR_same_noTies_r1_g4",
   "stagedRR_exponential_noTies_r1_g4",
   "tennisLadder_normal_15",
-  "tennisLadder_uniform_15",
+  #"tennisLadder_uniform_15",
   "tennisLadder_same_15",
   "tennisLadder_exponential_15"
   )
@@ -1217,21 +1225,27 @@ combined_combinations_df <- combined_combinations_df %>%
   unnest(params) %>%
   ungroup() %>%
   mutate(
-    # Create a label for the additional parameters
     param_label = paste(tournament_type, sep = "\n")
   )
 
 combined_combinations_df <- combined_combinations_df %>%
   mutate(
-    color_group = case_when(
-      tournament_type == "groupStage" ~ "groupStage (4 Groups)",
-      tournament_type == "stagedRR" ~ "stagedRR (4 Groups)",
-      tournament_type == "tennisLadder" ~ "tennisLadder (15 Rounds)",
+    competition_type = case_when(
+      tournament_type == "groupStage" ~ "Group Stage (4 Groups)",
+      tournament_type == "stagedRR" ~ "Staged Round Robin (4 Groups)",
+      tournament_type == "tennisLadder" ~ "Tennis Ladder (15 Rounds)",
+      tournament_type == "singleElimination" ~ "Single Elimination",
+      tournament_type == "doubleElimination" ~ "Double Elimination",
+      tournament_type == "roundRobin" ~ "Round Robin",
       TRUE ~ tournament_type
+    ),
+    distribution = case_when(
+      distribution == "Same" ~ "Coin Flip",
+      TRUE ~ distribution
     )
   )
 
-combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1241,9 +1255,10 @@ combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y 
     )
   ) +
   labs(
-    title = "Mutual Information (No Ties)",
+    title = "Weighted Mutual Information",
     x = "Top K Teams",
-    y = "Mutual Information (MI)"
+    y = "Mutual Information (MI)",
+    color = "Competition Type"
   ) +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
   scale_x_continuous(breaks = 1:16) + 
@@ -1263,6 +1278,18 @@ combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y 
 
 print(combined_plot)
 print(combined_combinations_plot)
+
+# Save the plots
+ggsave("manuscript/images/combined_plot.png", 
+       plot = combined_plot, 
+       width = 12, 
+       height = 6, 
+       dpi = 300)
+ggsave("manuscript/images/combined_combinations_plot.png", 
+       plot = combined_combinations_plot, 
+       width = 12, 
+       height = 6, 
+       dpi = 300)
 ```
 
 ## Single Elimination
@@ -1327,7 +1354,7 @@ parse_dataset_name_se <- function(dataset_name) {
 
 # Add parameter columns to the plot data
 single_elimination_plot_df <- single_elimination_plot_df %>%
-  select(-any_of(c("tournament_type", "distribution", "ties", "series", "third_place", "reseeded", "bad_seeding", "param_label", "color_group"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "third_place", "reseeded", "bad_seeding", "param_label", "competition_type"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name_se(dataset[1]))
@@ -1344,7 +1371,7 @@ single_elimination_plot_df <- single_elimination_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 single_elimination_plot_df <- single_elimination_plot_df %>%
   mutate(
-    color_group = paste(tournament_type, reseeded, bad_seeding, sep = " | ")
+    competition_type = paste(tournament_type, reseeded, bad_seeding, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -1356,7 +1383,7 @@ single_elim_ties_df <- single_elimination_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties
-single_elimination_noties_plot <- ggplot(single_elim_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+single_elimination_noties_plot <- ggplot(single_elim_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1389,7 +1416,7 @@ single_elimination_noties_plot <- ggplot(single_elim_noties_df, aes(x = index, y
   guides(color = guide_legend(nrow = 2))
 
 # Plot 2: Ties
-single_elimination_ties_plot <- ggplot(single_elim_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+single_elimination_ties_plot <- ggplot(single_elim_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1481,7 +1508,7 @@ parse_dataset_name_se <- function(dataset_name) {
 
 # Add parameter columns to the plot data
 single_elimination_combinations_plot_df <- single_elimination_combinations_plot_df %>%
-  select(-any_of(c("tournament_type", "distribution", "ties", "series", "third_place", "reseeded", "bad_seeding", "param_label", "color_group"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "third_place", "reseeded", "bad_seeding", "param_label", "competition_type"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name_se(dataset[1]))
@@ -1498,7 +1525,7 @@ single_elimination_combinations_plot_df <- single_elimination_combinations_plot_
 # Create a consistent color variable based on the parameter combinations
 single_elimination_combinations_plot_df <- single_elimination_combinations_plot_df %>%
   mutate(
-    color_group = paste(tournament_type, reseeded, bad_seeding, sep = " | ")
+    competition_type = paste(tournament_type, reseeded, bad_seeding, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -1510,7 +1537,7 @@ single_elim_combinations_ties_df <- single_elimination_combinations_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties (Combinations)
-single_elimination_combinations_noties_plot <- ggplot(single_elim_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+single_elimination_combinations_noties_plot <- ggplot(single_elim_combinations_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1543,7 +1570,7 @@ single_elimination_combinations_noties_plot <- ggplot(single_elim_combinations_n
   guides(color = guide_legend(nrow = 2))
 
 # Plot 2: Ties (Combinations)
-single_elimination_combinations_ties_plot <- ggplot(single_elim_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+single_elimination_combinations_ties_plot <- ggplot(single_elim_combinations_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1639,7 +1666,7 @@ parse_dataset_name <- function(dataset_name) {
 
 # Add parameter columns to the plot data
 double_elimination_plot_df <- double_elimination_plot_df %>%
-  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "color_group"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "competition_type"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name(dataset[1]))
@@ -1655,7 +1682,7 @@ double_elimination_plot_df <- double_elimination_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 double_elimination_plot_df <- double_elimination_plot_df %>%
    mutate(
-    color_group = paste(tournament_type, bad_seeding, sep = " | ")
+    competition_type = paste(tournament_type, bad_seeding, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -1667,7 +1694,7 @@ double_elimination_plot_ties_df <- double_elimination_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties
-double_elimination_noties_plot <- ggplot(double_elimination_plot_noTies_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+double_elimination_noties_plot <- ggplot(double_elimination_plot_noTies_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1700,7 +1727,7 @@ double_elimination_noties_plot <- ggplot(double_elimination_plot_noTies_df, aes(
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties
-double_elimination_ties_plot <- ggplot(double_elimination_plot_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+double_elimination_ties_plot <- ggplot(double_elimination_plot_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1783,7 +1810,7 @@ parse_dataset_name <- function(dataset_name) {
 
 # Add parameter columns to the plot data
 double_elimination_combinations_plot_df <- double_elimination_combinations_plot_df %>%
-  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "color_group"))) %>%
+  select(-any_of(c("tournament_type", "distribution", "ties", "series", "bad_seeding", "param_label", "competition_type"))) %>%
   group_by(dataset) %>%
   mutate(
     params = list(parse_dataset_name(dataset[1]))
@@ -1799,7 +1826,7 @@ double_elimination_combinations_plot_df <- double_elimination_combinations_plot_
 # Create a consistent color variable based on the parameter combinations
 double_elimination_combinations_plot_df <- double_elimination_combinations_plot_df %>%
    mutate(
-    color_group = paste(tournament_type, bad_seeding, sep = " | ")
+    competition_type = paste(tournament_type, bad_seeding, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -1811,7 +1838,7 @@ double_elimination_combinations_plot_ties_df <- double_elimination_combinations_
   filter(ties == "Ties")
 
 # Plot 1: No Ties (Combinations)
-double_elimination_combinations_noties_plot <- ggplot(double_elimination_combinations_plot_noTies_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+double_elimination_combinations_noties_plot <- ggplot(double_elimination_combinations_plot_noTies_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -1844,7 +1871,7 @@ double_elimination_combinations_noties_plot <- ggplot(double_elimination_combina
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties (Combinations)
-double_elimination_combinations_ties_plot <- ggplot(double_elimination_combinations_plot_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+double_elimination_combinations_ties_plot <- ggplot(double_elimination_combinations_plot_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2158,7 +2185,7 @@ group_stage_plot_df <- group_stage_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 group_stage_plot_df <- group_stage_plot_df %>%
   mutate(
-    color_group = paste(group_length, sep = " | ")
+    competition_type = paste(group_length, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -2170,7 +2197,7 @@ group_stage_ties_df <- group_stage_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties
-group_stage_noties_plot <- ggplot(group_stage_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+group_stage_noties_plot <- ggplot(group_stage_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2203,7 +2230,7 @@ group_stage_noties_plot <- ggplot(group_stage_noties_df, aes(x = index, y = mi_v
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties
-group_stage_ties_plot <- ggplot(group_stage_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+group_stage_ties_plot <- ggplot(group_stage_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2279,7 +2306,7 @@ group_stage_combinations_plot_df <- group_stage_combinations_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 group_stage_combinations_plot_df <- group_stage_combinations_plot_df %>%
   mutate(
-    color_group = paste(group_length, sep = " | ")
+    competition_type = paste(group_length, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -2291,7 +2318,7 @@ group_stage_combinations_ties_df <- group_stage_combinations_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties (Combinations)
-group_stage_combinations_noties_plot <- ggplot(group_stage_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+group_stage_combinations_noties_plot <- ggplot(group_stage_combinations_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2324,7 +2351,7 @@ group_stage_combinations_noties_plot <- ggplot(group_stage_combinations_noties_d
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties (Combinations)
-group_stage_combinations_ties_plot <- ggplot(group_stage_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+group_stage_combinations_ties_plot <- ggplot(group_stage_combinations_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2413,7 +2440,7 @@ staged_rr_plot_df <- staged_rr_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 staged_rr_plot_df <- staged_rr_plot_df %>%
   mutate(
-    color_group = paste(group_length, sep = " | ")
+    competition_type = paste(group_length, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -2425,7 +2452,7 @@ staged_rr_ties_df <- staged_rr_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties
-staged_rr_noties_plot <- ggplot(staged_rr_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+staged_rr_noties_plot <- ggplot(staged_rr_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2458,7 +2485,7 @@ staged_rr_noties_plot <- ggplot(staged_rr_noties_df, aes(x = index, y = mi_value
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties
-staged_rr_ties_plot <- ggplot(staged_rr_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+staged_rr_ties_plot <- ggplot(staged_rr_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2509,7 +2536,7 @@ staged_rr_combinations_plot_df <- staged_rr_combinations_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 staged_rr_combinations_plot_df <- staged_rr_combinations_plot_df %>%
   mutate(
-    color_group = paste(group_length, sep = " | ")
+    competition_type = paste(group_length, sep = " | ")
   )
 
 # Filter data for No Ties
@@ -2521,7 +2548,7 @@ staged_rr_combinations_ties_df <- staged_rr_combinations_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties (Combinations)
-staged_rr_combinations_noties_plot <- ggplot(staged_rr_combinations_noties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+staged_rr_combinations_noties_plot <- ggplot(staged_rr_combinations_noties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2554,7 +2581,7 @@ staged_rr_combinations_noties_plot <- ggplot(staged_rr_combinations_noties_df, a
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Ties (Combinations)
-staged_rr_combinations_ties_plot <- ggplot(staged_rr_combinations_ties_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+staged_rr_combinations_ties_plot <- ggplot(staged_rr_combinations_ties_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2638,7 +2665,7 @@ tennis_ladder_plot_df <- tennis_ladder_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 tennis_ladder_plot_df <- tennis_ladder_plot_df %>%
   mutate(
-    color_group = paste(rounds, sep = " | ")
+    competition_type = paste(rounds, sep = " | ")
   )
 
 # Filter data for Good Seed
@@ -2650,7 +2677,7 @@ tennis_ladder_badseed_df <- tennis_ladder_plot_df %>%
   filter(seed_type == "Bad Seed")
 
 # Plot 1: Good Seed
-tennis_ladder_goodseed_plot <- ggplot(tennis_ladder_goodseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+tennis_ladder_goodseed_plot <- ggplot(tennis_ladder_goodseed_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2683,7 +2710,7 @@ tennis_ladder_goodseed_plot <- ggplot(tennis_ladder_goodseed_df, aes(x = index, 
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Bad Seed
-tennis_ladder_badseed_plot <- ggplot(tennis_ladder_badseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+tennis_ladder_badseed_plot <- ggplot(tennis_ladder_badseed_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2734,7 +2761,7 @@ tennis_ladder_combinations_plot_df <- tennis_ladder_combinations_plot_df %>%
 # Create a consistent color variable based on the parameter combinations
 tennis_ladder_combinations_plot_df <- tennis_ladder_combinations_plot_df %>%
   mutate(
-    color_group = paste(rounds, sep = " | ")
+    competition_type = paste(rounds, sep = " | ")
   )
 
 # Filter data for Good Seed
@@ -2746,7 +2773,7 @@ tennis_ladder_combinations_badseed_df <- tennis_ladder_combinations_plot_df %>%
   filter(seed_type == "Bad Seed")
 
 # Plot 1: Good Seed (Combinations)
-tennis_ladder_combinations_goodseed_plot <- ggplot(tennis_ladder_combinations_goodseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+tennis_ladder_combinations_goodseed_plot <- ggplot(tennis_ladder_combinations_goodseed_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2779,7 +2806,7 @@ tennis_ladder_combinations_goodseed_plot <- ggplot(tennis_ladder_combinations_go
   guides(color = guide_legend(nrow = 1))
 
 # Plot 2: Bad Seed (Combinations)
-tennis_ladder_combinations_badseed_plot <- ggplot(tennis_ladder_combinations_badseed_df, aes(x = index, y = mi_values, color = color_group, group = dataset)) +
+tennis_ladder_combinations_badseed_plot <- ggplot(tennis_ladder_combinations_badseed_df, aes(x = index, y = mi_values, color = competition_type, group = dataset)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   facet_grid(
@@ -2819,3 +2846,4 @@ print(tennis_ladder_badseed_plot)
 print(tennis_ladder_combinations_goodseed_plot)
 print(tennis_ladder_combinations_badseed_plot)
 ```
+
