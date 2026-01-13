@@ -52,7 +52,10 @@ In The World Series Competition, @Mosteller1952 shifted the focus from designing
 
 Building on the paired comparison framework, @BradleyTerry1952 introduced a probabilistic model for paired comparisons that became a cornerstone of modern statistical ranking theory. Their model assigns a positive “strength” parameter to each competitor and defines the probability that one competitor beats another as a function of the ratio of their strengths. This formulation allows researchers to infer an overall ranking from observed pairwise outcomes by estimating these strength parameters from data, often by using maximum likelihood methods. The Bradley-Terry model has become widely used in sports analytics and preference modeling because it translates binary outcomes from games or comparisons into a quantitative ranking of competitors.
 
+In A Tournament Problem, @Scheid1960 derives the schedule for a round robin tournament for different numbers of players with multiple players on each team. He considers tournaments where each player plays with each other player exactly one, and each plays against each other player exactly twice. Additionally, no player plays against himself and no player plays with himself. He forms an equation to determine the number of games for any number of players and teams with any number of players.
+
 @Glenn1960-mn returned to the comparison of tournament formats, offering one of the earliest evaluations of tournament "effectiveness." Focusing on competitions with four participants, Glenn analyzed six tournament designs, including round-robin, variations of single-elimination, and double-elimination formats. He compared these designs using two criteria: the probability that the strongest competitor wins and the expected number of games required. By modeling match outcomes probabilistically, Glenn found that tournaments with more games are more accurate but less efficient. His results showed that round-robin tournaments maximize ranking accuracy, while elimination formats prioritize efficiency. 
+
 
 
 
