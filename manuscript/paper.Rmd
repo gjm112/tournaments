@@ -586,10 +586,7 @@ same tournament, their final rank is randomly assigned from the set of
 ranks 5 through 8. Each competition structure was simulated 10,000 times
 and those results were used to estimate $wI_m(r,\hat{r})$.
 
-```{=html}
-<!-- we should include links to the images to the ideal seeding structure 
-that Ryan was working on -->
-```
+<!-- we should include links to the images to the ideal seeding structure that Ryan was working on -->
 
 We examined the following structures with the assumption of the ideal
 seeding for each competition:
@@ -613,12 +610,9 @@ seeding for each competition:
 ![This figure compares the normalized weight mutual information of
 various competition structures against the number of salient ranks for
 various assumed distributions of true strengths, $\theta$.
-\label{fig:fig1}](images/combined_plot.png){width="408"}
+\label{fig:fig1}](images/combined_plot.png){width="680"}
 
-```{=html}
-<!-- need to include table with the values of weighted mutual information for 
-each plot in the appendix -->
-```
+<!-- need to include table with the values of weighted mutual information for each plot in the appendix -->
 
 Figure \ref{fig:fig1} shows the results of the estimated values of
 $wI_m(r,\hat{r})$ on the y-axis while the x-axis represents the number
@@ -642,33 +636,109 @@ exponential distribution shows a larger gap between single elimination
 distribution, when k is small. This is because the probability of the
 better team winning is increased, especially for the top few teams.
 
-It is important to note that while the theoretical value for round robin for 
-the distribution "Coin Flip" is 0.25, it is not seen in the results due to a
-limited number of simulations and noise within simulations. 
+It is important to note that while the theoretical value for round robin
+for the distribution "Coin Flip" is 0.25, it is not seen in the results
+due to a limited number of simulations and noise within simulations.
 
-Next steps:
-
-- tiered ranks example
-
-- show differences in single elimination potential structures (seeding, reseed,
-series, etc.)
-
-- show how round robin increases as the rounds increase (ideal structure 
-for the real world if time/fatigue wasn't a factor?)
-
-- talk about how to use this in the real world (why just simulating strengths
-for a single season doesn't capture the whole picture)
-
-- fix plot formats
+In addition to the estimated values of $wI_m(r,\hat{r})$, we can also
+easily estimate the tiered rankings.
 
 ![This figure compares the normalized weight mutual information of
 various competition structures against the number of *tiered ranks* for
 various assumed distributions of true strengths, $\theta$.
-\label{fig:fig2}](images/combined_combinations_plot.png){width="408"}
+\label{fig:fig2}](images/combined_combinations_plot.png){width="680"}
 
+Figure \ref{fig:fig2} demonstrates tiered ranking for the top K teams.
+As the top K teams approach the total number of teams, the mutual
+information approaches 1, or complete information. When K is 16, every
+team is within the top 16, so it is correctly ordered.
 
+While the comparison between most of the structures show similar results
+to those in Figure \ref{fig:fig1}, the plot of Group Stage shows a
+noticeable different with a its unique pattern. This is due to the
+ranking within the structure, as within each group, the pots that
+determine the groups create groups with one team from the top 4 teams,
+then one team from the next 4, etc. This creates the sharp inclines seen
+from $K=11$ to $K=12$ and $K=15$ to $K=16$. If one of the bottom 4 teams
+ends up in third place or higher in the group phase, then the mutual
+information lowers. The random assignment of ranks within the teams that
+finish in last create the plateaus because, given the lowest 4 teams all
+end up last in their respective groups, those teams should have an equal
+probability of ending up with rank 13 as rank 16.
 
+In order to avoid these leaps, a potential solution would be to create
+multiple tiers: the top 8 teams (or teams that advance to the knockout
+round), the teams that finished third in their respective groups, and
+the teams that finished last in their respective groups. However, for
+the sake of comparing against other structures, we only looked at the
+top K teams.
 
+In addition to the unique competition structures, most structures have
+different variations of the overall structure. For example, single
+elimination tournaments could have a reseeding structure, like the NFL
+playoffs. In this case, instead of set matchups, the matchups are
+determined as the highest seed remaining plays the lowest seed
+remaining, then the next highest plays the next lowest until all teams
+have a game.
+
+Another structure is the step Ladder structure in which the lowest seed
+plays the next lowest seed (16 vs 15) and the winner of that plays the
+next lowest (14). This continues until the top team plays a game. If
+this is correctly seeded, it seems like the ideal structure with very
+minimal variation. However, if seeded poorly, the structure could be
+viewed as one of the worst. Therefore, Figure \ref{fig:fig3} below looks
+at different structures, seeding, and number of games within a series.
+
+![This figure compares the normalized weight mutual information of
+various single elimination competition structures against the number of
+*tiered ranks* for various assumed distributions of true strengths,
+$\theta$.
+\label{fig:fig3}](images/single_elimination_plot.png){width="680"}
+
+Note, the labelled "Bad Seed" is equivalent to the worst possible
+seeding structure. For step ladder, it means the top team plays the
+second best team, the winner plays the third best team etc. For single
+elimination, the seeding structure is (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8, 9
+vs 10, 11 vs 12, 13 vs 14, 15 vs 16).
+
+Once again, the best and worst structure are the expected of step
+ladder, good and bad seeding structures. The step ladder with the bad
+seeding structure actually is below 0.25, or completely random
+assignment of $\hat{r}$, for larger values of $K$. The distribution,
+however, heavily influences the resulting mutual information in the
+smaller values of $K$ for the step ladder with bad seeding, but not as
+much with good seeding. This can be attributed to the fact, for good
+seeding structure, the top team has to win only 1 match, with the next
+be playing 2 matches, etc., while the top teams are still favored.
+However, for the bad seeding structure, the top team has to play 15
+matches to end up in the correct position, and for that to occur, the
+second best team ends up in last place. Therefore, given the
+distribution, the probability that the best team wins 14 games can
+change the metric drastically. The same logic applies for the number of
+games in the series, as more games lead to higher mutual information.
+While still having an effect, the distribution plays less of factor in
+the typical single elimination structure.
+
+Where the seeding structure heavily impacted the step ladder structure,
+the single elimination structure is seen to be less influenced by
+seeding, given that there is reseeding. As seen in Figure
+\ref{fig:fig3}, the reseeded single elimination structure has very
+little difference between the good seeding and bad seeding.
+Additionally, both reseeded actually appear slightly better than the
+good seeding structure for the usual structure with a set bracket. This
+would lead us to believe that, when determining a structure to use, the
+reseeded option is a more efficacious approach than the common single
+elimination structure.
+
+Next steps:
+
+-   show how round robin increases as the rounds increase (ideal
+    structure for the real world if time/fatigue wasn't a factor?)
+
+-   talk about how to use this in the real world (why just simulating
+    strengths for a single season doesn't capture the whole picture)
+
+-   fix plot formats
 
 # Conclusion {#sec:conclusion}
 
