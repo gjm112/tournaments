@@ -1255,7 +1255,7 @@ combined_combinations_plot <- ggplot(combined_combinations_df, aes(x = index, y 
     )
   ) +
   labs(
-    title = "Weighted Mutual Information",
+    title = "Tiered Weighted Mutual Information",
     x = "Top K Teams",
     y = "Mutual Information (MI)",
     color = "Competition Type"
@@ -1376,7 +1376,8 @@ single_elimination_plot_df <- single_elimination_plot_df %>%
 
 # Filter data for No Ties
 single_elim_noties_df <- single_elimination_plot_df %>%
-  filter(ties == "No Ties")
+  filter(ties == "No Ties") %>%
+  filter(distribution != "Uniform")
 
 # Filter data for Ties
 single_elim_ties_df <- single_elimination_plot_df %>%
@@ -1394,7 +1395,7 @@ single_elimination_noties_plot <- ggplot(single_elim_noties_df, aes(x = index, y
     )
   ) +
   labs(
-    title = "Single Elimination: Mutual Information (No Ties)",
+    title = "Single Elimination: Mutual Information",
     x = "Top K Teams",
     y = "Mutual Information (MI)",
     color = "Parameters"
@@ -1610,6 +1611,12 @@ print(single_elimination_ties_plot)
 print(single_elimination_combinations_noties_plot)
 print(single_elimination_combinations_ties_plot)
 
+
+ggsave("manuscript/images/single_elimination_plot.png", 
+       plot = single_elimination_noties_plot, 
+       width = 12, 
+       height = 6, 
+       dpi = 300)
 ```
 
 ## Double Elimination
@@ -2846,4 +2853,3 @@ print(tennis_ladder_badseed_plot)
 print(tennis_ladder_combinations_goodseed_plot)
 print(tennis_ladder_combinations_badseed_plot)
 ```
-
