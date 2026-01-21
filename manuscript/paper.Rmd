@@ -730,15 +730,70 @@ would lead us to believe that, when determining a structure to use, the
 reseeded option is a more efficacious approach than the common single
 elimination structure.
 
-Next steps:
+Another competition structure that can be used as a simple example is
+round robin. When time and number of games is not a constraint, this is
+typically the most common approach to a structure. Examples of this are
+found most often in European soccer leagues, like the Premier League.
 
--   show how round robin increases as the rounds increase (ideal
-    structure for the real world if time/fatigue wasn't a factor?)
+![This figure compares the normalized weight mutual information of
+various round robin competition structures against the number of salient
+ranks for various assumed distributions of true strengths, $\theta$.
+\label{fig:fig4}](images/round_robin_plot.png){width="680"}
 
--   talk about how to use this in the real world (why just simulating
-    strengths for a single season doesn't capture the whole picture)
+Figure \ref{fig:fig4} depicts three different distributions and the
+mutual information given from a round robin structure for a number of
+series. As the number of rounds increase, so does the mutual information
+given that there is a difference in the strength parameters. As the
+number of rounds increase, the probability of the better team being
+ranked higher than a lower team increases. Therefore, given an infinite
+number of rounds, the metric should approach a value of 1.
 
--   fix plot formats
+It is also interesting to note that the exponential distribution has a
+wider gap between the curves as the value of $K$ increases. This is
+likely because the difference between the strength parameters for the
+top 2 teams is larger than the difference between the strength
+parameters for the bottom 2. Therefore, the larger difference leads to
+less variation in games for the top teams and more variation for lower
+teams.
+
+On the other hand, the uniform distribution only has a slight variation
+in the around the middle ($K = 8$) that appears to become more flat as
+the number of rounds increase to 4. This is because the strength
+parameters are equally spaced, and thus have roughly the same variation
+from simulation to simulation. Over time, as the number of rounds
+increase, all of the curves will begin to flatten.
+
+In a perfect world, a large number of rounds for a round robin
+tournament would always be used and all of the other structures would,
+thus, become useless. However, we do not live in a perfect world and
+athletes cannot sustain a season that long. So, how can this metric be
+able to find the best structure given the real-life constraints? One
+might suggest estimating the strengths of each competitor in a given
+season and using the structures that would be reasonable to use given
+the time constraints. This, however, would give the best competition
+structure for that specific season.
+
+To estimate our metric for a specific real-world competition, some
+potential pathways include:
+
+-   estimating the strength parameters for many seasons, running
+    simulations for each of those seasons, combining the results and
+    using the formula to get an overall mutual information score
+
+-   estimating the strength parameters for many seasons, running
+    simulations for each of those seasons and calculating the mutual
+    information for each season, average the resulting metrics
+
+-   estimating the strength parameters for many seasons and averaging
+    the strength parameter associate by the order of competitors (e.g.
+    average the best team from each season), running simulations over
+    the new strength distribution from the averages.
+
+Overall, the metric succeeds in comparing competition structures
+effectiveness based on efficacy and effectivity. There is no one perfect
+structure that can be used given real-world constraints, but this metric
+can offer potential solutions to structures that struggle to provide the
+results that are expected and desired.
 
 # Conclusion {#sec:conclusion}
 
