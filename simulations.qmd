@@ -1961,25 +1961,23 @@ roundRobin_plot_df <- roundRobin_plot_df %>%
 
 # Filter data for No Ties
 roundRobin_plot_noties_df <- roundRobin_plot_df %>%
-  filter(ties == "No Ties")
+  filter(ties == "No Ties") %>%
+  filter(distribution != "Same")
 
 # Filter data for Ties
 roundRobin_plot_ties_df <- roundRobin_plot_df %>%
   filter(ties == "Ties")
 
 # Plot 1: No Ties
-roundRobin_noties_plot <- ggplot(roundRobin_plot_noties_df, aes(x = index, y = mi_values, group = dataset)) +
+roundRobin_noties_plot <- ggplot(roundRobin_plot_noties_df, aes(x = index, y = mi_values, group = dataset, color = series)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
-  facet_grid(
-    series ~ distribution,
-    labeller = labeller(
-      series = function(x) paste("Rounds:", x),
-      distribution = function(x) x
-    )
+  facet_wrap(
+    ~ distribution,
+    labeller = labeller(distribution = function(x) x)
   ) +
   labs(
-    title = "Round Robin: Mutual Information (No Ties)",
+    title = "Round Robin: Mutual Information",
     x = "Top K Teams",
     y = "Mutual Information (MI)"
   ) +
@@ -2066,7 +2064,8 @@ roundRobin_combinations_plot_df <- roundRobin_combinations_plot_df %>%
 
 # Filter data for No Ties
 roundRobin_combinations_plot_noties_df <- roundRobin_combinations_plot_df %>%
-  filter(ties == "No Ties")
+  filter(ties == "No Ties") %>%
+  filter(distribution != "Uniform")
 
 # Filter data for Ties
 roundRobin_combinations_plot_ties_df <- roundRobin_combinations_plot_df %>%
@@ -2142,6 +2141,12 @@ print(roundRobin_ties_plot)
 # Display plots
 print(roundRobin_combinations_noties_plot)
 print(roundRobin_combinations_ties_plot)
+
+ggsave("manuscript/images/round_robin_plot.png", 
+       plot = roundRobin_noties_plot, 
+       width = 12, 
+       height = 6, 
+       dpi = 300)
 
 ```
 
