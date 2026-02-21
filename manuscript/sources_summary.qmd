@@ -21,8 +21,9 @@ In A Tournament Problem, @Scheid1960 derives the schedule for a round robin tour
 
 @Glenn1960-mn returned to the comparison of tournament formats, offering one of the earliest evaluations of tournament "effectiveness." Focusing on competitions with four participants, Glenn analyzed six tournament designs, including round-robin, variations of single-elimination, and double-elimination formats. He compared these designs using two criteria: the probability that the strongest competitor wins and the expected number of games required. By modeling match outcomes probabilistically, Glenn found that tournaments with more games are more accurate but less efficient. His results showed that round-robin tournaments maximize ranking accuracy, while elimination formats prioritize efficiency. 
 
-@Slater1961 addresses inconsistencies in pairwise comparisons by determining how many circular triads are possible while keeping the ranking valid. He provides a method for identifying and minimizing circular triads when ranking objects, known as the Slater rule. NEED TO FINISH
+@Slater1961 identifies an issue in paired comparisons when inconsistencies occur, which makes it difficult to make a linear ranking. This occurs if there are three objects, A, B, and C, which are ranked A > B, B > C, and C > A. Slater provides a method for identifying and minimizing circular triads when ranking objects. This is defined as the number of preferences that must be switched to make an inconsistent tournament transitive, ultimately identifying a consistent linear ranking.
 
+@Hartigan1968
 
 
 
