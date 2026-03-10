@@ -1,5 +1,5 @@
 ---
-title: "Title"
+title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information"
 format:
   jasa-pdf:
     keep-tex: true  
