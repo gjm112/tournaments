@@ -25,7 +25,9 @@ In A Tournament Problem, @Scheid1960 derives the schedule for a round robin tour
 
 @Hartigan1968
 
+Returning to ranking theory, @Daniels1969 defines different methods to score players in a round-robin tournament based on their scores and the strength of their opponents. These ranking methods work to score a player proportional to their ability. 
 
+Continuing with ranking theory, @elo1978rating establishes a system for ranking chess skill based on performance against opponents, rather than just match results. It calculates expected outcomes based on the difference of rankings between opponents, with scores updating after each game. 
 
 
 # Notes from Other Papers
