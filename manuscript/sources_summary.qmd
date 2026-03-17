@@ -25,26 +25,20 @@ In A Tournament Problem, @Scheid1960 derives the schedule for a round robin tour
 
 @Hartigan1968
 
-Returning to ranking theory, @Daniels1969 defines different methods to score players in a round-robin tournament based on their scores and the strength of their opponents. These ranking methods work to score a player proportional to their ability. 
+Returning to ranking theory, @Daniels1969 defines different methods to score players in a round-robin tournament based on their scores and the strength of their opponents. These ranking methods work to score a player proportional to their ability. Depending on the method, a participant wins different points depending on whether they win, lose, or draw, and depending on the strength of their opponent.
 
-Continuing with ranking theory, @elo1978rating establishes a system for ranking chess skill based on performance against opponents, rather than just match results. It calculates expected outcomes based on the difference of rankings between opponents, with scores updating after each game. 
+Furthermore, @elo1978rating establishes a new system for ranking chess skill based on performance against opponents, rather than just considering the match results. The Elo system calculates expected outcomes based on the difference of rankings between opponents, and these scores update after each match. 
+
+@Shieh1998 proposes a a weighted Kendall's tau statistic ($\tau_w$) to measure weighted correlation. This statistic places more emphasis on items that have low rankings than those that have high rankings (or vice versa). As an example, 1234 would be more highly correlated with 1243 than with 2134 because the first numbers in the sequence are considered more important and need to match for the statistic to be greater. This statistic provides a new way to compare two sets of rankings.
+
+@fagin2003 similarly introduce distance measures to compare "top *k* lists." Before these methods, there was no well-studied method for comparing two lists for similarity. 
+
+In The Economic Design of Sporting Contests, @szymanski2003 shifts to describe the best way to design a tournament. FINISH
+
+
 
 
 # Notes from Other Papers
-
-### Csato 2021 - The incentive (in)compatability of group-based qualification systems
-
--   A mechanism is called incentive-compatible if every participant can achieve their own best outcome by reporting their true preferences.
-
--   All sporting contests should provide players with appropriate incentives to perform.
-
--   In sports, incentive INcompatibility can come from the fact that being ranked lower in a group stage leads to facing a preferred competitor in the subsequent stage, giving an advantage.
-
--   Motivating real-world example is the European qualification tournament for the 2018 FIFA World Cup.
-
-### Elo 1978 - The Rating of Chess Players, Past and Present
-
--   Explains the Elo system and includes calculated ratings of many players in the past.
 
 ### Aziz and Others 2018 - Fixing Balanced Knockout and Double Elimination Tournaments
 
@@ -62,6 +56,22 @@ Continuing with ranking theory, @elo1978rating establishes a system for ranking 
 
 -   This paper incorporates team production with the theory of rank order elimination tournaments. Existing literature focuses on individual sports or on team sports which are not elimination tournaments. In this analysis, competitors in an elimination tournament are groups rather than individuals (competition studied is video games).
 
+### Csato 2021 - The incentive (in)compatability of group-based qualification systems
+
+-   A mechanism is called incentive-compatible if every participant can achieve their own best outcome by reporting their true preferences.
+
+-   All sporting contests should provide players with appropriate incentives to perform.
+
+-   In sports, incentive INcompatibility can come from the fact that being ranked lower in a group stage leads to facing a preferred competitor in the subsequent stage, giving an advantage.
+
+-   Motivating real-world example is the European qualification tournament for the 2018 FIFA World Cup.
+
+### Daniels 1969 - Round-robin tournament scores
+
+-   In a paired comparisons experiment, preferences are expressed between all possible pairs of a set of objects. The problem of analyzing such an experiment is basically to assign optimum scores to the objects, often with the more limited aim of ranking them in order of preference.
+
+-   Round-robin tournament is another example of this situation. The paper proposes some methods of scoring players, based on a concept of fair allocation of rewards to each player.
+
 ### Devriesere, Csato, Goossens 2024 - Tournament Design: A Review from an Operational Research Perspective
 
 -   Tournament design refers to the rules that determine how a tournament (a series of games between a number of competitors) is organized.
@@ -69,6 +79,10 @@ Continuing with ranking theory, @elo1978rating establishes a system for ranking 
 -   Provides an overview of the tournament design literature from the perspective of operational research. Discusses three important design criteria: efficacy and effectivity, fairness, and attractiveness.
 
 -   Survey classifies the papers discussing these properties according to the main components of tournament design: format, seeding, draw, scheduling, and ranking.
+
+### Elo 1978 - The Rating of Chess Players, Past and Present
+
+-   Explains the Elo system and includes calculated ratings of many players in the past.
 
 ### Glickman, Jensen 2003 - Adaptive Paired Comparative Design
 
@@ -160,11 +174,6 @@ Continuing with ranking theory, @elo1978rating establishes a system for ranking 
 
 -   Estimate the overall effectiveness of the decision technique. Answer the question: Will the Series be very effective in identifying the better team?
 
-### Daniels 1969 - Round-robin tournament scores
-
--   In a paired comparisons experiment, preferences are expressed between all possible pairs of a set of objects. The problem of analyzing such an experiment is basically to assign optimum scores to the objects, often with the more limited aim of ranking them in order of preference.
-
--   Round-robin tournament is another example of this situation. The paper proposes some methods of scoring players, based on a concept of fair allocation of rewards to each player.
 
 ### Scarf, Yusof 2010 - A numerical study of the tournament structure and seeding policy for the soccer World Cup Finals
 
