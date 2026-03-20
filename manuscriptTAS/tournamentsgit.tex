@@ -1,0 +1,977 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  12pt]{article}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+\usepackage[]{natbib}
+\bibliographystyle{agsm}
+
+
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-1in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.7in}%
+\addtolength{\topmargin}{-1in}%
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information},
+  pdfauthor={Zachary Culp; Josie Peterburs; Ryan P. A. McShane; Gregory J. Matthews},
+  pdfkeywords={tournament structures, mutual information},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+
+\begin{document}
+
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\date{March 12, 2026}
+\title{\bf Assessing Ranking Fidelity of Competition Structures via
+Weighted Mutual Information}
+\author{
+Zachary Culp\thanks{The authors gratefully acknowledge \emph{please
+remember to list all relevant funding sources in the non-anonymized
+(unblinded) version}.}\\
+Department of Mathematics and Statistics, Loyola University Chicago\\
+and\\Josie Peterburs\\
+Department of Mathematics and Statistics, Loyola University Chicago\\
+and\\Ryan P. A. McShane\\
+Department of Statistics, The University of Chicago\\
+and\\Gregory J. Matthews\\
+Department of Mathematics and Statistics, Loyola University Chicago\\
+}
+\maketitle
+
+\bigskip
+\bigskip
+\begin{abstract}
+We evaluate multiple competitions structures to assess their
+effectiveness in accurately reproducing the true underlying ranking of
+participating teams. Using repeated simulations for each structure, we
+compare teams' true performance ranks to their simulated outcomes. To
+quantify the accuracy of each format, we calculate weighted mutual
+information between true and simulated rankings across a large number of
+replicates. ``Salient'' weights are applied to look at only the top i
+out of n total teams/competitors in a given competition structure. This
+information-theoretic approach allows us to objectively compare formats
+and identify which structures most effectively preserve rank order.
+Results are visualized through comparative plots, providing clear
+insights into the trade-offs and strengths of each competition design.
+\end{abstract}
+
+\noindent%
+{\it Keywords:} tournament structures, mutual information
+\vfill
+
+\newpage
+\spacingset{1.9} % DON'T change the spacing!
+
+
+\section{Introduction}\label{introduction}
+
+There are hundreds of different competitions structures that dictate how
+a set of teams compete against each other to determine an overall
+ranking. Common structures include bracket tournaments where if a team
+wins their competition they advance to the next round. Bracket
+tournaments can be run as single elimination where competitors advance
+or are eliminated based on a single match (e.g.~NCAA College Basketball
+Tournament, National Football League (NFL) playoffs, major tennis
+tournaments) or where each round is contested as a best of \(k\) series
+(e.g.~\(k\) = 7: National Basketball Association (NBA) playoffs,
+National Hockey League (NHL) playoffs, \(k\) varies by round: Major
+League Baseball (MLB), Women's National Basketball Association (WNBA))
+and the series winner advance while the series loser is eliminated.
+Additional styles of the bracket tournaments include variations where
+competitors are not eliminated after a single loss such as double
+elimination tournaments where competitors continue until they have lost
+twice. Within double elimination tournament, there are several
+variations. For instance, the NCAA College Wrestling tournament is a
+double elimination tournament, however, if a competitor loses a match
+they fall into the consolation bracket and the best they can finish
+after a loss before the finals is 3rd place making this not a ``true''
+double elimination format. Olympic judo uses a variant of this system
+with single elimination until the quarterfinals followed by a
+consolation bracket consisting of the four quarterfinal losers who still
+have a chance for a bronze medal\footnote{in Olympic judo they award two
+  bronze medals to the two competitors who each win their side of the
+  consolation bracket}.
+
+``True'' double elimination - a bracket tournament where a competitor
+can still finish ranked first as long as a competitor has not lost two
+games - is used in NCAA baseball and softball for certain rounds in
+their postseason. Additional variants of double elimination include
+double elimination brackets with a ``true third'' match which includes
+an additional match contested between the competitors ranked 2nd (loser
+of the finals) and 3rd (winner of the consolation bracket) at the end of
+the tournament \emph{if they have not already competed against each
+other}. There is also a variation of double elimination where only those
+competitors who have lost to a competitor that makes the finals are
+placed into the consolation bracket and given the chance to compete for
+third place. This style of competition is used in Olympic wrestling
+(both freestyle and Greco-Roman)\footnote{As in Olympic judo, Olympic
+  wrestling also award two bronze medals to the winners of each side of
+  the consolation bracket}.
+
+In bracket style competitions, only a handful of the match-ups that are
+possible actually occur. When every possible competitive pairing occurs,
+this is referred to as a round-robin structure where every competitor
+plays every other competitor the same number of times. Single
+round-robin, where was possible match-up occurs exactly once, is used
+in, for examples, the group stage of the FIFA World Cup to create a
+ranking to determine which teams advance to the next round. Double
+round-robin, where each possible pairing occurs twice, is used in
+association football in English Premier League (EPL) and in chess during
+the FIDE candidates tournament (a tournament that decides who will
+challenge the world champion). For the sake of brevity, we review only a
+small number of possible competition structures, but the interested
+reader can find a more complete list of competition structures in
+\citet{Goosens2024}, \citet{Appleton1995-zn} and \citet{Csato2021}.
+
+\citet{Daniels1969}
+
+A natural question of interest after reviewing different types of
+competition structures is: which competition structure is best? As with
+most complicated questions, the answer is ``it depends''. One
+commonsense conceptualization for the best competition structure is that
+the final rankings produced by a competition structure should closely
+match the true rankings of the strength of the competitors. That is, a
+good competition structure should rank the true best team first, the
+true second best team second, and so on, until finally ranking the true
+worst team last. We refer to this property of a competition structure as
+the efficacy of the structure (\citet{Lasek2018-de},
+\citet{Sziklai2022-kf}). If one were only interested in correctly
+ranking the true best competitor as first, with the ranks of the
+remaining competitors viewed as inconsequential, we refer to this here
+are effectivity (\citet{Glenn1960-mn}). While there are many competition
+structures where efficacy and effectivity are useful
+measures\footnote{efficacy is a useful measure for the EPL, for example,
+  as the ranking of the teams matters at both the high end (i.e.~entry
+  into special tournaments) and the low end (i.e.~relegation status) and
+  effectivity is a useful measure for the NCAA College Basketball
+  tournament (i.e.~main goal is to crown a champion)}, there are many
+other competitions where the correct ranking of more than one
+competitor, but not all the competitors is of import. For instance, in
+Olympic competition, the goal of a competition structure is to correctly
+rank the top 3 competitors to award gold, silver, and bronze medals
+to\footnote{Some sports award two bronze medals (e.g.~wrestling, judo,
+  boxing, tae kwon do)}. In many American sports, for instance the NFL,
+the goal of the competition structure of the regular season is to rank
+the top 7 teams in each conference to choose the playoff teams with the
+ranking of the teams 8 through 16 in each conference inconsequential in
+determining a Super Bowl champion\footnote{The ranking of teams outside
+  of the playoffs does matter for draft purposes though}. We coin the
+term ``salient ranks'' to refer to the ranks of a competition structure
+that matter. That is the ranks 1, 2, and 3 in Olympic competition are
+the salient ranks in that competition structure. In this notation,
+efficacy is a measure with with salient ranks 1 through \(n\) where
+\(n\) is the number of competitors, and effectivity is a measure where 1
+is the only salient rank.\\
+
+If the only goal of a competition structure was high efficacy of the
+salient ranks, the best way to achieve this would be to play each pair
+of possible match ups of competitors as many times as possible. Of
+course, this is impossible due to many factors including time
+constraints, cost constraints, and wear and tear on competitors in high
+impact sports (e.g.~boxing, American football, etc.). In addition,
+competitions where the true best team is guaranteed or nearly guaranteed
+to win may be less appealing to fans and may drive down demand as
+discussed in \citet{Johnson2022-wz}.
+
+In light of this, many different competition structures have been
+proposed, several of which are mentioned previously. Given these many
+competition structures, ideally there would be a way comparing the
+performance of different competition structures to each other.
+
+Here, we propose a novel metric for evaluating different competition
+structures using an information theoretic approach. As an analogy, we
+view the results of a tournament as a transmitted message, and we use
+information theory to assess how accurately the message (i.e.~the
+tournament results) matches the true transmission (i.e.~the true ranking
+of competitors).
+
+Specifically, we use weighted mutual information with a weights based on
+squared error loss\footnote{other loss functions can easily be
+  incorporated into our method} between the ranks generated by a
+competition structure and the true ranks of the competitors.
+Additionally, we include an indicator vector to specify the salient
+ranks, allowing us to compare different competition structures with
+different choices for salient ranks.
+
+The remainder of this manuscript presents the mathematical foundation of
+the proposed measure followed by a simulation study estimating out
+proposed measure for different types of competition structures with
+varying choices of salient ranks. We close by offering a summary of the
+work and ideas for future directions.
+
+\section{Methods}\label{methods}
+
+Consider a set of \(n\) teams indexed from \(i = 1, 2, \cdots, n\) each
+with an associated true strength parameter
+\(\boldsymbol{\theta} = (\theta_1, \theta_2, \ldots, \theta_n)\) such
+that \((\theta_1 \ge \theta_2 \ge \ldots \ge \theta_n)\). Next, let
+\(r(\boldsymbol{\theta})\) be the indexes of \(\boldsymbol{\theta}\)
+when \(\theta\) is sorted from largest to smallest so that
+\(r(\boldsymbol{\theta}) = \{1, 2, \ldots, n-1, n\}\) (Note: While we
+allow for two values of \(\theta\) to be equal to each other, we choose
+to assign unique ranks to each \(\theta_i\)). Next define \(T(\phi, s)\)
+as a tournament with schedule \(\phi\) and seeding structure \(s\).
+\(\phi\) contains all the information about the scheduling of teams,
+which could be fully known prior to the tournament (\emph{e.g.} round
+robin) or determined as the tournament progresses (\emph{e.g.} single
+elimination tournament). We then let
+\(\hat{r}(T(\phi, s),\boldsymbol{\theta})\) be an \(n\)-dimensional
+vector-valued random variable that gives the results of a tournament as
+a vector of the indexes of \(\boldsymbol{\theta}\). The number in the
+first position of the vector \(\hat{r}(T(\phi, s),\boldsymbol{\theta})\)
+indicates the index of the team that finished first, the number in the
+second position of the vector
+\(\hat{r}(T(\phi, s),\boldsymbol{\theta})\) indicates the index of the
+team that finished second, and so on. (Note: We do allow for ties in
+\(\hat{r}\).)
+
+For example, in a \(n\) = 4 team tournament,
+\(\hat{r}(T(\phi, s),\boldsymbol{\theta})\) = (3, 2, 1, 4) indicates
+that the team with index 3 (i.e.~the true third best team) won the
+tournament, the true second best team finished second, the true best
+team finished third and the true 4th team finished 4th in that
+particular tournament. If \(\hat{r}(T(\phi, s),\boldsymbol{\theta})\) =
+(1, 2, 3, 4), this means that the random outcome of the tournament was
+the same as the true ordering of the teams.
+
+As noted above we allow for ties in \(\hat{r}\). Continuing the above
+example, if \(\hat{r}(T(\phi, s),\boldsymbol{\theta})\) = (3, 2, 1, 3)
+this indicates that the teams that are truly ranked 1st and 4th tied for
+3rd.
+
+We need a transition: If one views the true ranking of the teams in a
+tournament as a message to be sent to a receiver and the outcome of the
+tournament as a message that is received, we can measure the
+``goodness'' of a tournament in terms of its ability to accurately
+transmit the true ranking. We can then use concepts from information
+theory to assess the ability of a tournament to correctly rank teams.
+Specifically, we start with the concept of mutual information
+(\citet{Guiasu1977-nu}).
+
+For two random variables \(X\) and \(Y\) mutual information is defined
+as:
+
+\[
+I(X;Y)=\sum_{y\in Y}\sum_{x\in X}p(x,y)\log \frac {p(x,y)}{p(x)\,p(y)}
+\]
+
+In our setting, we replace \(X\) and \(Y\) with
+\(r(\boldsymbol{\theta})\) and
+\(\hat{r}(T(\phi, s),\boldsymbol{\theta})\), and we could seek to
+estimate
+\(I(r(\boldsymbol{\theta}),\hat{r}(T(\phi, s),\boldsymbol{\theta}))\).
+For simplicity, we drop the arguments from the functions \(r\) and
+\(\hat{r}\) for ease of exposition.
+
+In order to compute mutual information, marginal distributions of \(r\)
+and \(\hat{r}\) are required. Without knowing \(r\), all possible
+permutations of \(\hat{r}\) are equally likely so we set
+\(p(\hat{r}) = \frac{1}{n!}\). By a similar argument we set
+\(p(r) = \frac{1}{n!}\).
+
+we set . By a similar argument we set \(p(\hat{r}) = \frac{1}{n!}\).
+
+We define the mutual information of \(r\) and \(\hat{r}\) to be:
+
+\[
+I(r,\hat{r})=\sum_{r}\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})} = n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{(\frac{1}{n!})^2}
+\]
+
+While there are \(n!\) different permutations for the result of \(r\),
+we don't need to sum across these as any specific choice of \(r\) is
+just an arbitrary labeling of the true strength parameters vector
+\(\boldsymbol{\theta}\). So given \(r\), the distribution of \(\hat{r}\)
+is the same up to the labeling. Therefore, we only need to consider a
+single permutation of \(r\), we compute the the quantity inside the
+summation, and then multiple by \(n!\) (effectively summing across
+\(r\)).
+
+In order to compute this quantity, we need to compute \(p(r,\hat{r})\).
+This probability is found by calculating the probability of a given
+permutation of \(\hat{r}\) and \(r\) is assumed to be the permutation
+from \(\{1, 2, \ldots, n\}\). We estimate \(p(r,\hat{r})\) empirically
+through simulation.
+
+However, using mutual information in this form does not suit our needs
+in this setting. The problem is that mutual information in this form
+will yield high values of mutual information when the output from the
+tournament \(\hat{r}\) is highly consistent \emph{even if the ranking
+from the tournament is incorrect} (\emph{i.e.} the rankings produced by
+the tournament are very different from the true rankings). As an
+example, if \(n=4\) and the true order of \(\boldsymbol{\theta}\) is
+\(r = \{1, 2, 3, 4\}\) and \(p(\hat{r} = \{4, 3, 2, 1\}) = 1\) will be
+the same mutual information as when \(r = \{1, 2, 3, 4\}\) and
+\(p(\hat{r} = \{1, 2, 3, 4\}) = 1\) and in both of these cases the
+mutual information will be maximized at:
+
+\[
+I(r,\hat{r})= n!\sum_{\hat{r}}p(r,\hat{r})\log \frac {p(r,\hat{r})}{\left(\frac{1}{n!}\right)^2} = n! log((n!)^2)
+\] and for the specific case when \(n=4\) would be: \[
+4! log_2(4!^2) = 24*log_2(24^2) = 220.0782
+\]
+
+\subsection{Weighted Mutual
+Information}\label{weighted-mutual-information}
+
+In order to alleviate this problem, we instead consider \emph{weighted}
+mutual information (\citet{Guiasu1977-nu}). We want to give more weight
+to permutations from \(\hat{r}\) that are ``closer'' to \(r\).
+Essentially, this problem comes down to choosing a metric that measures
+the closeness between the vectors \(\hat{r}\) and \(r\). One then gives
+more weight to combinations of \(\hat{r}\) and \(r\) that are closer and
+less weight to combinations that are far apart. A natural choice for
+distance between vectors the sum of squared deviations between the two
+vectors. Specifically, we define the loss function between \(\hat{r}\)
+and \(r\) to be \(l(r, \hat{r}) = \sum_{i=1}^n (\hat{r}_i - r_i)^2\).
+Then, since small losses should be associated with large weights, we
+focus on the recipricol of this loss function.
+
+In general, any loss function \(l(r, \hat{r})\) can be used to define
+the weighting function as follows:
+
+\[
+w(r, \hat{r}) =
+\begin{cases}
+\frac{1}{l(r, \hat{r})}, & r \ne \hat{r} \\
+1, & r = \hat{r}
+\end{cases}
+\]
+
+Note that in order to avoid dividing by 0, we define the weight to be 1
+when \(r\) and \(\hat{r}\) are exactly equal.
+
+Specifically, when squared error loss is chosen, one gets the following
+weight function:
+
+\[
+w(r, \hat{r}) =
+\begin{cases}
+\frac{1}{\sum_{i=1}^n (\hat{r}_i - r_i)^2}, & r \ne \hat{r} \\
+1, & r = \hat{r}
+\end{cases}
+\]
+
+An alternative to defining weight this way is to consider looking at the
+correlation between \(\hat{r}\) and \(r\). Since, \(\hat{r}\) and \(r\)
+are already ranks, the Pearson and Spearman correlation coefficients
+will be computationally exactly the same in this setting if that was the
+measure that someone chose to use.
+
+Spearman correlation can be written as follows:
+
+\[
+\rho_{s} =  1 - \frac{6  \sum_{i=1}^n (\hat{r}_i - r_i)^2}{n(n^2 - 1)}
+\],
+
+which means that Spearman correlation is simply (one minus) a scaling of
+squared error loss. Since \(\rho_{s} \in [-1,1]\), but we desire weights
+\(w(\hat{r},r) \in [0,1]\), we define
+\(w(\hat{r},r) = \frac{(\rho_s + 1)}{2}\) guaranteeing weights in the
+desired range.
+
+While squared error loss and Spearman/Pearson correlation work well, in
+this setting we argue that Kendall's \(\tau\) correlation is the most
+appropriate for weighting due to its interpretation and how this related
+to competitions. One way of interpreting Kendall's \(\tau\) is that it's
+a scaling of the number of adjacent swaps required to go from one
+permutation of ranks to another. Recall that Kendall's \(\tau\) is
+defined as: \[
+\rho_\tau = 1 - \frac{2 \times \# \text{ discordant pairs}}{{n \choose 2}}
+\]. To convert \(\rho_\tau\) back to the range between \([0,1]\), which
+we want for weighting purposes, we subtract 1 and divide by 2 giving us
+\(\frac{\rho_\tau + 1}{2}\). This then becomes:
+
+\[
+w(\hat{r},r) = \frac{\rho_\tau + 1}{2} = 1 - \frac{\# \text{ discordant pairs}}{{n \choose 2}}
+\] and the number of discordant pairs is equivalent to the number of
+adjacent swaps needed to get the order of \(\hat{r}\) correct.\\
+As an example, consider \(r = (1,2,3,4)\) and \(\hat{r} = (1,3,4,2)\).
+This requires two adjacent swaps to get \(\hat{r}\) to equal \(r\) (i.e
+swap 4 with 2 and then 3 with 2). The Kendall's \(\tau\) value between
+these two vectors is \(\frac{1}{3}\). We would then define the weight
+between the two vectors to be \((\rho_{\tau} + 1)/2 = \frac{2}{3}\) .
+This is exactly equivalent to
+\(1 - \frac{\#\text{ adj swaps}}{{n \choose 2}}\).
+
+Once an appropriate weight function \(w(r, \hat{r})\) is chosen, we get
+the following formula for weighted information:
+
+\[
+I_w(r,\hat{r})= \sum_{r}\sum_{\hat{r}}w(r, \hat{r})p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+\] \# Tiered Ranking
+
+This framework was developed to assess the efficacy of the full ranking
+of the top \(k\) teams generated by different competition formats.
+However, it may be of interest to have a competition structure that
+simply selects the top \(k\) teams in any order. Continuing with the
+Olympics example, if an organizer only cares about the top 3 teams
+earning medals \emph{in any order} (i.e.~\(\hat{r} = \{1,2,3,4\}\) and
+\(\hat{r} = \{3,2,1,4\}\) are equivalent), our framework can easily
+handle this modifying \(\hat{r}\) (and \(r\)?) so that the top \(k\)
+elements are ordered correctly and tied. That is, for the Olympic
+example, if \(k\) was 3 and \(\hat{r} = \{3,2,1,4\}\), we convert all
+the elements of \(\hat{r} \le k\) to 1 (i.e.~\(\hat{r}\) becomes
+\(\{1,1,1,4\}\)), and then we proceed with the exact same formula. We
+refer to this as tiered ranking.
+
+This concept can be extended to multiple tiers, which is applicable to a
+competition structure such as the premier league where the top 4 teams
+qualify for the Champions league and the bottom 3 teams are relegated.
+While this straight foward to compute, we do not evaluate scenarios such
+as this in this article.
+
+\subsection{Salient Weights (and
+ranks)}\label{salient-weights-and-ranks}
+
+In addition to the the weighting function \(w\), we defined a second set
+of weights that we refer to as the ``salient weights'' and denote as the
+vector \(m\). This set of weights is used to indicate which ranks have
+been determined to salient (as previously described) and consists of a
+vector of length \(n\) with elements that are positive for each of the
+salient ranks and 0 otherwise. As an example, for a four-team
+tournament, if the organizer decided that only the correctly choosing
+the best team as the winner was important, then \(m = \{1,0,0,0\}\)
+(i.e. measuring effectivity). In an event such as the Olympics, the
+salient weights could be 1's for the first three elements and 0's
+elsewhere such that \(m = \{1,1,1,0\}\). Additionally, one can also
+weight the salient ranks. For example, continuing the Olmypics example
+where getting the top three correct is the main objective, one could
+argue that it is more important to get the first place correct than the
+third place. This could lead to, for instance, a salient weight vector
+of \(m = \{5,3,1,0, \cdots, 0\}\) giving 5 times the weight to getting
+the first place team correct as getting the third team correct.
+
+With the addition of the salient weighting vector, \(m\), the formula
+for weighted mutual information becomes:
+
+\[
+I_w(r,\hat{r},m)= \sum_{r}\sum_{\hat{r}}w(r, \hat{r}, m)p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})}
+\] .
+
+Incorporating \(m\) into this function is straightforward for many
+weighting functions. We use the weighted Kendall's \(\tau\) presented in
+\citet{Shieh1998} with a slight modification to the sign function.
+Specifically, in the special case that \(sign(0) = 1\). Then
+\(w(r, \hat{r}, m)\) becomes:
+
+\[
+w(r, \hat{r}, m) = \frac{\sum_{i \ne j} m^{\star}_{ij}\text{sign}_{(0+)}(r_i - r_j)sign_{(0+)}(\hat{r}_i - \hat{r}_j)}{\sum_{i,j}m^{\star}_{i,j}- \sum_i m^{\star}_{i,i}}
+\] where \(m^{\star}_{i,j} = m_{min(i,j)}\) and \(sign_{(0+)}(.)\) is
+the sign of the input with the special case that a 0 maps to 1.
+
+Finally, because this mutual information is unitless, the formula can be
+standardized to be between 0 and 1 as follows: \[
+I^{\star}_w(r,\hat{r},m) = \frac{I_w(r,\hat{r},m)}{H(r, \hat{r})}
+\]
+
+where \(H(.)\) is the usual Shannon entropy. Using this framework,
+values of \(I^{\star}_w(r,\hat{r},m)\) near 1 indicated competition
+structures with high efficacy. Values near 0.25 indicate tournament
+structures where all possible rankings are equally likely and values
+near 0 indicate rankings that are inefficacious (e.g.~complete rank
+reversal).
+
+Under the assumption of equal probability for all possible permutations
+of \(\hat{r}\), we can simplify \(p(r, \hat{r}) = \frac{1}{n!}\) and
+\(\sum_r \sum_{\hat{r}} w(r, \hat{r},m) = 0.5 \times n!\). Assuming that
+\(p(r) = p(\hat{r}) = \frac{1}{n!}\), this results in: \[
+I_w(r,\hat{r},m) = \sum_{r}\sum_{\hat{r}}w(r, \hat{r}, m)p(r,\hat{r})\log \frac {p(r,\hat{r})}{p(r)p(\hat{r})} = 0.5 \times n! \times \frac{1}{n!} \times \log(\frac{1/n!}{(1/n!)^2}) = 0.5 \times \log(n!)
+\]
+
+Additionally, we can assume that \(r\) and \(\hat{r}\) are independent
+and have equivalent probabilities of \(\frac{1}{n!}\). Through the chain
+rule detailed in \citet{Cover2006}, \[
+H(r, \hat{r}) = H(r) + H(\hat{r}|r)
+\] . Assuming independence and equality, \[
+H(\hat{r}|r) = H(\hat{r}) = H(r)
+\] . Thus, \[
+H(r,\hat{r}) = 2 \times H(r) = - 2 \sum_{r} p(r)\log(p(r)) = -2(n!) \times (\frac{1}{n!}) \times \log (\frac{1}{n!}) = \log((n!)^2)
+\]
+
+and the final simplification:
+
+\[
+I^{\star}_w(r,\hat{r},m) = \frac{I_w(r,\hat{r},m)}{H(r, \hat{r})} = \frac{0.5\times \log(n!)}{2\times \log(n!)} = \frac{0.5}{2} = 0.25
+\]
+
+\section{Results}\label{results}
+
+While we have explored many more competition scenarios, for the sake of
+space we present only results of tournaments with \(n\) = 16 with the
+distribution of true strengths distributed as equally spaced quantiles
+of a standard normal distribution unless otherwise noted. In order to
+simulate each game we compute the probability that team \(j\) will beat
+team \(k\) by taking the inverse logit transformation of the differences
+in their strength parameters such that\\
+\[
+p_{jk} = \frac{e^{\theta_j - \theta_k}}{1 + e^{\theta_j - \theta_k}}
+\] where \(p_{jk}\) is the probability that competitor \(j\) beats
+competitor \(k\) and \(\theta_j\) and \(\theta_k\) are the strength
+parameters of teams \(j\) and \(k\), respectively.
+
+We focus on several simple competition structures focused mainly on
+variations of bracket tournaments to demonstrate the proof of concept of
+our proposed metric. In all cases, where seeding is needed (i.e.~all the
+bracket structures), the seeds are considered to be known and correct
+reflecting each team's true rank. Note that in bracket structures, the
+final rankings of teams not reaching the finals was randomly assigned
+among possible ranks. For example, if a team in a single elimination
+bracket lost in the semi-finals, their possible ranks are either 3 or 4
+and are equally likely; if a team loses in the quarterfinals in that
+same tournament, their final rank is randomly assigned from the set of
+ranks 5 through 8. Each competition structure was simulated 10,000 times
+and those results were used to estimate \(wI_m(r,\hat{r})\).
+
+We examined the following structures with the assumption of the ideal
+seeding for each competition:
+
+\begin{itemize}
+\item
+  Single Elimination, seeding (1 vs 16, 8 vs 9, 4 vs 13, 5 vs 12, 3 vs
+  14, 6 vs 11, 7 vs 10, 2 vs 15)
+\item
+  Double Elimination, seeding (1 vs 16, 8 vs 9, 4 vs 13, 5 vs 12, 3 vs
+  14, 6 vs 11, 7 vs 10, 2 vs 15)
+\item
+  Round Robin
+\item
+  Group Stage, 4 groups of 4, seeding (pot 1: 1-4, pot 2: 5-8, pot 3:
+  9-12, and pot 4: 13-16)
+\item
+  Staged Round Robin, 4 groups of 4, seeding (pot 1: 1-4, pot 2: 5-8,
+  pot 3: 9-12, and pot 4: 13-16)
+\item
+  Tennis Ladder, seeding (16 vs 15, 16 vs 15 winner vs 14, etc.)
+\end{itemize}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=7.08333in,height=\textheight,keepaspectratio]{images/combined_plot.png}
+
+}
+
+\caption{This figure compares the normalized weight mutual information
+of various competition structures against the number of salient ranks
+for various assumed distributions of true strengths, \(\theta\).
+\label{fig:fig1}}
+
+\end{figure}%
+
+Figure \ref{fig:fig1} shows the results of the estimated values of
+\(wI_m(r,\hat{r})\) on the y-axis while the x-axis represents the number
+of salient weights that were considered. Intuitively, of the competition
+structures considered here, the tennis ladder (shown in brown) should be
+the best structures because its built in structure limits the amount the
+top teams can fall in the final \(\hat{r}\) rankings. Note that it tops
+almost all of the bracket structures regardless of the choice of the
+number of salient ranks and distribution of \(\theta\) The exception
+comes in that round robin has the largest number of matchups and, with
+the exponential distribution, the probability of the top seed winning
+each game is much larger than the other distributions.
+
+The distribution of \(\theta\) can highly influence the resulting
+weighted mutual information that results. If the distribution is ``Coin
+Flip'', as in every team has a 50\% chance to win each game, then the
+overall information that can be gathered from the competition structure
+itself is significantly lower than other distributions. Additionally,
+the exponential distribution shows a larger gap between single
+elimination (shown in red) and double elimination (shown in blue) than
+the normal distribution, when k is small. This is because the
+probability of the better team winning is increased, especially for the
+top few teams.
+
+It is important to note that while the theoretical value for round robin
+for the distribution ``Coin Flip'' is 0.25, it is not seen in the
+results due to a limited number of simulations and noise within
+simulations.
+
+In addition to the estimated values of \(wI_m(r,\hat{r})\), we can also
+easily estimate the tiered rankings.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=7.08333in,height=\textheight,keepaspectratio]{images/combined_combinations_plot.png}
+
+}
+
+\caption{This figure compares the normalized weight mutual information
+of various competition structures against the number of \emph{tiered
+ranks} for various assumed distributions of true strengths, \(\theta\).
+\label{fig:fig2}}
+
+\end{figure}%
+
+Figure \ref{fig:fig2} demonstrates tiered ranking for the top K teams.
+As the top K teams approach the total number of teams, the mutual
+information approaches 1, or complete information. When K is 16, every
+team is within the top 16, so it is correctly ordered.
+
+While the comparison between most of the structures show similar results
+to those in Figure \ref{fig:fig1}, the plot of Group Stage shows a
+noticeable different with a its unique pattern. This is due to the
+ranking within the structure, as within each group, the pots that
+determine the groups create groups with one team from the top 4 teams,
+then one team from the next 4, etc. This creates the sharp inclines seen
+from \(K=11\) to \(K=12\) and \(K=15\) to \(K=16\). If one of the bottom
+4 teams ends up in third place or higher in the group phase, then the
+mutual information lowers. The random assignment of ranks within the
+teams that finish in last create the plateaus because, given the lowest
+4 teams all end up last in their respective groups, those teams should
+have an equal probability of ending up with rank 13 as rank 16.
+
+In order to avoid these leaps, a potential solution would be to create
+multiple tiers: the top 8 teams (or teams that advance to the knockout
+round), the teams that finished third in their respective groups, and
+the teams that finished last in their respective groups. However, for
+the sake of comparing against other structures, we only looked at the
+top K teams.
+
+In addition to the unique competition structures, most structures have
+different variations of the overall structure. For example, single
+elimination tournaments could have a reseeding structure, like the NFL
+playoffs. In this case, instead of set matchups, the matchups are
+determined as the highest seed remaining plays the lowest seed
+remaining, then the next highest plays the next lowest until all teams
+have a game.
+
+Another structure is the step Ladder structure in which the lowest seed
+plays the next lowest seed (16 vs 15) and the winner of that plays the
+next lowest (14). This continues until the top team plays a game. If
+this is correctly seeded, it seems like the ideal structure with very
+minimal variation. However, if seeded poorly, the structure could be
+viewed as one of the worst. Therefore, Figure \ref{fig:fig3} below looks
+at different structures, seeding, and number of games within a series.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=7.08333in,height=\textheight,keepaspectratio]{images/single_elimination_plot.png}
+
+}
+
+\caption{This figure compares the normalized weight mutual information
+of various single elimination competition structures against the number
+of \emph{tiered ranks} for various assumed distributions of true
+strengths, \(\theta\). \label{fig:fig3}}
+
+\end{figure}%
+
+Note, the labelled ``Bad Seed'' is equivalent to the worst possible
+seeding structure. For step ladder, it means the top team plays the
+second best team, the winner plays the third best team etc. For single
+elimination, the seeding structure is (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8, 9
+vs 10, 11 vs 12, 13 vs 14, 15 vs 16).
+
+Once again, the best and worst structure are the expected of step
+ladder, good and bad seeding structures. The step ladder with the bad
+seeding structure actually is below 0.25, or completely random
+assignment of \(\hat{r}\), for larger values of \(K\). The distribution,
+however, heavily influences the resulting mutual information in the
+smaller values of \(K\) for the step ladder with bad seeding, but not as
+much with good seeding. This can be attributed to the fact, for good
+seeding structure, the top team has to win only 1 match, with the next
+be playing 2 matches, etc., while the top teams are still favored.
+However, for the bad seeding structure, the top team has to play 15
+matches to end up in the correct position, and for that to occur, the
+second best team ends up in last place. Therefore, given the
+distribution, the probability that the best team wins 14 games can
+change the metric drastically. The same logic applies for the number of
+games in the series, as more games lead to higher mutual information.
+While still having an effect, the distribution plays less of factor in
+the typical single elimination structure.
+
+Where the seeding structure heavily impacted the step ladder structure,
+the single elimination structure is seen to be less influenced by
+seeding, given that there is reseeding. As seen in Figure
+\ref{fig:fig3}, the reseeded single elimination structure has very
+little difference between the good seeding and bad seeding.
+Additionally, both reseeded actually appear slightly better than the
+good seeding structure for the usual structure with a set bracket. This
+would lead us to believe that, when determining a structure to use, the
+reseeded option is a more efficacious approach than the common single
+elimination structure.
+
+Another competition structure that can be used as a simple example is
+round robin. When time and number of games is not a constraint, this is
+typically the most common approach to a structure. Examples of this are
+found most often in European soccer leagues, like the Premier League.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=7.08333in,height=\textheight,keepaspectratio]{images/round_robin_plot.png}
+
+}
+
+\caption{This figure compares the normalized weight mutual information
+of various round robin competition structures against the number of
+salient ranks for various assumed distributions of true strengths,
+\(\theta\). \label{fig:fig4}}
+
+\end{figure}%
+
+Figure \ref{fig:fig4} depicts three different distributions and the
+mutual information given from a round robin structure for a number of
+series. As the number of rounds increase, so does the mutual information
+given that there is a difference in the strength parameters. As the
+number of rounds increase, the probability of the better team being
+ranked higher than a lower team increases. Therefore, given an infinite
+number of rounds, the metric should approach a value of 1.
+
+It is also interesting to note that the exponential distribution has a
+wider gap between the curves as the value of \(K\) increases. This is
+likely because the difference between the strength parameters for the
+top 2 teams is larger than the difference between the strength
+parameters for the bottom 2. Therefore, the larger difference leads to
+less variation in games for the top teams and more variation for lower
+teams.
+
+On the other hand, the uniform distribution only has a slight variation
+in the around the middle (\(K = 8\)) that appears to become more flat as
+the number of rounds increase to 4. This is because the strength
+parameters are equally spaced, and thus have roughly the same variation
+from simulation to simulation. Over time, as the number of rounds
+increase, all of the curves will begin to flatten.
+
+In a perfect world, a large number of rounds for a round robin
+tournament would always be used and all of the other structures would,
+thus, become useless. However, we do not live in a perfect world and
+athletes cannot sustain a season that long. So, how can this metric be
+able to find the best structure given the real-life constraints? One
+might suggest estimating the strengths of each competitor in a given
+season and using the structures that would be reasonable to use given
+the time constraints. This, however, would give the best competition
+structure for that specific season.
+
+To estimate our metric for a specific real-world competition, some
+potential pathways include:
+
+\begin{itemize}
+\item
+  estimating the strength parameters for many seasons, running
+  simulations for each of those seasons, combining the results and using
+  the formula to get an overall mutual information score
+\item
+  estimating the strength parameters for many seasons, running
+  simulations for each of those seasons and calculating the mutual
+  information for each season, average the resulting metrics
+\item
+  estimating the strength parameters for many seasons and averaging the
+  strength parameter associate by the order of competitors (e.g. average
+  the best team from each season), running simulations over the new
+  strength distribution from the averages.
+\end{itemize}
+
+Overall, the metric succeeds in comparing competition structures
+effectiveness based on efficacy and effectivity. There is no one perfect
+structure that can be used given real-world constraints, but this metric
+can offer potential solutions to structures that struggle to provide the
+results that are expected and desired.
+
+\section{Conclusion}\label{sec:conclusion}
+
+This study introduced a weighted mutual information framework to
+evaluate the effectiveness of different competition formats in
+preserving the true underlying rankings of teams. We also introduce the
+concept of salient ranks, thereby extending and generalizing the
+concepts of efficacy and effectivity. By simulating outcomes of
+competition structures with varying seeding methods and applying an
+information-theoretic approach, we quantified how accurately each format
+conveys ranking information. Our findings confirm the intuitive
+advantage of round robin tournaments, which consistently outperformed
+single and double elimination formats in ranking accuracy, but also
+quantify the difference between these structures. Additionally, we
+demonstrated the degree to which poor seeding structures can
+significantly degrade performance of a competition structure, in some
+cases making competition outcomes even worse than simply randomly
+generating a set of ranks.
+
+These results underscore the trade-off between tournament accuracy and
+practical constraints such as time, cost, and entertainment value. While
+round robin offers the highest fidelity to true rankings, it is often
+impractical for large tournaments, highlighting the need for hybrid or
+adaptive structures that balance accuracy with logistical feasibility.
+
+Future work should extend this analysis to scenarios with more
+tournament structures, varying numbers of competitors, incorporate
+probabilistic strength models reflecting real-world uncertainty, and
+explore alternative weighting schemes for different competitive
+priorities (e.g., 4 salient ranks versus 8 salient ranking). Applying
+these methods to actual tournament data could further validate their
+usefulness for organizers aiming to design fair and informative
+competitions.
+
+Acknowledgements
+
+We thank the Department of Mathematics and Statistics at Loyola
+University Chicago for their support and resources in conducting this
+study. We thank Kailey Marie Lum for the suggestion of the term
+``salient ranks''. No external funding was received for this research.
+
+Supplementary Material
+
+All supplementary material available at
+\url{https://github.com/gjm112/tournaments}.
+
+References
+
+
+\bibliography{references.bib}
+
+
+
+\end{document}
