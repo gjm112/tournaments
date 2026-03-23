@@ -560,13 +560,11 @@ $$
 
 # Results
 
-While we have explored many more competition scenarios, for the sake of
-space we present only results of tournaments with $n$ = 16 with the
-distribution of true strengths distributed as equally spaced quantiles
-of a standard normal distribution unless otherwise noted. In order to
-simulate each game we compute the probability that team $j$ will beat
-team $k$ by taking the inverse logit transformation of the differences
-in their strength parameters such that\
+We evaluated tournament structures with n = 16 competitors to
+demonstrate the utility of our proposed weighted mutual information
+metric. Game outcomes were simulated probabilistically using a logistic
+model where the probability that competitor j defeats competitor k is
+given by:\
 $$
 p_{jk} = \frac{e^{\theta_j - \theta_k}}{1 + e^{\theta_j - \theta_k}}
 $$ where $p_{jk}$ is the probability that competitor $j$ beats
@@ -575,16 +573,12 @@ of teams $j$ and $k$, respectively.
 
 We focus on several simple competition structures focused mainly on
 variations of bracket tournaments to demonstrate the proof of concept of
-our proposed metric. In all cases, where seeding is needed (i.e. all the
-bracket structures), the seeds are considered to be known and correct
-reflecting each team's true rank. Note that in bracket structures, the
-final rankings of teams not reaching the finals was randomly assigned
-among possible ranks. For example, if a team in a single elimination
-bracket lost in the semi-finals, their possible ranks are either 3 or 4
-and are equally likely; if a team loses in the quarterfinals in that
-same tournament, their final rank is randomly assigned from the set of
-ranks 5 through 8. Each competition structure was simulated 10,000 times
-and those results were used to estimate $wI_m(r,\hat{r})$.
+our proposed metric. Each competition structure was simulated 10,000
+times to estimate $wI_m(r,\hat{r})$. In all bracket structures, seeding
+was assumed to be optimal, reflecting each team's true rank. For teams
+eliminated before the finals, ranks were assigned randomly within their
+possible range (e.g., semifinal losers were assigned rank 3 or 4 with
+equal probability).
 
 <!-- we should include links to the images to the ideal seeding structure that Ryan was working on -->
 
@@ -607,193 +601,226 @@ seeding for each competition:
 
 -   Tennis Ladder, seeding (16 vs 15, 16 vs 15 winner vs 14, etc.)
 
-![This figure compares the normalized weight mutual information of
-various competition structures against the number of salient ranks for
-various assumed distributions of true strengths, $\theta$.
+![Weighted mutual information of various competition structures as a
+function of the top K teams for three distributions of strengths (Coin
+Flip, Exponential, Normal).
 \label{fig:fig1}](images/combined_plot.png){width="680"}
 
 <!-- need to include table with the values of weighted mutual information for each plot in the appendix -->
 
-Figure \ref{fig:fig1} shows the results of the estimated values of
-$wI_m(r,\hat{r})$ on the y-axis while the x-axis represents the number
-of salient weights that were considered. Intuitively, of the competition
-structures considered here, the tennis ladder (shown in brown) should be
-the best structures because its built in structure limits the amount the
-top teams can fall in the final $\hat{r}$ rankings. Note that it tops
-almost all of the bracket structures regardless of the choice of the
-number of salient ranks and distribution of $\theta$ The exception comes
-in that round robin has the largest number of matchups and, with the
-exponential distribution, the probability of the top seed winning each
-game is much larger than the other distributions.
+Figure \ref{fig:fig1} presents the normalized weighted mutual
+information $wI_m(r,\hat{r})$ as a function of the number of salient
+ranks (k) across multiple strength distributions. The tennis ladder
+structure consistently achieves the highest $wI_m$ values across nearly
+all conditions, outperforming the traditional bracket formats regardless
+of k or strength distribution. This superior performance arises from the
+ladder's inherent sequential constraint, which limits the extent to
+which highly-ranked teams can fall in the final standings $\hat{r}$. The
+structure essentially provides a built-in protection mechanism for top
+competitors while maintaining competitive integrity. However, this
+built-in protection is only applicable for the assumption that the
+seeding was done correctly.
 
-The distribution of $\theta$ can highly influence the resulting weighted
-mutual information that results. If the distribution is "Coin Flip", as
-in every team has a 50% chance to win each game, then the overall
-information that can be gathered from the competition structure itself
-is significantly lower than other distributions. Additionally, the
-exponential distribution shows a larger gap between single elimination
-(shown in red) and double elimination (shown in blue) than the normal
-distribution, when k is small. This is because the probability of the
-better team winning is increased, especially for the top few teams.
+Round robin tournaments achieve the highest $wI_m$ value for $k=1$ only
+under the exponential distribution, where the increased probability of
+top-seed victories (due to larger strength differentials) combines with
+the structure's maximal number of matchups to provide the exception to
+the tennis ladder structure's superior performance. However, this
+advantage disappears under more balanced strength distributions.
+
+## Influence of Strength Distributions
+
+The distribution of the strength parameters, $\theta$, can substantially
+influence the competition's information. Under the "Coin Flip"
+distribution, where every team has an equal 50% win probability, all
+structures exhibit reduced $wI_m$ values compared to scenarios with
+heterogeneous strengths. This result is intuitive: when true skill
+differences are absent, tournament structures cannot extract meaningful
+ranking information beyond random assignment.
+
+The exponential distribution, characterized by larger gaps between top
+competitors and smaller gaps among lower-ranked teams, produces distinct
+patterns. The disparity between single and double elimination widens
+considerably for small k, as the heightened probability of top-seed
+victories makes the recovery mechanism of double elimination
+particularly valuable for preserving information about elite
+competitors. Conversely, under normal and uniform distributions, with
+more evenly-spaced strength parameters, this advantage diminishes.
 
 It is important to note that while the theoretical value for round robin
-for the distribution "Coin Flip" is 0.25, it is not seen in the results
-due to a limited number of simulations and noise within simulations.
+for the distribution "Coin Flip" is 0.25, our simulations produced
+slightly different estimates due to finite simulation counts and
+inherent stochastic variation.
 
-In addition to the estimated values of $wI_m(r,\hat{r})$, we can also
-easily estimate the tiered rankings.
+## Tiered Ranking Analysis
 
-![This figure compares the normalized weight mutual information of
-various competition structures against the number of *tiered ranks* for
-various assumed distributions of true strengths, $\theta$.
+![Tiered weighted mutual information of various competition structures
+as a function of the top K teams for three distributions of true
+strengths (Coin Flip, Exponential, Normal).
 \label{fig:fig2}](images/combined_combinations_plot.png){width="680"}
 
-Figure \ref{fig:fig2} demonstrates tiered ranking for the top K teams.
-As the top K teams approach the total number of teams, the mutual
-information approaches 1, or complete information. When K is 16, every
-team is within the top 16, so it is correctly ordered.
+Figure \ref{fig:fig2} examines the mutual information for tiered
+rankings of the top $K$ teams. As $K$ approaches $n=16$, $wI_m$
+approaches 1 since all teams fall within the "top 16" and ordering
+becomes deterministic. The convergence patterns across structures reveal
+their relative effectiveness at different ranking granularities.
 
-While the comparison between most of the structures show similar results
-to those in Figure \ref{fig:fig1}, the plot of Group Stage shows a
-noticeable different with a its unique pattern. This is due to the
-ranking within the structure, as within each group, the pots that
-determine the groups create groups with one team from the top 4 teams,
-then one team from the next 4, etc. This creates the sharp inclines seen
-from $K=11$ to $K=12$ and $K=15$ to $K=16$. If one of the bottom 4 teams
-ends up in third place or higher in the group phase, then the mutual
-information lowers. The random assignment of ranks within the teams that
-finish in last create the plateaus because, given the lowest 4 teams all
-end up last in their respective groups, those teams should have an equal
-probability of ending up with rank 13 as rank 16.
+Most structures exhibit monotonic increases in $wI_m$ as $K$ increases,
+reflecting the accumulating information about progressively larger
+subsets of the ranking. However, the group stage format (orange)
+displays a distinctive non-monotonic pattern characterized by sharp
+discontinuities at $K=12$ and $K=16$. These irregularities arise from
+the pot-based seeding structure: each group contains exactly one team
+from each pot (ranks 1-4, 5-8, 9-12, 13-16). This design creates
+clustering effects where teams finishing in specific group positions
+span multiple pots.
 
-In order to avoid these leaps, a potential solution would be to create
-multiple tiers: the top 8 teams (or teams that advance to the knockout
-round), the teams that finished third in their respective groups, and
-the teams that finished last in their respective groups. However, for
-the sake of comparing against other structures, we only looked at the
-top K teams.
+The sharp increases observed from $K=11$ to $K=12$ and $K=15$ to $K=16$
+reflect the resolution of pot-based uncertainties as additional teams
+are included in the top-K tier. The plateaus between these transitions
+occur because teams eliminated in the same round receive randomly
+assigned ranks within their possible range. For instance, the four teams
+finishing last in their respective groups receive ranks 13 through 16,
+producing no additional information until all four teams are included.
+While subdividing the final ranking into multiple tiers (e.g., knockout
+qualifiers, third-place finishers, last-place finishers) would eliminate
+these discontinuities, we maintained a unified ranking for
+cross-structure comparability.
 
-In addition to the unique competition structures, most structures have
-different variations of the overall structure. For example, single
-elimination tournaments could have a reseeding structure, like the NFL
-playoffs. In this case, instead of set matchups, the matchups are
-determined as the highest seed remaining plays the lowest seed
-remaining, then the next highest plays the next lowest until all teams
-have a game.
+## Effects of Seeding Quality and Competition Variants
 
-Another structure is the step Ladder structure in which the lowest seed
-plays the next lowest seed (16 vs 15) and the winner of that plays the
-next lowest (14). This continues until the top team plays a game. If
-this is correctly seeded, it seems like the ideal structure with very
-minimal variation. However, if seeded poorly, the structure could be
-viewed as one of the worst. Therefore, Figure \ref{fig:fig3} below looks
-at different structures, seeding, and number of games within a series.
+Beyond structure type, specific implementation choices significantly
+affect tournament informativeness. Figure \ref{fig:fig3} examines
+variants of single elimination and ladder structures under different
+seeding scenarios and series lengths.
 
-![This figure compares the normalized weight mutual information of
-various single elimination competition structures against the number of
-*tiered ranks* for various assumed distributions of true strengths,
-$\theta$.
+![Mutual information of single elimination variants as a function of the
+top K teams for three distributions (Exponential, Normal, Coin Flip) and
+three series lengths (1, 3, 7).
 \label{fig:fig3}](images/single_elimination_plot.png){width="680"}
 
-Note, the labelled "Bad Seed" is equivalent to the worst possible
-seeding structure. For step ladder, it means the top team plays the
-second best team, the winner plays the third best team etc. For single
-elimination, the seeding structure is (1 vs 2, 3 vs 4, 5 vs 6, 7 vs 8, 9
-vs 10, 11 vs 12, 13 vs 14, 15 vs 16).
+<!-- should I include a zoomed in image of the single elimination yellow, red, and green plots? -->
 
-Once again, the best and worst structure are the expected of step
-ladder, good and bad seeding structures. The step ladder with the bad
-seeding structure actually is below 0.25, or completely random
-assignment of $\hat{r}$, for larger values of $K$. The distribution,
-however, heavily influences the resulting mutual information in the
-smaller values of $K$ for the step ladder with bad seeding, but not as
-much with good seeding. This can be attributed to the fact, for good
-seeding structure, the top team has to win only 1 match, with the next
-be playing 2 matches, etc., while the top teams are still favored.
-However, for the bad seeding structure, the top team has to play 15
-matches to end up in the correct position, and for that to occur, the
-second best team ends up in last place. Therefore, given the
-distribution, the probability that the best team wins 14 games can
-change the metric drastically. The same logic applies for the number of
-games in the series, as more games lead to higher mutual information.
-While still having an effect, the distribution plays less of factor in
-the typical single elimination structure.
+### Seeding Quality
 
-Where the seeding structure heavily impacted the step ladder structure,
-the single elimination structure is seen to be less influenced by
-seeding, given that there is reseeding. As seen in Figure
-\ref{fig:fig3}, the reseeded single elimination structure has very
-little difference between the good seeding and bad seeding.
-Additionally, both reseeded actually appear slightly better than the
-good seeding structure for the usual structure with a set bracket. This
-would lead us to believe that, when determining a structure to use, the
-reseeded option is a more efficacious approach than the common single
-elimination structure.
+Seeding quality exerts dramatically different effects depending on
+structure type. For the step ladder, seeding determines whether the
+structure achieves near-optimal performance or falls below random
+assignment. Under optimal seeding (top team plays winner of 2 vs 3 vs
+... vs 16), the step ladder requires the best team to win only one
+match, the second-best two matches, and so forth, yielding exceptionally
+high $wI_m$ values. However, under worst-case seeding (1 vs 2, winner vs
+3, etc.), the top team must win 15 consecutive matches to achieve the
+correct rank, while the second-best team will finish last if the top
+team wins the first match. This creates $wI_m$ values below 0.25 for
+large $K$ (worse than random assignment) because the structure
+systematically inverts the true ranking.
 
-Another competition structure that can be used as a simple example is
-round robin. When time and number of games is not a constraint, this is
+The strength distribution further modulates this effect. Under
+exponential distributions where top teams have higher win probabilities,
+badly-seeded step ladders show slightly elevated $wI_m$ for small $K$,
+as the best team more reliably wins its 15 matches. Under more balanced
+distributions, even small $K$ values produce poor results, as upsets
+become more probable throughout the extended gauntlet.
+
+Traditional single elimination brackets prove remarkably robust to poor
+seeding when reseeding is employed. A common example of a reseeded
+single elimination structure is the NFL playoff format. Figure
+\ref{fig:fig3} demonstrates minimal divergence between optimal and
+worst-case seeding under reseeding protocols, where remaining teams are
+rematched each round (highest remaining seed plays lowest, etc.).
+Reseeded formats actually slightly outperform standard brackets with
+optimal seeding, suggesting that dynamic seeding adjustments provide
+value even when initial seeding is correct. This finding indicates that
+when feasible, reseeded single elimination represents a more effective
+approach than fixed-bracket formats.
+
+### Series Length
+
+Extending individual matchups from single games to best-of-series
+formats predictably increases $wI_m$ across all structures and
+distributions. Longer series reduce outcome variance, allowing true
+strength differences to more reliably determine results. However, the
+magnitude of improvement varies by distribution: exponential
+distributions show larger gains from extended series than uniform
+distributions, as the longer format more reliably separates competitors
+with substantial skill gaps.
+
+## Round Robin Performance Under Extended Competition
+
+When time and number of games is not a constraint, round robin is
 typically the most common approach to a structure. Examples of this are
-found most often in European soccer leagues, like the Premier League.
+found most often in European soccer leagues, like the English Premier
+League.
 
-![This figure compares the normalized weight mutual information of
-various round robin competition structures against the number of salient
-ranks for various assumed distributions of true strengths, $\theta$.
+![Mutual information of round robin structures as a function of the top
+K teams for three distributions (Exponential, Normal, Uniform) with
+varying numbers of complete rounds (1, 2, 4).
 \label{fig:fig4}](images/round_robin_plot.png){width="680"}
 
-Figure \ref{fig:fig4} depicts three different distributions and the
-mutual information given from a round robin structure for a number of
-series. As the number of rounds increase, so does the mutual information
-given that there is a difference in the strength parameters. As the
-number of rounds increase, the probability of the better team being
-ranked higher than a lower team increases. Therefore, given an infinite
-number of rounds, the metric should approach a value of 1.
+<!-- do switching to uniform instead of coin flip make sense here? The coin flip would just have all values getting closer to 0.25, but because of the number of simulations it will likely be about 0.4. -->
 
-It is also interesting to note that the exponential distribution has a
-wider gap between the curves as the value of $K$ increases. This is
-likely because the difference between the strength parameters for the
-top 2 teams is larger than the difference between the strength
-parameters for the bottom 2. Therefore, the larger difference leads to
-less variation in games for the top teams and more variation for lower
-teams.
+Figure \ref{fig:fig4} examines round robin tournaments across multiple
+complete rounds, where each team plays every other team 1, 2, or 4
+times. As the number of rounds increases, $wI_m$ increases across all
+distributions, as repeated head-to-head matchups progressively reveal
+true strength rankings. Given infinite rounds, the metric would converge
+to 1 for any distribution with heterogeneous strengths.
 
-On the other hand, the uniform distribution only has a slight variation
-in the around the middle ($K = 8$) that appears to become more flat as
-the number of rounds increase to 4. This is because the strength
-parameters are equally spaced, and thus have roughly the same variation
-from simulation to simulation. Over time, as the number of rounds
-increase, all of the curves will begin to flatten.
+The exponential distribution exhibits wider separation between curves as
+$K$ increases, reflecting the varying difficulty of resolving rankings
+at different skill levels. Large strength differentials between top
+competitors are quickly resolved with high confidence, while similar
+bottom-tier competitors require more matchups to differentiate. This
+produces expanding gaps in $wI_m$ as additional rounds
+disproportionately clarify the difficult-to-resolve lower ranks.
 
-In a perfect world, a large number of rounds for a round robin
-tournament would always be used and all of the other structures would,
-thus, become useless. However, we do not live in a perfect world and
-athletes cannot sustain a season that long. So, how can this metric be
-able to find the best structure given the real-life constraints? One
-might suggest estimating the strengths of each competitor in a given
-season and using the structures that would be reasonable to use given
-the time constraints. This, however, would give the best competition
-structure for that specific season.
+Conversely, the uniform distribution displays more consistent spacing
+between round-count curves and only modest variation around $K=8$,
+reflecting the equal spacing of strength parameters. Since all pairwise
+differences are approximately equivalent, all rank pairs exhibit similar
+resolution difficulty, and increasing roounds improves rankings
+uniformly across the entire field. As round counts continue to increase
+beyond 4, these curves would be expected to flatten progressively.
 
-To estimate our metric for a specific real-world competition, some
-potential pathways include:
+## Practical Implementation Considerations
 
--   estimating the strength parameters for many seasons, running
-    simulations for each of those seasons, combining the results and
-    using the formula to get an overall mutual information score
+While round robin with extensive rounds theoretically provides maximal
+information, real-world constraints on season length, athlete health,
+and scheduling feasibility necessitate more limited structures. To apply
+our metric to specific real-world competitions, we propose three
+potential approaches:
 
--   estimating the strength parameters for many seasons, running
-    simulations for each of those seasons and calculating the mutual
-    information for each season, average the resulting metrics
+1.  **Season-specific simulation**: Estimate strength parameters for
+    multiple historical seasons, simulate tournament outcomes for each
+    season independently, and aggregate results to compute an overall
+    mutual information score
+2.  **Averaged metric approach**: Estimate strength parameters for
+    multiple historical seasons, compute $wI_m$ separately for each
+    season's simulations, and average the resulting metric
+3.  **Pooled strength distribution**: Estimate strength parameters
+    across multiple seasons, aggregate them by rank position (e.g.,
+    average all championship teams' parameters, all second-place teams'
+    parameters, etc.) to create a representative strength distribution,
+    then simulate tournaments using this composite distribution.
 
--   estimating the strength parameters for many seasons and averaging
-    the strength parameter associate by the order of competitors (e.g.
-    average the best team from each season), running simulations over
-    the new strength distribution from the averages.
+Each approach offers different trade-offs between capturing seasonal
+variation and computational tractability, with the optimal choice
+depending on the specific application and available historical data.
 
-Overall, the metric succeeds in comparing competition structures
-effectiveness based on efficacy and effectivity. There is no one perfect
-structure that can be used given real-world constraints, but this metric
-can offer potential solutions to structures that struggle to provide the
-results that are expected and desired.
+## Summary
+
+Our weighted mutual information metric successfully quantifies
+tournament structure effectiveness in producing accurate rankings. No
+single structure universally dominates across all scenarios: tennis
+ladders excel under ideal seeding, round robins provide maximal
+information given sufficient time, and reseeded single elimination
+offers a robust middle ground. The metric reveals that structure choice,
+seeding quality, strength distribution, and series length all interact
+to determine tournament informativeness. These results provide a
+quantitative foundation for evaluating existing tournament designs and
+optimizing structures given real-world constraints on time, resources,
+and competitive balance objectives.
 
 # Conclusion {#sec:conclusion}
 
