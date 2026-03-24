@@ -1,7 +1,9 @@
-## title: "sources_summary"
+---
+title: "sources_summary"
 format: html
 editor: visual
 bibliography: references.bib
+---
 
 # Tournament Paper - Josie Lit Review
 
