@@ -35,6 +35,12 @@ Furthermore, @elo1978rating establishes a new system for ranking chess skill bas
 
 In The Economic Design of Sporting Contests, @szymanski2003 shifts to describe how economic thinking has been applied to the design of sports contests and tournaments. The review discusses contest theory literature with the application to sports. A distinction is made between team and individual sports as players act as agents on behalf of a team in team sports rather than as an individual. Szymaski draws together research on incentives in individual sports with research on competitive balance and outcome uncertainty in team sports. The paper compares the contest organization between North America and Europe in particular.
 
+@Glickman2005Adaptive adds to the discussion of paired comparisons and tournament design by introducing a pairing method that incorporates prior information about the participants. Developed as an alternative to the Swiss system, this new method determines the set of pairings by maximizing the expected Kullback-Leibler distance between the prior and posterior distributions of the strength parameters (NEED TO REWORD because this is straight from the paper). The authors formulate the problem as a Bayesian optimal design and demonstrate how it can be applied adaptively for pairing objects multiple times. 
+
+@Kobayashi2006 proposes an algorithm to fully rank teams where multiple matches occur at the same time. The method uses parallel pairings to reduce the total number of rounds and optimize time efficiency. Specifically, they use lattice path counting techniques used in ballot problems to determine the necessary number of rounds. They compare this approach to parallel sorting algorithms, which establish a ranking order in an efficient manner. 
+
+@Scarf2011
+
 # Notes from Other Papers
 
 ### Aziz and Others 2018 - Fixing Balanced Knockout and Double Elimination Tournaments
