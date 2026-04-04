@@ -39,7 +39,7 @@ In The Economic Design of Sporting Contests, @szymanski2003 shifts to describe h
 
 @Kobayashi2006 proposes an algorithm to fully rank teams where multiple matches occur at the same time. The method uses parallel pairings to reduce the total number of rounds and optimize time efficiency. Specifically, they use lattice path counting techniques used in ballot problems to determine the necessary number of rounds. They compare this approach to parallel sorting algorithms, which establish a ranking order in an efficient manner. 
 
-@Scarf2011
+@Scarf2011 explore the implications of different tournament designs. They study the effect of seeding and other design changes given the competitive balance of a tournament. Using data from international soccer matches, they simulate match outcomes to compare different seeding structures, pointing out the importance of creating a fair and efficient tournament while also maintaining tournament outcome uncertainty. They show that seeding increases the probability that the best teams advance but overall reduces the tournament outcome uncertainty.
 
 # Notes from Other Papers
 
