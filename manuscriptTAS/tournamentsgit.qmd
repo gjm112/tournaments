@@ -2,29 +2,45 @@
 title: "Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information"
 format:
   jasa-pdf:
+    latex-auto-install: false
     keep-tex: true  
     journal:
       blinded: false
-  jasa-html: default
 date: last-modified
 author:
-  - name: Author 1
+  - name: Zachary Culp
     acknowledgements: | 
       The authors gratefully acknowledge _please remember to list all relevant funding sources in the non-anonymized (unblinded) version_.
     affiliations:
-      - name: University of XXX
-        department: Department of YYY
-  - name: Author 2
+      - name: Loyola University Chicago
+        department: Department of Mathematics and Statistics
+  - name: Josie Peterburs
     affiliations:
-      - name: University of WWW
-        department: Department of ZZZ
+      - name: Loyola University Chicago
+        department: Department of Mathematics and Statistics
+  - name: Ryan P. A. McShane
+    affiliations:
+      - name: The University of Chicago
+        department: Department of Statistics
+  - name: Gregory J. Matthews
+    affiliations:
+      - name: Loyola University Chicago
+        department: Department of Mathematics and Statistics
 abstract: |
-  The text of your abstract. 200 or fewer words.
+  We evaluate multiple competitions structures to assess their effectiveness in accurately reproducing the true underlying ranking of participating teams. Using repeated simulations for each structure, we compare teams’ true performance ranks to their simulated outcomes. To quantify the accuracy of each format, we calculate weighted mutual information between true and simulated rankings across a large number of replicates. "Salient" weights are applied to look at only the top i out of n total teams/competitors in a given competition structure. This information-theoretic approach allows us to objectively compare formats and identify which structures most effectively preserve rank order. Results are visualized through comparative plots, providing clear insights into the trade-offs and strengths of each competition design.
 keywords:
-  - 3 to 6 keywords
-  - that do not appear in the title
+  - tournament structures
+  - mutual information
 bibliography: references.bib  
 ---
+
+  <!-- | \normalsize [`zculp@luc.edu`](mailto:zculp@luc.edu) \vspace{-1mm} -->
+
+  <!-- | \normalsize [`jpeterburs@luc.edu`](mailto:jpeterburs@luc.edu) \vspace{-1mm} -->
+
+  <!-- | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm} -->
+
+  <!-- | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm} -->
 
 
 ```{r setup, echo=FALSE, message=FALSE}
@@ -43,7 +59,7 @@ gjm <- function(x, color = "red") {
 library(tidyverse)
 library(dplyr)
 library(stringr)
-theme_set(theme_minimal())
+theme_set(theme_bw())
 ```
 
 ## Introduction
@@ -843,54 +859,3 @@ All supplementary material available at
 
 # References
 
-<!-- author: |  -->
-
-<!--   | \large Zach Culp \vspace{-1.1mm} -->
-
-<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
-
-<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
-
-<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
-
-<!--   | -->
-
-<!--   | \large Josie Peterburs \vspace{-1.1mm} -->
-
-<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
-
-<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
-
-<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
-
-<!--   | -->
-
-<!--   | \large Ryan McShane \vspace{-1.1mm} -->
-
-<!--   | \normalsize University of Chicago \vspace{-1mm} -->
-
-<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
-
-<!--   | -->
-
-<!--   | \large Gregory J. Matthews \vspace{-1.1mm} -->
-
-<!--   |    \normalsize  \vspace{-1mm} -->
-
-<!--   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} -->
-
-<!--   | \normalsize Center for Data Science and Consulting \vspace{-1mm} -->
-
-<!--   | \normalsize Loyola University Chicago \vspace{-1mm} -->
-
-<!--   | \normalsize Chicago, IL 60660 \vspace{-1mm} -->
-
-<!--   | \normalsize [`email`](mailto:ypu@something.edu) \vspace{-1mm} -->
-
-<!--   | \normalsize [`zculp@luc.edu`](mailto:zculp@luc.edu) \vspace{-1mm} -->
-
-<!--   | \normalsize [`jpeterburs@luc.edu`](mailto:jpeterburs@luc.edu) \vspace{-1mm} -->
-
-<!--   | \normalsize [`rmcshane@uchicago.edu`](mailto:rmcshane@uchicago.edu) \vspace{-1mm} -->
-
-<!--   | \normalsize [`gmatthews1@luc.edu`](mailto:gmatthews1@luc.edu) \vspace{-1mm} -->
