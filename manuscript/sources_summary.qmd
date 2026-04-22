@@ -59,6 +59,11 @@ In "Fixing Balanced Knockout and Double Elimination Tournaments," @Aziz2017 cons
 
 In "Division Play and Outcome Uncertainty in Sports Leagues," @LeeFort2005 discuss outcome uncertainty and competitive balance and its importance in sports economics. Rather than analyzing how schedules affect biasedness of competitive balance measures, they assess the impacts on outcome uncertainty by the choice of competitive balance of moving to division play. This includes the impact of schedule imbalance, division strength, the number of teams, and the number of divisions. They estimate the marginal impacts on outcome uncertainty and competitive balance using numerical analysis and regression. They find that division play affects outcome uncertainty and competitive balance with results matching historical MLB data.
 
+@Glickman2025 provides an overview of the statistical models used to estimate the strengths of players or teams based on head-to-head outcomes. They review classic methods like Bradley-Terry and Thurstone-Mosteller and modern systems like Elo and Glicko. They focus on systems where ability changes over time, using Bayesian frameworks for updating ratings. 
+The models are applied to sports analytics, online gaming, and chess to evaluate performance and predict future outcomes.
+
+@Devriesere2025 provides an overview of tournament designs. They compare the tournaments based on four criteria: efficacy, fairness, attractiveness, and strategy-proofness. They use an operational research perspective to analyze the formats, seeding policies, scheduling, and ranking methods of many different formats.
+
 # Notes from Other Papers
 
 ### Aziz and Others 2018 - Fixing Balanced Knockout and Double Elimination Tournaments
