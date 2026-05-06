@@ -374,8 +374,6 @@ permutations of $\hat{r}$ are equally likely so we set
 $p(\hat{r}) = \frac{1}{n!}$. By a similar argument we set
 $p(r) = \frac{1}{n!}$.
 
-we set . By a similar argument we set $p(\hat{r}) = \frac{1}{n!}$.
-
 We define the mutual information of $r$ and $\hat{r}$ to be:
 
 $$
@@ -534,7 +532,7 @@ simply selects the top $k$ teams in any order. Continuing with the
 Olympics example, if an organizer only cares about the top 3 teams
 earning medals *in any order* (i.e. $\hat{r} = \{1,2,3,4\}$ and
 $\hat{r} = \{3,2,1,4\}$ are equivalent), our framework can easily handle
-this modifying $\hat{r}$ (and $r$?) so that the top $k$ elements are
+this modifying $\hat{r}$ (and $r$) so that the top $k$ elements are
 ordered correctly and tied. That is, for the Olympic example, if $k$ was
 3 and $\hat{r} = \{3,2,1,4\}$, we convert all the elements of
 $\hat{r} \le k$ to 1 (i.e. $\hat{r}$ becomes $\{1,1,1,4\}$), and then we
