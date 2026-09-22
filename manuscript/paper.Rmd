@@ -12,7 +12,7 @@ author: |
   | \normalsize Loyola University Chicago \vspace{-1mm} 
   | \normalsize Chicago, IL 60660 \vspace{-1mm} 
   | 
-  | \large Ryan McShane \vspace{-1.1mm} 
+  | \large Ryan P. A. McShane \vspace{-1.1mm} 
   | \normalsize University of Chicago \vspace{-1mm} 
   | \normalsize Chicago, IL 60660 \vspace{-1mm} 
   | 
