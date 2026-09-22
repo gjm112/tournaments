@@ -13,8 +13,8 @@ author: |
   | \normalsize Chicago, IL 60660 \vspace{-1mm} 
   | 
   | \large Ryan P. A. McShane \vspace{-1.1mm} 
-  | \normalsize University of Chicago \vspace{-1mm} 
-  | \normalsize Chicago, IL 60660 \vspace{-1mm} 
+  | \normalsize The University of Chicago \vspace{-1mm} 
+  | \normalsize Chicago, IL 60637 \vspace{-1mm} 
   | 
   | \large Gregory J. Matthews \vspace{-1.1mm} 
   | \normalsize Department of Mathematics and Statistics \vspace{-1mm} 
