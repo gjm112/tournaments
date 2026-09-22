@@ -560,12 +560,12 @@ $$
 Incorporating $m$ into this function is straightforward for many
 weighting functions. We use the weighted Kendall's $\tau$ presented in
 @Shieh1998 with a slight modification to the sign function.
-Specifically, in the special case that $sign(0) = 1$. Then
+Specifically, in the special case that $\mathrm{sign}(0) = 1$. Then
 $w(r, \hat{r}, m)$ becomes:
 $$
 w(r, \hat{r}, m) = \frac{\sum_{i \ne j} m^{\star}_{ij}\mathrm{sign}_{(0+)}(r_i - r_j)\mathrm{sign}_{(0+)}(\hat{r}_i - \hat{r}_j)}{\sum_{i,j}m^{\star}_{i,j}- \sum_i m^{\star}_{i,i}},
 $$ 
-where $m^{\star}_{i,j} = m_{min(i,j)}$ and $sign_{(0+)}(.)$ is the
+where $m^{\star}_{i,j} = m_{min(i,j)}$ and $\mathrm{sign}_{(0+)}(.)$ is the
 sign of the input with the special case that a 0 maps to 1.
 
 <!-- $$ -->
