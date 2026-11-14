@@ -76,7 +76,7 @@ tournaments/
 | **manuscriptTAS** | JASA submission draft: `tournamentsgit.qmd` |
 | **CMSAC_presentation** | Slide decks and presentation assets |
 | **Images** | Cross-project figures (e.g. tournament comparison plots) |
-| **R Data Files** | Large saved objects (`curves_data.RData`, `mi_results.RData`) — gitignored / LFS |
+| **R Data Files** | Large saved objects (`curves_data.rds`, `tournament_functions.rds`, `mi_results.rds`) |
 | **library** | Reference PDFs (Bradley–Terry, Kendall & Smith, tournament design, etc.) |
 
 ------------------------------------------------------------------------
@@ -133,7 +133,6 @@ Strengths are drawn from Normal, Uniform, Exponential, or equal-strength (coin-f
 
 ## Data Notes
 
-- `R Data Files/curves_data.RData` and `R Data Files/mi_results.RData` are excluded from git tracking (see `.gitignore`). Regenerate via the simulation and metric notebooks if missing locally.
 - NFL CSV files live in `Potential Case Study (NFL)/`.
 
 ------------------------------------------------------------------------
