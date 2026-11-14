@@ -2,10 +2,10 @@
 
 Research project evaluating how well different tournament and competition formats recover the true underlying ranking of teams. Simulations are run under the Bradley–Terry model (and related strength distributions), and formats are compared using **weighted mutual information** and related rank-correlation metrics.
 
-**Authors:** Zachary Culp, Josie Peterburs, Ryan P. A. McShane, Gregory J. Matthews  
+**Authors:** Zachary Culp, Josie Peterburs, Ryan P. A. McShane, Gregory J. Matthews\
 **Affiliations:** Loyola University Chicago; The University of Chicago
 
----
+------------------------------------------------------------------------
 
 ## Overview
 
@@ -17,7 +17,7 @@ Competition structures—round robin, single elimination, double elimination, gr
 - A CMSAC conference presentation
 - An NFL case study applying estimated team strengths to playoff structures
 
----
+------------------------------------------------------------------------
 
 ## Getting Started
 
@@ -30,24 +30,24 @@ Competition structures—round robin, single elimination, double elimination, gr
 
 ### Setup
 
-1. Clone or download this repository.
-2. Open `tournaments.Rproj` in RStudio (sets the project root as the working directory).
-3. Install required R packages:
+1.  Clone or download this repository.
+2.  Open `tournaments.Rproj` in RStudio (sets the project root as the working directory).
+3.  Install required R packages:
 
-```r
+``` r
 install.packages(c(
   "tidyverse", "combinat", "ggplot2", "knitr", "rmarkdown",
   "kableExtra", "future", "future.apply", "progressr"
 ))
 ```
 
-4. For JASA manuscript rendering, ensure the Quarto JASA extension is available (included under `_extensions/` and `manuscriptTAS/_extensions/`).
+4.  For JASA manuscript rendering, ensure the Quarto JASA extension is available (included under `_extensions/` and `manuscriptTAS/_extensions/`).
 
----
+------------------------------------------------------------------------
 
 ## Project Structure
 
-```
+```         
 tournaments/
 ├── Tournament Simulations/   # Core simulation engines and analysis notebooks
 ├── Metric Creation/          # Mutual information curves, swap metrics, evaluation plots
@@ -67,7 +67,7 @@ tournaments/
 ### Folder Guide
 
 | Folder | Contents |
-|--------|----------|
+|--------------------------------|----------------------------------------|
 | **Tournament Simulations** | `simulations.qmd` (main pipeline), format-specific scripts (`round_robin.qmd`, `double_elimination.qmd`, `repechage.R`, etc.) |
 | **Metric Creation** | Weighted mutual information computation and comparison plots |
 | **Weighting Function** | `weighted_kendall.R`, `partial_kendall.R` — salient-rank weighting schemes |
@@ -79,9 +79,13 @@ tournaments/
 | **R Data Files** | Large saved objects (`curves_data.RData`, `mi_results.RData`) — gitignored / LFS |
 | **library** | Reference PDFs (Bradley–Terry, Kendall & Smith, tournament design, etc.) |
 
----
+------------------------------------------------------------------------
 
 ## Key Workflows
+
+### Reproduce the results/graphs from the paper
+
+Open and knit/render `Tournament Simulations/simulations.qmd`. This document contains the code to run all tournament simulations many times, calculate mutual information for each tournament structure given the unique parameters, and creates the plots used in the paper. All functions used in this document are stored in `R Data Files/tournament_functions.rds` and all of the results used to create plots are stored in `R Data Files/mi_results.rds`. If you wish to skip simulating the results yourself and just create plots, skip to **MI Plots** in `Tournament Simulations/simulations.qmd`.
 
 ### Run tournament simulations
 
@@ -102,7 +106,7 @@ Render `Metric Creation/mutual_information_curves.qmd`. Output figures are saved
 
 Render files in `CMSAC_presentation/`. Presentations load precomputed results from `R Data Files/curves_data.RData`.
 
----
+------------------------------------------------------------------------
 
 ## Tournament Formats Implemented
 
@@ -116,7 +120,7 @@ Render files in `CMSAC_presentation/`. Presentations load precomputed results fr
 
 Strengths are drawn from Normal, Uniform, Exponential, or equal-strength (coin-flip) distributions, or supplied manually.
 
----
+------------------------------------------------------------------------
 
 ## Metrics
 
@@ -125,14 +129,14 @@ Strengths are drawn from Normal, Uniform, Exponential, or equal-strength (coin-f
 - **Probability curves** — P(correctly identifying the next-best team among remaining competitors)
 - **Swap distance** — number of pairwise swaps needed to reconcile predicted and true orderings
 
----
+------------------------------------------------------------------------
 
 ## Data Notes
 
 - `R Data Files/curves_data.RData` and `R Data Files/mi_results.RData` are excluded from git tracking (see `.gitignore`). Regenerate via the simulation and metric notebooks if missing locally.
 - NFL CSV files live in `Potential Case Study (NFL)/`.
 
----
+------------------------------------------------------------------------
 
 ## Citation
 
@@ -140,7 +144,7 @@ If you use this work, please cite the manuscript (in preparation):
 
 > Culp, Z., Peterburs, J., McShane, R. P. A., and Matthews, G. J. *Assessing Ranking Fidelity of Competition Structures via Weighted Mutual Information.*
 
----
+------------------------------------------------------------------------
 
 ## License
 

@@ -12,6 +12,10 @@ library(future)
 library(future.apply)
 library(progressr)
 
+# NOTE: readRDS from local storing of the tournament functions rds file
+# tournament_functions <- readRDS("R Data Files/tournament_functions.rds")
+# list2env(tournament_functions, envir = .GlobalEnv)
+
 # Use all cores except one
 cl <- parallel::makeCluster(parallel::detectCores() - 2)
 plan(cluster, workers = cl)
@@ -22,14 +26,14 @@ teams <- 16
 
 Note: The naming of each data frame has the following structure: tournament_distribution_ties_r_info
 
--   tournament is the tournament structure
--   distribution is the name of the distribution for $\theta$ (Normal, Uniform, Same, Manual)
-    -   Same is equal strengths or coin flip
+- tournament is the tournament structure
+- distribution is the name of the distribution for $\theta$ (Normal, Uniform, Same, Manual)
+  - Same is equal strengths or coin flip
 
-    -   Manual is an user created $\theta$ vector passed by adding theta_hat = *user input* at the end of the function
--   ties: ties or noTies
--   r is the number of games in a series or the number of iterations of round robin or group stage
--   info is any additional information like reseeded, third place game, or bad seeding structure
+  - Manual is an user created $\theta$ vector passed by adding theta_hat = *user input* at the end of the function
+- ties: ties or noTies
+- r is the number of games in a series or the number of iterations of round robin or group stage
+- info is any additional information like reseeded, third place game, or bad seeding structure
 
 # Getting Simulations
 
@@ -636,6 +640,10 @@ with_progress({
 ### Functions to get MI and put it in a Data Frame for Plots
 
 ```{r}
+# Optional load the results rds data file
+# tournament_results <- readRDS("R Data Files/mi_results.rds")
+# list2env(tournament_results, envir = .GlobalEnv)
+
 library(ggsci)
 compute_mi_for_datasets <- function(dataset_list) {
   # Validate input
@@ -1055,6 +1063,7 @@ all_mi_combinations <- bind_rows(
 
 ```{r}
 library(ggsci)
+
 ```
 
 ## Comparison Plot
